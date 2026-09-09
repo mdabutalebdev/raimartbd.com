@@ -33,6 +33,21 @@
     background: var(--color-brand-orange);
 }
 
+/* Testimonial swiper pagination bullets */
+.testi-pagination .swiper-pagination-bullet {
+    background: #cbd5e1;
+    opacity: 1;
+    width: 8px;
+    height: 8px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+.testi-pagination .swiper-pagination-bullet-active {
+    background: var(--color-brand-orange, #f97316);
+    width: 24px;
+    border-radius: 4px;
+}
+
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
