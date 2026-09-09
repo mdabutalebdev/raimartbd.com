@@ -75,14 +75,14 @@ import 'swiper/css/pagination';
 
     // Testimonials Swiper
     new Swiper('.testimonial-swiper', {
-        modules: [Navigation, Autoplay],
+        modules: [Pagination, Autoplay],
         slidesPerView: 1,
         spaceBetween: 20,
         loop: true,
         autoplay: { delay: 4000, disableOnInteraction: false },
-        navigation: {
-            nextEl: '.testi-next',
-            prevEl: '.testi-prev',
+        pagination: {
+            el: '.testi-pagination',
+            clickable: true,
         },
         breakpoints: {
             768: { slidesPerView: 2 },

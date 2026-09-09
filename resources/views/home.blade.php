@@ -205,7 +205,7 @@
 
     {{-- Best selling --}}
     <section class="py-4 md:py-6">
-        <div class="gb-container relative group">
+        <div class="gb-container relative">
             <div class="flex items-center justify-between gap-4">
                 <h2 class="text-xl sm:text-3xl font-bold text-gray-800 mb-2 sm:mb-4">Best Selling Product</h2>
                 <div class="flex shrink-0 gap-2">
@@ -234,7 +234,7 @@
 
     {{-- New arrivals --}}
     <section class="py-4 md:py-6">
-        <div class="gb-container relative group">
+        <div class="gb-container relative">
             <div class="flex items-center justify-between gap-4">
                 <h2 class="text-xl sm:text-3xl font-bold text-gray-800 mb-2 sm:mb-4">New Arrival Product</h2>
                 <div class="flex shrink-0 gap-2">
@@ -310,48 +310,43 @@
                 Real stories, genuine smiles. Discover why thousands trust Raimart for their everyday shopping.
             </p>
 
-            <div class="swiper testimonial-swiper w-full min-w-0 mt-4 md:mt-6 pb-4">
-                <div class="swiper-wrapper">
+            <div class="swiper testimonial-swiper w-full min-w-0 mt-4 md:mt-6 pb-2">
+                <div class="swiper-wrapper flex">
                     @foreach ($testimonials as $testimonial)
-                        <div class="swiper-slide">
-                            <div class="h-full rounded-xl bg-brand-bg p-6">
-                                <div class="flex items-center gap-3">
-                                    @if ($testimonial->avatar)
-                                        <img src="{{ image_url($testimonial->avatar) }}" class="h-10 w-10 rounded-full object-cover" alt="{{ $testimonial->name ?? $testimonial->phone }}">
-                                    @else
-                                        <span class="flex h-10 w-10 items-center justify-center rounded-full bg-brand-navy font-serif text-sm font-semibold text-white">
-                                            <i class="fa-solid fa-user"></i>
-                                        </span>
-                                    @endif
-                                    <div>
-                                        <p class="text-sm font-semibold text-brand-navy">{{ $testimonial->name ?? $testimonial->phone ?? 'Customer' }}</p>
-                                        @if($testimonial->location)
-                                            <p class="text-xs text-brand-navy/50">{{ $testimonial->location }}</p>
+                        <div class="swiper-slide !h-auto">
+                            <div class="flex h-full flex-col justify-between rounded-xl bg-brand-bg p-6">
+                                <div>
+                                    <div class="flex items-center gap-3">
+                                        @if ($testimonial->avatar)
+                                            <img src="{{ image_url($testimonial->avatar) }}" class="h-10 w-10 rounded-full object-cover shrink-0" alt="{{ $testimonial->name ?? $testimonial->phone }}">
+                                        @else
+                                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-navy font-serif text-sm font-semibold text-white">
+                                                <i class="fa-solid fa-user"></i>
+                                            </span>
                                         @endif
+                                        <div>
+                                            <p class="text-sm font-semibold text-brand-navy">{{ $testimonial->name ?? $testimonial->phone ?? 'Customer' }}</p>
+                                            @if($testimonial->location)
+                                                <p class="text-xs text-brand-navy/50">{{ $testimonial->location }}</p>
+                                            @endif
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div class="mt-3 text-xs text-brand-orange">
-                                    @for ($i = 0; $i < 5; $i++)
-                                        <i class="fa-{{ $i < $testimonial->rating ? 'solid' : 'regular' }} fa-star"></i>
-                                    @endfor
-                                </div>
+                                    <div class="mt-3 text-xs text-brand-orange">
+                                        @for ($i = 0; $i < 5; $i++)
+                                            <i class="fa-{{ $i < $testimonial->rating ? 'solid' : 'regular' }} fa-star"></i>
+                                        @endfor
+                                    </div>
 
-                                <p class="mt-3 text-sm leading-relaxed text-brand-navy/70">{{ $testimonial->text }}</p>
+                                    <p class="mt-3 text-sm leading-relaxed text-brand-navy/70">{{ $testimonial->text }}</p>
+                                </div>
                             </div>
                         </div>
                     @endforeach
                 </div>
 
                 @if(count($testimonials) > 0)
-                    <div class="mt-4 flex justify-center gap-4">
-                        <button type="button" class="testi-prev flex h-9 w-9 items-center justify-center rounded-full bg-white text-brand-navy shadow-sm border border-brand-navy/10 hover:bg-brand-orange hover:text-white hover:border-brand-orange transition" aria-label="Previous">
-                            <i class="fa-solid fa-chevron-left text-xs"></i>
-                        </button>
-                        <button type="button" class="testi-next flex h-9 w-9 items-center justify-center rounded-full bg-white text-brand-navy shadow-sm border border-brand-navy/10 hover:bg-brand-orange hover:text-white hover:border-brand-orange transition" aria-label="Next">
-                            <i class="fa-solid fa-chevron-right text-xs"></i>
-                        </button>
-                    </div>
+                    <div class="testi-pagination flex justify-center items-center mt-6"></div>
                 @endif
             </div>
 

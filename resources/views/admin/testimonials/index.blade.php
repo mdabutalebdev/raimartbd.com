@@ -22,9 +22,22 @@
                     @forelse ($testimonials as $testimonial)
                         <tr class="hover:bg-gray-50 transition-colors">
                             <td class="px-6 py-4">
-                                <div class="font-medium text-brand-navy">{{ $testimonial->name ?? 'N/A' }}</div>
-                                <div class="text-xs">{{ $testimonial->phone }}</div>
-                                <div class="text-xs">{{ $testimonial->email }}</div>
+                                <div class="flex items-center gap-3">
+                                    @if ($testimonial->avatar)
+                                        <img src="{{ image_url($testimonial->avatar) }}" class="h-10 w-10 rounded-full object-cover shrink-0 border border-gray-200">
+                                    @else
+                                        <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-navy/10 font-serif text-sm font-semibold text-brand-navy">
+                                            <i class="fa-solid fa-user"></i>
+                                        </span>
+                                    @endif
+                                    <div>
+                                        <div class="font-medium text-brand-navy">{{ $testimonial->name ?? 'N/A' }}</div>
+                                        @if($testimonial->location)
+                                            <div class="text-xs text-gray-500">{{ $testimonial->location }}</div>
+                                        @endif
+                                        @if($testimonial->phone)<div class="text-xs text-gray-400">{{ $testimonial->phone }}</div>@endif
+                                    </div>
+                                </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-brand-orange text-xs">
@@ -49,7 +62,8 @@
                             </td>
                             <td class="px-6 py-4 text-right whitespace-nowrap space-x-2">
                                 <button type="button" @click="selectedTestimonial = {{ json_encode($testimonial) }}; showModal = true" class="text-blue-500 hover:underline">View</button>
-                                
+                                <a href="{{ route('admin.testimonials.edit', $testimonial) }}" class="text-brand-orange hover:underline font-medium">Edit</a>
+
                                 @if(!$testimonial->is_active)
                                     <form action="{{ route('admin.testimonials.accept', $testimonial) }}" method="POST" class="inline">
                                         @csrf
@@ -63,7 +77,7 @@
                                         <button type="submit" class="text-yellow-600 hover:underline">Reject</button>
                                     </form>
                                 @endif
-                                
+
                                 <form action="{{ route('admin.testimonials.destroy', $testimonial) }}" method="POST" class="inline" onsubmit="return confirm('Delete this review permanently?');">
                                     @csrf
                                     @method('DELETE')
@@ -90,9 +104,14 @@
                 
                 <template x-if="selectedTestimonial">
                     <div class="space-y-4">
-                        <div>
-                            <p class="text-sm font-medium text-brand-navy">Customer Name</p>
-                            <p class="text-sm text-gray-700" x-text="selectedTestimonial.name || 'N/A'"></p>
+                        <div class="flex items-center gap-4">
+                            <template x-if="selectedTestimonial.avatar">
+                                <img :src="'/storage/' + selectedTestimonial.avatar" class="h-14 w-14 rounded-full object-cover border border-gray-200">
+                            </template>
+                            <div>
+                                <p class="text-base font-semibold text-brand-navy" x-text="selectedTestimonial.name || 'N/A'"></p>
+                                <p class="text-xs text-gray-500" x-text="selectedTestimonial.location || ''"></p>
+                            </div>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>

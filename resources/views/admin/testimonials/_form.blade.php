@@ -22,10 +22,13 @@
     </div>
 
     <div>
-        <label class="text-sm font-medium">Avatar</label>
-        <input type="file" name="avatar" accept="image/*" class="mt-1 w-full rounded-lg border border-brand-navy/15 px-4 py-2 text-sm">
+        <label class="text-sm font-medium">Profile Picture / Avatar</label>
+        <input type="file" name="avatar" accept="image/*" class="mt-1 w-full rounded-lg border border-brand-navy/15 px-4 py-2 text-sm bg-white">
         @if (! empty($testimonial) && $testimonial->avatar)
-            <img src="{{ image_url($testimonial->avatar) }}" class="mt-2 h-12 w-12 rounded-full object-cover">
+            <div class="mt-2 flex items-center gap-3">
+                <img src="{{ image_url($testimonial->avatar) }}" class="h-12 w-12 rounded-full object-cover border border-brand-navy/15 shadow-sm">
+                <span class="text-xs text-brand-navy/60">Current Profile Picture</span>
+            </div>
         @endif
     </div>
 
