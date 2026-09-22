@@ -21,11 +21,14 @@ import 'swiper/css/pagination';
     // Product Grid/Row Swipers (Best Selling, New Arrivals)
     const productSwipers = document.querySelectorAll('.product-swiper');
     productSwipers.forEach(el => {
+        const slideCount = el.querySelectorAll('.swiper-slide').length;
         new Swiper(el, {
             modules: [Navigation],
             slidesPerView: 2,
             spaceBetween: 12,
-            loop: true,
+            loop: slideCount > 5,
+            preventClicks: false,
+            preventClicksPropagation: false,
             navigation: {
                 nextEl: el.parentElement.querySelector('[aria-label="Scroll right"], [data-suggest-next]'),
                 prevEl: el.parentElement.querySelector('[aria-label="Scroll left"], [data-suggest-prev]'),
@@ -40,11 +43,14 @@ import 'swiper/css/pagination';
     // Category Swiper
     const categorySwipers = document.querySelectorAll('.category-swiper');
     categorySwipers.forEach(el => {
+        const slideCount = el.querySelectorAll('.swiper-slide').length;
         new Swiper(el, {
             modules: [Navigation],
             slidesPerView: 3,
             spaceBetween: 12,
-            loop: true,
+            loop: slideCount > 10,
+            preventClicks: false,
+            preventClicksPropagation: false,
             navigation: {
                 nextEl: el.parentElement.querySelector('.category-next'),
                 prevEl: el.parentElement.querySelector('.category-prev'),
@@ -982,3 +988,45 @@ window.paginator = function (total, perPage) {
 window.quickContact = function () {
     return { open: false };
 };
+
+// ---------------------------------------------------------------------------
+// Product Card Navigation Handler (Capture phase)
+// Intercepts taps/clicks on product cards (including inside Swiper sliders)
+// while allowing drag gestures and action buttons (wishlist, cart) to work.
+// ---------------------------------------------------------------------------
+(() => {
+    let pointerStartX = 0;
+    let pointerStartY = 0;
+
+    document.addEventListener('pointerdown', (e) => {
+        pointerStartX = e.clientX;
+        pointerStartY = e.clientY;
+    }, true);
+
+    document.addEventListener('click', (e) => {
+        // If movement distance > 8px, it was a drag/swipe gesture, not a click
+        const dx = Math.abs(e.clientX - pointerStartX);
+        const dy = Math.abs(e.clientY - pointerStartY);
+        if (dx > 8 || dy > 8) return;
+
+        // Ignore clicks on wishlist toggle, add-to-cart buttons, forms, inputs
+        if (e.target.closest('[data-wishlist-toggle], [data-add-to-cart], button, form, input, select, textarea')) {
+            return;
+        }
+
+        const card = e.target.closest('[data-product-card]');
+        if (!card) return;
+
+        const url = card.dataset.productUrl || card.querySelector('a[href]')?.href;
+        if (!url) return;
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (window.Livewire && typeof window.Livewire.navigate === 'function') {
+            window.Livewire.navigate(url);
+        } else {
+            window.location.href = url;
+        }
+    }, true);
+})();
