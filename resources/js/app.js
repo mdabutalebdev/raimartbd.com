@@ -26,7 +26,9 @@ import 'swiper/css/pagination';
             modules: [Navigation],
             slidesPerView: 2,
             spaceBetween: 12,
-            loop: slideCount > 5,
+            // Ensure we have at least 12 slides before enabling loop to prevent Swiper warnings
+            // and broken duplicate slides when slidesPerView is high on desktop.
+            loop: slideCount >= 12,
             preventClicks: false,
             preventClicksPropagation: false,
             navigation: {
@@ -36,6 +38,22 @@ import 'swiper/css/pagination';
             breakpoints: {
                 640: { slidesPerView: 3, spaceBetween: 16 },
                 1024: { slidesPerView: 5, spaceBetween: 16 }
+            },
+            on: {
+                click: function (swiper, event) {
+                    // Fallback for duplicated slides where wire:navigate might fail
+                    const card = event.target.closest('[data-product-url]');
+                    if (card) {
+                        const url = card.dataset.productUrl;
+                        if (url) {
+                            if (window.Livewire) {
+                                window.Livewire.navigate(url);
+                            } else {
+                                window.location.href = url;
+                            }
+                        }
+                    }
+                }
             }
         });
     });
