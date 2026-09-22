@@ -11,9 +11,11 @@
 <div class="grid gap-5 sm:grid-cols-2">
     <div class="sm:col-span-2">
         <label class="text-sm font-medium">Banner Image <span class="text-red-500">*</span></label>
-        <input type="file" name="image" accept="image/*" class="mt-1 w-full rounded-lg border border-brand-navy/15 px-4 py-2 text-sm">
+        <input type="file" name="image" accept="image/*" 
+            onchange="if(this.files[0].size > 5 * 1024 * 1024) { alert('Image size is too large! Please select an image under 5MB.'); this.value = ''; }"
+            class="mt-1 w-full rounded-lg border border-brand-navy/15 px-4 py-2 text-sm">
         <p class="mt-1 text-xs text-brand-navy/50">
-            Recommended size &mdash; wide banner, around <strong>1720&times;450</strong> (about 3.8:1). Uploading this ratio keeps the banner perfectly fitted.
+            Recommended size &mdash; wide banner, around <strong>1720&times;450</strong> (about 3.8:1). Max size: 5MB. Uploading this ratio keeps the banner perfectly fitted.
         </p>
         @if (! empty($banner) && $banner->image)
             <img src="{{ image_url($banner->image) }}" class="mt-3 w-full max-w-md rounded-lg object-cover ring-1 ring-brand-navy/10">

@@ -36,9 +36,11 @@
 
     <div>
         <label class="text-sm font-medium">Image</label>
-        <input type="file" name="image" accept="image/*" class="mt-1 w-full rounded-lg border border-brand-navy/15 px-4 py-2 text-sm">
+        <input type="file" name="image" accept="image/*" 
+            onchange="if(this.files[0].size > 5 * 1024 * 1024) { alert('Image size is too large! Please select an image under 5MB.'); this.value = ''; }"
+            class="mt-1 w-full rounded-lg border border-brand-navy/15 px-4 py-2 text-sm">
         <p class="mt-1 text-xs text-brand-navy/50">
-            Recommended size &mdash; <strong>Hero:</strong> 1920&times;800 (2.4:1 wide) &nbsp;•&nbsp; <strong>Promo:</strong> 600&times;600 (1:1 square). Uploading these ratios keeps every banner perfectly fitted.
+            Recommended size &mdash; <strong>Hero:</strong> 1920&times;800 (2.4:1 wide) &nbsp;•&nbsp; <strong>Promo:</strong> 600&times;600 (1:1 square). Max size: 5MB. Uploading these ratios keeps every banner perfectly fitted.
         </p>
         @if (! empty($banner) && $banner->image)
             <img src="{{ image_url($banner->image) }}" class="mt-2 h-16 w-28 rounded-lg object-cover">
