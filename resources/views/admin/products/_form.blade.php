@@ -284,14 +284,10 @@
                                         @else
                                             <img src="{{ image_url($image->image) }}" class="h-16 w-16 rounded border border-gray-200 object-cover">
                                         @endif
-                                        <button type="submit" form="delete-image-{{ $image->id }}" class="absolute -right-1.5 -top-1.5 rounded-full bg-white border border-gray-200 w-5 h-5 text-gray-600 hover:text-red-500 flex items-center justify-center shadow-sm">
+                                        <button type="button" @click="if(confirm('Delete this image?')) { let f = document.createElement('form'); f.method = 'POST'; f.action = '{{ route('admin.products.images.destroy', [$product, $image]) }}'; f.innerHTML = '<input type=\'hidden\' name=\'_method\' value=\'DELETE\'><input type=\'hidden\' name=\'_token\' value=\'{{ csrf_token() }}\'>'; document.body.appendChild(f); f.submit(); }" class="absolute -right-1.5 -top-1.5 rounded-full bg-white border border-gray-200 w-5 h-5 text-gray-600 hover:text-red-500 flex items-center justify-center shadow-sm">
                                             <i class="fa-solid fa-trash-can" style="font-size: 10px;"></i>
                                         </button>
                                     </div>
-                                    <form id="delete-image-{{ $image->id }}" action="{{ route('admin.products.images.destroy', [$product, $image]) }}" method="POST" class="hidden">
-                                        @csrf
-                                        @method('DELETE')
-                                    </form>
                                 @endforeach
                             </div>
                         </div>

@@ -82,6 +82,30 @@ import 'swiper/css/pagination';
         });
     });
     
+    // Brand Swiper
+    const brandSwipers = document.querySelectorAll('.brand-swiper');
+    brandSwipers.forEach(el => {
+        const slideCount = el.querySelectorAll('.swiper-slide').length;
+        new Swiper(el, {
+            modules: [Navigation],
+            slidesPerView: 3,
+            spaceBetween: 12,
+            loop: slideCount > 6,
+            preventClicks: false,
+            preventClicksPropagation: false,
+            navigation: {
+                nextEl: el.parentElement.querySelector('.brand-next'),
+                prevEl: el.parentElement.querySelector('.brand-prev'),
+            },
+            breakpoints: {
+                480: { slidesPerView: 4, spaceBetween: 12 },
+                640: { slidesPerView: 5, spaceBetween: 16 },
+                768: { slidesPerView: 6, spaceBetween: 16 },
+                1024: { slidesPerView: 8, spaceBetween: 16 }
+            }
+        });
+    });
+
     // Suggest Swiper (Cart Suggestions)
     const suggestSwipers = document.querySelectorAll('.suggest-swiper');
     suggestSwipers.forEach(el => {

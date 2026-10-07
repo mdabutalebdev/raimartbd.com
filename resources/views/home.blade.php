@@ -101,6 +101,8 @@
         </div>
     </section>
 
+
+
     {{-- Featured products --}}
     <section class="py-4 md:py-6">
         @php $featuredCategories = $featuredProducts->pluck('category')->filter()->unique('id')->values(); @endphp

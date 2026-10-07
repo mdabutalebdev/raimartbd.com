@@ -28,6 +28,8 @@ class HomeController extends Controller
         });
 
         $categories = Cache::remember('home:categories', now()->addHours(6), fn () => $this->homeCategories());
+        
+        $brands = Cache::remember('home:brands', now()->addHours(6), fn () => \App\Models\Brand::active()->onHome()->orderBy('sort_order')->get());
 
         $featuredProducts = Product::with(self::CARD_RELATIONS)->active()->featured()->latest()->take(10)->get();
         $bestSelling = Product::with(self::CARD_RELATIONS)->active()->bestSeller()->latest()->take(15)->get();
@@ -45,6 +47,7 @@ class HomeController extends Controller
             'heroBanners',
             'promoBanners',
             'categories',
+            'brands',
             'featuredProducts',
             'bestSelling',
             'newArrivals',
