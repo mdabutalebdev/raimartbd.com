@@ -12,61 +12,100 @@
         @keydown.escape.window="deleteModalOpen = false"
     >
         <div class="flex items-center justify-between">
-            <h1 class="font-serif text-2xl font-bold">Categories</h1>
+            <h1 class="font-serif text-2xl font-bold">All Categories</h1>
             <a href="{{ route('admin.categories.create') }}" class="rounded-lg bg-brand-orange px-4 py-2 text-sm font-semibold text-white hover:bg-brand-navy">
-                <i class="fa-solid fa-plus"></i> Add Category
+                <i class="fa-solid fa-plus mr-1"></i> New Category
             </a>
         </div>
+        <p class="text-sm text-gray-500 mt-1">Manage product categories and subcategories.</p>
 
-        <div class="mt-6 space-y-4">
-            @foreach ($categories as $category)
-                <div class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-brand-navy/5">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <img src="{{ image_url($category->image) }}" class="h-12 w-12 rounded-lg object-cover" alt="{{ $category->name }}">
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <p class="font-medium text-lg text-brand-navy">{{ $category->name }}</p>
-                                    @if($category->show_on_home)
-                                        <span class="rounded-full bg-blue-50 text-blue-600 px-2.5 py-0.5 text-xs font-semibold border border-blue-100 flex items-center gap-1">
-                                            <i class="fa-solid fa-house w-3"></i> Home
-                                        </span>
-                                    @endif
-                                    @if(!$category->is_active)
-                                        <span class="rounded-full bg-red-50 text-red-600 px-2.5 py-0.5 text-xs font-semibold border border-red-100">Hidden</span>
-                                    @endif
+        <!-- Table -->
+        <div class="mt-6 bg-white rounded-xl shadow-sm ring-1 ring-brand-navy/5 overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-100">
+                <thead>
+                    <tr class="bg-gray-50 text-xs font-semibold uppercase tracking-wider text-gray-500">
+                        <th class="px-4 py-3 text-left">Image</th>
+                        <th class="px-4 py-3 text-left">Name</th>
+                        <th class="px-4 py-3 text-left">Parent</th>
+                        <th class="px-4 py-3 text-left">Order</th>
+                        <th class="px-4 py-3 text-center">Status</th>
+                        <th class="px-4 py-3 text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                    @foreach ($categories as $category)
+                        <!-- Parent Row -->
+                        <tr class="hover:bg-gray-50/50 transition-colors">
+                            <td class="px-4 py-3">
+                                <img src="{{ image_url($category->image) }}" class="h-10 w-10 rounded-lg object-cover border border-gray-100" alt="{{ $category->name }}">
+                            </td>
+                            <td class="px-4 py-3">
+                                <p class="font-semibold text-brand-navy text-sm">{{ $category->name }}</p>
+                                @if($category->children->count())
+                                    <p class="text-xs text-gray-400 mt-0.5">{{ $category->children->count() }} subcategories</p>
+                                @endif
+                            </td>
+                            <td class="px-4 py-3 text-xs text-gray-500">None (Root)</td>
+                            <td class="px-4 py-3 text-xs text-gray-500">{{ $category->sort_order }}</td>
+                            <td class="px-4 py-3 text-center">
+                                @if($category->is_active)
+                                    <span class="inline-flex items-center rounded-full bg-green-50 text-green-700 px-2.5 py-0.5 text-xs font-medium border border-green-100">Active</span>
+                                @else
+                                    <span class="inline-flex items-center rounded-full bg-red-50 text-red-600 px-2.5 py-0.5 text-xs font-medium border border-red-100">Inactive</span>
+                                @endif
+                            </td>
+                            <td class="px-4 py-3 text-right">
+                                <div class="flex justify-end items-center gap-3">
+                                    <a href="{{ route('admin.categories.edit', $category) }}" class="text-brand-orange hover:text-brand-navy" title="Edit">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </a>
+                                    <button type="button" @click="openDeleteModal('{{ route('admin.categories.destroy', $category) }}', '{{ addslashes($category->name) }}')" class="text-gray-400 hover:text-red-500" title="Delete">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
                                 </div>
-                                <p class="text-xs text-gray-500 mt-1"><i class="fa-solid fa-list-tree mr-1"></i> {{ $category->children->count() }} subcategories</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3 text-sm">
-                            <a href="{{ route('admin.categories.edit', $category) }}" class="text-brand-orange hover:underline">Edit</a>
-                            <button type="button" @click="openDeleteModal('{{ route('admin.categories.destroy', $category) }}', '{{ addslashes($category->name) }}')" class="text-red-500 hover:underline">Delete</button>
-                        </div>
-                    </div>
+                            </td>
+                        </tr>
 
-                    @if ($category->children->count())
-                        <div class="mt-4 flex flex-wrap gap-2 border-t border-brand-navy/5 pt-4">
-                            @foreach ($category->children as $child)
-                                <span class="flex items-center gap-2 rounded-full bg-brand-bg px-3 py-1 text-xs">
-                                    {{ $child->name }}
-                                    <div class="flex items-center gap-1 border-l border-brand-navy/10 pl-2 ml-1">
-                                        <a href="{{ route('admin.categories.edit', $child) }}" class="text-brand-navy/40 hover:text-brand-orange" title="Edit"><i class="fa-solid fa-pen"></i></a>
-                                        <button type="button" @click="openDeleteModal('{{ route('admin.categories.destroy', $child) }}', '{{ addslashes($child->name) }}')" class="text-brand-navy/40 hover:text-red-500" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                        <!-- Children Rows -->
+                        @foreach ($category->children as $child)
+                            <tr class="hover:bg-gray-50/50 transition-colors bg-gray-50/30">
+                                <td class="px-4 py-2.5 pl-8">
+                                    <img src="{{ image_url($child->image) }}" class="h-8 w-8 rounded-md object-cover border border-gray-100" alt="{{ $child->name }}">
+                                </td>
+                                <td class="px-4 py-2.5">
+                                    <div class="flex items-center gap-1.5">
+                                        <i class="fa-solid fa-corner-down-right text-gray-300 text-xs"></i>
+                                        <p class="text-sm text-gray-700">{{ $child->name }}</p>
                                     </div>
-                                </span>
-                            @endforeach
-                        </div>
-                    @endif
-                </div>
-            @endforeach
+                                </td>
+                                <td class="px-4 py-2.5 text-xs text-gray-400">{{ $category->name }}</td>
+                                <td class="px-4 py-2.5 text-xs text-gray-400">{{ $child->sort_order }}</td>
+                                <td class="px-4 py-2.5 text-center">
+                                    @if($child->is_active)
+                                        <span class="inline-flex items-center rounded-full bg-green-50 text-green-700 px-2.5 py-0.5 text-xs font-medium border border-green-100">Active</span>
+                                    @else
+                                        <span class="inline-flex items-center rounded-full bg-red-50 text-red-600 px-2.5 py-0.5 text-xs font-medium border border-red-100">Inactive</span>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-2.5 text-right">
+                                    <div class="flex justify-end items-center gap-3">
+                                        <a href="{{ route('admin.categories.edit', $child) }}" class="text-brand-orange hover:text-brand-navy" title="Edit">
+                                            <i class="fa-solid fa-pen-to-square text-sm"></i>
+                                        </a>
+                                        <button type="button" @click="openDeleteModal('{{ route('admin.categories.destroy', $child) }}', '{{ addslashes($child->name) }}')" class="text-gray-400 hover:text-red-500" title="Delete">
+                                            <i class="fa-solid fa-trash-can text-sm"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    @endforeach
+                </tbody>
+            </table>
         </div>
 
         <!-- Alpine Delete Confirmation Modal -->
-        <!-- Modal Backdrop -->
         <div x-show="deleteModalOpen" x-transition.opacity class="fixed inset-0 z-50 bg-brand-navy/60 backdrop-blur-sm"></div>
-
-        <!-- Modal Content -->
         <div x-show="deleteModalOpen" 
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"

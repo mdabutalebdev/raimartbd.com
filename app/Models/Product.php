@@ -72,6 +72,18 @@ class Product extends Model
         return $this->hasMany(ProductReview::class);
     }
 
+    public function variants()
+    {
+        return $this->hasMany(ProductVariant::class);
+    }
+
+    public function hasVariants(): bool
+    {
+        return $this->relationLoaded('variants')
+            ? $this->variants->isNotEmpty()
+            : $this->variants()->exists();
+    }
+
     public function refreshReviewStats(): void
     {
         $approved = $this->reviews()->approved();

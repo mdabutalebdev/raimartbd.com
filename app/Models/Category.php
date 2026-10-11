@@ -14,12 +14,20 @@ class Category extends Model
         'sort_order',
         'is_active',
         'show_on_home',
+        'home_layout',
+        'home_max_products',
+        'home_per_page',
+        'home_order',
     ];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'show_on_home' => 'boolean',
+            'home_max_products' => 'integer',
+            'home_per_page' => 'integer',
+            'home_order' => 'integer',
         ];
     }
 

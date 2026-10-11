@@ -10,7 +10,7 @@ class ProductController extends Controller
     {
         abort_unless($product->is_active, 404);
 
-        $product->load(['category', 'images', 'brand']);
+        $product->load(['category', 'images', 'brand', 'variants']);
 
         $reviews = $product->reviews()->approved()->latest()->get();
 

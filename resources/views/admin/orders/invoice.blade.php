@@ -72,7 +72,7 @@
             <div class="sm:text-right">
                 <p class="text-[11px] font-bold uppercase tracking-wide text-brand-navy/40">Order Details</p>
                 <div class="mt-1.5 space-y-0.5 text-sm text-brand-navy/70">
-                    <p>Payment: <span class="font-medium uppercase text-brand-navy">{{ $order->payment_method }}</span></p>
+                    <p>Payment: <span class="font-medium uppercase text-brand-navy">{{ $order->payment_method_name }}</span></p>
                     <p>Delivery: <span class="font-medium text-brand-navy">{{ $order->delivery_area === 'inside' ? 'Inside Dhaka' : 'Outside Dhaka' }}</span></p>
                     @if ($order->coupon_code)
                         <p>Coupon: <span class="font-medium text-brand-navy">{{ $order->coupon_code }}</span></p>

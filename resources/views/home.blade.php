@@ -40,10 +40,10 @@
 
                 @if ($heroBanners->count() > 1)
                     <div class="swiper-pagination"></div>
-                    <button type="button" class="hero-prev absolute left-4 top-1/2 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-[5px] border border-brand-orange bg-gray-50 text-brand-orange transition hover:bg-brand-orange hover:text-white lg:flex" aria-label="Previous">
+                    <button type="button" class="hero-prev absolute left-4 top-1/2 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-[5px] border border-brand-orange bg-gray-50 text-brand-orange transition hover:bg-brand-orange hover:text-white cursor-pointer lg:flex" aria-label="Previous">
                         <i class="fa-solid fa-chevron-left text-xs"></i>
                     </button>
-                    <button type="button" class="hero-next absolute right-4 top-1/2 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-[5px] border border-brand-orange bg-gray-50 text-brand-orange transition hover:bg-brand-orange hover:text-white lg:flex" aria-label="Next">
+                    <button type="button" class="hero-next absolute right-4 top-1/2 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-[5px] border border-brand-orange bg-gray-50 text-brand-orange transition hover:bg-brand-orange hover:text-white cursor-pointer lg:flex" aria-label="Next">
                         <i class="fa-solid fa-chevron-right text-xs"></i>
                     </button>
                 @endif
@@ -68,10 +68,10 @@
             <div class="flex items-center justify-between gap-4">
                 <h2 class="text-xl sm:text-3xl font-bold text-gray-800 mb-2 sm:mb-4">Browse Category</h2>
                 <div class="flex shrink-0 gap-2">
-                    <button type="button" class="category-prev flex h-9 w-9 items-center justify-center rounded-[5px] border border-brand-orange text-brand-orange transition hover:bg-brand-orange hover:text-white" aria-label="Scroll left">
+                    <button type="button" class="category-prev flex h-9 w-9 items-center justify-center rounded-[5px] border border-brand-orange text-brand-orange transition hover:bg-brand-orange hover:text-white cursor-pointer" aria-label="Scroll left">
                         <i class="fa-solid fa-chevron-left text-xs"></i>
                     </button>
-                    <button type="button" class="category-next flex h-9 w-9 items-center justify-center rounded-[5px] border border-brand-orange text-brand-orange transition hover:bg-brand-orange hover:text-white" aria-label="Scroll right">
+                    <button type="button" class="category-next flex h-9 w-9 items-center justify-center rounded-[5px] border border-brand-orange text-brand-orange transition hover:bg-brand-orange hover:text-white cursor-pointer" aria-label="Scroll right">
                         <i class="fa-solid fa-chevron-right text-xs"></i>
                     </button>
                 </div>
@@ -211,10 +211,10 @@
             <div class="flex items-center justify-between gap-4">
                 <h2 class="text-xl sm:text-3xl font-bold text-gray-800 mb-2 sm:mb-4">Best Selling Product</h2>
                 <div class="flex shrink-0 gap-2">
-                    <button type="button" class="flex h-9 w-9 items-center justify-center rounded-[5px] border border-brand-orange text-brand-orange transition hover:bg-brand-orange hover:text-white" aria-label="Scroll left">
+                    <button type="button" class="flex h-9 w-9 items-center justify-center rounded-[5px] border border-brand-orange text-brand-orange transition hover:bg-brand-orange hover:text-white cursor-pointer" aria-label="Scroll left">
                         <i class="fa-solid fa-chevron-left text-xs"></i>
                     </button>
-                    <button type="button" class="flex h-9 w-9 items-center justify-center rounded-[5px] border border-brand-orange text-brand-orange transition hover:bg-brand-orange hover:text-white" aria-label="Scroll right">
+                    <button type="button" class="flex h-9 w-9 items-center justify-center rounded-[5px] border border-brand-orange text-brand-orange transition hover:bg-brand-orange hover:text-white cursor-pointer" aria-label="Scroll right">
                         <i class="fa-solid fa-chevron-right text-xs"></i>
                     </button>
                 </div>
@@ -240,10 +240,10 @@
             <div class="flex items-center justify-between gap-4">
                 <h2 class="text-xl sm:text-3xl font-bold text-gray-800 mb-2 sm:mb-4">New Arrival Product</h2>
                 <div class="flex shrink-0 gap-2">
-                    <button type="button" class="flex h-9 w-9 items-center justify-center rounded-[5px] border border-brand-orange text-brand-orange transition hover:bg-brand-orange hover:text-white" aria-label="Scroll left">
+                    <button type="button" class="flex h-9 w-9 items-center justify-center rounded-[5px] border border-brand-orange text-brand-orange transition hover:bg-brand-orange hover:text-white cursor-pointer" aria-label="Scroll left">
                         <i class="fa-solid fa-chevron-left text-xs"></i>
                     </button>
-                    <button type="button" class="flex h-9 w-9 items-center justify-center rounded-[5px] border border-brand-orange text-brand-orange transition hover:bg-brand-orange hover:text-white" aria-label="Scroll right">
+                    <button type="button" class="flex h-9 w-9 items-center justify-center rounded-[5px] border border-brand-orange text-brand-orange transition hover:bg-brand-orange hover:text-white cursor-pointer" aria-label="Scroll right">
                         <i class="fa-solid fa-chevron-right text-xs"></i>
                     </button>
                 </div>
@@ -263,6 +263,67 @@
         </div>
     </section>
 
+    {{-- Dynamic Homepage Category Sections --}}
+    @foreach ($homeCategorySections as $sectionCat)
+        <section class="py-4 md:py-6">
+            <div class="gb-container relative">
+                @if ($sectionCat->home_layout === 'grid')
+                    {{-- Grid Layout with Load More --}}
+                    @php
+                        $perPage = $sectionCat->home_per_page ?: 20;
+                        $totalProds = $sectionCat->home_products->count();
+                    @endphp
+                    <div x-data="{ visibleCount: {{ $perPage }}, total: {{ $totalProds }}, perLoad: {{ $perPage }} }">
+                        <div class="flex items-center justify-between gap-4">
+                            <h2 class="text-xl sm:text-3xl font-bold text-gray-800 mb-2 sm:mb-4">{{ $sectionCat->name }}</h2>
+                        </div>
+
+                        <div class="product-row mt-4 md:mt-6">
+                            @foreach ($sectionCat->home_products as $idx => $product)
+                                <div x-show="{{ $idx }} < visibleCount" @if($idx >= $perPage) style="display: none;" @endif>
+                                    <x-product-card :product="$product" />
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <template x-if="visibleCount < total">
+                            <div class="mt-6 text-center">
+                                <button type="button" @click="visibleCount = Math.min(total, visibleCount + perLoad)"
+                                    class="inline-flex items-center gap-2 rounded-lg border border-brand-orange px-6 py-2.5 text-sm font-semibold text-brand-orange transition hover:bg-brand-orange hover:text-white cursor-pointer shadow-xs">
+                                    <span>Load More Products</span>
+                                    <i class="fa-solid fa-angle-down text-xs"></i>
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+                @else
+                    {{-- Slider Layout --}}
+                    <div class="flex items-center justify-between gap-4">
+                        <h2 class="text-xl sm:text-3xl font-bold text-gray-800 mb-2 sm:mb-4">{{ $sectionCat->name }}</h2>
+                        <div class="flex shrink-0 gap-2">
+                            <button type="button" class="flex h-9 w-9 items-center justify-center rounded-[5px] border border-brand-orange text-brand-orange transition hover:bg-brand-orange hover:text-white cursor-pointer" aria-label="Scroll left">
+                                <i class="fa-solid fa-chevron-left text-xs"></i>
+                            </button>
+                            <button type="button" class="flex h-9 w-9 items-center justify-center rounded-[5px] border border-brand-orange text-brand-orange transition hover:bg-brand-orange hover:text-white cursor-pointer" aria-label="Scroll right">
+                                <i class="fa-solid fa-chevron-right text-xs"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="swiper product-swiper w-full min-w-0 mt-5 md:mt-8 pb-2">
+                        <div class="swiper-wrapper">
+                            @foreach ($sectionCat->home_products as $product)
+                                <div class="swiper-slide">
+                                    <x-product-card :product="$product" />
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            </div>
+        </section>
+    @endforeach
+
     {{-- Just for you — 15 shown, then 5 more per "Show More" click --}}
     <section class="gb-container py-4 md:py-6">
         <div x-data="paginator({{ $justForYou->count() }}, 10)" x-ref="top">
@@ -280,7 +341,7 @@
             @if ($justForYou->count() > 10)
                 <nav class="mt-6 flex items-center justify-center gap-1.5" aria-label="Just for you pages">
                     <button type="button" @click="prev()" :disabled="page === 1"
-                        class="flex h-9 w-9 items-center justify-center rounded-md text-brand-navy/60 transition hover:text-brand-orange disabled:cursor-not-allowed disabled:opacity-30"
+                        class="flex h-9 w-9 items-center justify-center rounded-md text-brand-navy/60 transition hover:text-brand-orange disabled:cursor-not-allowed disabled:opacity-30 cursor-pointer"
                         aria-label="Previous page">
                         <i class="fa-solid fa-chevron-left text-xs"></i>
                     </button>
@@ -289,13 +350,13 @@
                         <button type="button" @click="go(n)" :disabled="n === '…'"
                             :class="n === page
                                 ? 'bg-brand-orange text-white'
-                                : (n === '…' ? 'cursor-default text-brand-navy/40' : 'text-brand-navy hover:bg-brand-orange/10 hover:text-brand-orange')"
+                                : (n === '…' ? 'cursor-default text-brand-navy/40' : 'text-brand-navy hover:bg-brand-orange/10 hover:text-brand-orange cursor-pointer')"
                             class="flex h-9 min-w-9 items-center justify-center rounded-md px-2 text-sm font-semibold transition"
                             x-text="n"></button>
                     </template>
 
                     <button type="button" @click="next()" :disabled="page === pages"
-                        class="flex h-9 w-9 items-center justify-center rounded-md text-brand-navy/60 transition hover:text-brand-orange disabled:cursor-not-allowed disabled:opacity-30"
+                        class="flex h-9 w-9 items-center justify-center rounded-md text-brand-navy/60 transition hover:text-brand-orange disabled:cursor-not-allowed disabled:opacity-30 cursor-pointer"
                         aria-label="Next page">
                         <i class="fa-solid fa-chevron-right text-xs"></i>
                     </button>

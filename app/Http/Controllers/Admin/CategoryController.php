@@ -71,6 +71,16 @@ class CategoryController extends Controller
         return redirect()->route('admin.categories.index')->with('status', 'Category deleted successfully.');
     }
 
+    public function toggleHome(Category $category)
+    {
+        $category->update(['show_on_home' => !$category->show_on_home]);
+
+        return response()->json([
+            'show_on_home' => $category->show_on_home,
+            'message' => $category->show_on_home ? 'Category added to homepage.' : 'Category removed from homepage.',
+        ]);
+    }
+
     private function validated(Request $request): array
     {
         $data = $request->validate([

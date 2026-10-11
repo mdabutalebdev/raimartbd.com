@@ -2,23 +2,23 @@
     {{-- Top bar --}}
     <div class="relative mx-auto flex gb-container items-center gap-3 py-3 md:gap-6 md:py-4">
         {{-- Mobile hamburger --}}
-        <button type="button" data-drawer-open="mobile-menu-drawer" class="flex h-9 w-9 shrink-0 items-center justify-center text-brand-navy md:hidden" aria-label="Menu">
+        <button type="button" data-drawer-open="mobile-menu-drawer" class="flex h-9 w-9 shrink-0 items-center justify-center text-brand-navy md:hidden cursor-pointer" aria-label="Menu">
             <i class="fa-solid fa-bars text-xl"></i>
         </button>
 
         {{-- Logo: centered on mobile, left-aligned on desktop --}}
-        <a href="{{ url('/') }}" wire:navigate class="absolute left-1/2 flex shrink-0 -translate-x-1/2 items-center md:static md:left-auto md:translate-x-0">
+        <a href="{{ url('/') }}" wire:navigate class="absolute left-1/2 flex shrink-0 -translate-x-1/2 items-center md:static md:left-auto md:translate-x-0 cursor-pointer">
             <img src="{{ asset('images/logo.png') }}" alt="Raimart" class="h-6 md:h-8">
         </a>
 
         <livewire:global-search />
 
         <div class="ml-auto flex items-center gap-4 text-brand-navy md:gap-5">
-            <a href="{{ route('wishlist.index') }}" wire:navigate class="relative hidden sm:block" aria-label="Wishlist">
+            <a href="{{ route('wishlist.index') }}" wire:navigate class="relative hidden sm:block cursor-pointer" aria-label="Wishlist">
                 <i class="fa-regular fa-heart text-xl"></i>
                 <span data-wishlist-count class="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-brand-orange text-[10px] font-semibold text-white {{ $wishlistCount > 0 ? '' : 'hidden' }}">{{ $wishlistCount }}</span>
             </a>
-            <button type="button" data-cart-open class="relative" aria-label="Cart">
+            <button type="button" data-cart-open class="relative cursor-pointer" aria-label="Cart">
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 text-current">
                     <circle cx="8" cy="21" r="1" />
                     <circle cx="19" cy="21" r="1" />
@@ -28,7 +28,7 @@
             </button>
             @auth
                 <div class="relative group hidden md:block" id="profile-menu">
-                    <button type="button" class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-bg overflow-hidden border border-gray-200" aria-label="Profile">
+                    <button type="button" class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-bg overflow-hidden border border-gray-200 cursor-pointer" aria-label="Profile">
                         @if(auth()->user()->avatar)
                             <img src="{{ Storage::url(auth()->user()->avatar) }}" alt="Profile" class="w-full h-full object-cover">
                         @else
@@ -48,13 +48,13 @@
                         <div class="py-1 border-t border-gray-100">
                             <form action="{{ route('logout') }}" method="POST">
                                 @csrf
-                                <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50">Logout</button>
+                                <button type="submit" class="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 cursor-pointer">Logout</button>
                             </form>
                         </div>
                     </div>
                 </div>
             @else
-                <a href="{{ route('login') }}" wire:navigate class="hidden md:flex h-9 w-9 items-center justify-center rounded-full bg-brand-bg hover:bg-brand-orange hover:text-white transition" aria-label="Account">
+                <a href="{{ route('login') }}" wire:navigate class="hidden md:flex h-9 w-9 items-center justify-center rounded-full bg-brand-bg hover:bg-brand-orange hover:text-white transition cursor-pointer" aria-label="Account">
                     <i class="fa-regular fa-user"></i>
                 </a>
             @endauth
@@ -66,7 +66,7 @@
         <div class="mx-auto flex gb-container items-center justify-between py-3 text-sm">
             <nav class="flex items-center gap-8">
                 <div class="relative" id="categories-menu" data-shop-url="{{ route('shop') }}">
-                    <button type="button" id="categories-toggle" class="flex items-center gap-2 font-medium transition hover:text-brand-orange" aria-expanded="false" aria-controls="categories-panel">
+                    <button type="button" id="categories-toggle" class="flex items-center gap-2 font-medium transition hover:text-brand-orange cursor-pointer" aria-expanded="false" aria-controls="categories-panel">
                         <i class="fa-solid fa-bars"></i>
                         Categories
                     </button>
@@ -77,7 +77,7 @@
                                 <a
                                     href="{{ route('shop', ['category' => $navCategory['slug']]) }}"
                                     wire:navigate
-                                    class="category-item flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition hover:bg-brand-bg hover:text-brand-orange"
+                                    class="category-item flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition hover:bg-brand-bg hover:text-brand-orange cursor-pointer"
                                     data-name="{{ $navCategory['name'] }}"
                                     data-subcategories="{{ json_encode($navCategory['subcategories']) }}"
                                 >

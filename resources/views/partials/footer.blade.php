@@ -49,7 +49,7 @@
                 &copy; {{ date('Y') }} Raimart. All rights reserved.
             </p>
             <p>
-                Developed by <a href="https://hosterex.com/" target="_blank" rel="noopener noreferrer" class="font-medium text-white hover:text-white/80 transition">Hosterex</a>
+                Developed by <a href="https://www.softanex.com/" target="_blank" rel="noopener noreferrer" class="font-medium text-white hover:text-white/80 transition">Softanex</a>
             </p>
         </div>
     </div>

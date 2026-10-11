@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title }}</title>
     
     <!-- Favicon -->
@@ -23,59 +24,236 @@
     <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
 </head>
-<body class="bg-brand-bg font-sans text-brand-navy antialiased">
-    <div class="flex min-h-screen">
-        <aside class="fixed inset-y-0 left-0 z-50 hidden w-64 shrink-0 flex-col bg-brand-navy text-white lg:flex overflow-y-auto">
-            <a href="{{ route('admin.dashboard') }}" wire:navigate class="flex items-center gap-2 px-6 py-6 font-serif text-xl font-bold">
-                <img src="{{ asset('images/logo-white.png') }}" alt="Raimart" class="h-8">
-            </a>
+<body class="bg-brand-bg font-sans text-brand-navy antialiased" x-data="{ mobileMenuOpen: false }">
+        {{-- Mobile Backdrop --}}
+        <div x-show="mobileMenuOpen" style="display: none;" x-transition.opacity class="fixed inset-0 bg-gray-900/60 z-40 lg:hidden" @click="mobileMenuOpen = false"></div>
 
-            <nav class="flex-1 space-y-1 px-3">
-                @php
-                    $navItems = [
-                        ['route' => 'admin.dashboard', 'icon' => 'gauge', 'label' => 'Dashboard'],
-                        ['route' => 'admin.categories.index', 'icon' => 'list', 'label' => 'Categories'],
-                        ['route' => 'admin.brands.index', 'icon' => 'trademark', 'label' => 'Brands'],
-                        ['route' => 'admin.products.index', 'icon' => 'box', 'label' => 'Products'],
-                        ['route' => 'admin.top-selling.edit', 'icon' => 'fire', 'label' => 'Top Selling'],
-                        ['route' => 'admin.banners.index', 'icon' => 'image', 'label' => 'Banners'],
-                        ['route' => 'admin.promo-banners.index', 'icon' => 'rectangle-ad', 'label' => 'Promo Banner'],
-                        ['route' => 'admin.testimonials.index', 'icon' => 'quote-left', 'label' => 'Reviews'],
-                        ['route' => 'admin.orders.index', 'icon' => 'bag-shopping', 'label' => 'Orders'],
-                        ['route' => 'admin.customers.index', 'icon' => 'users', 'label' => 'Customers'],
-                        ['route' => 'admin.product-reviews.index', 'icon' => 'star', 'label' => 'Product Reviews'],
-                        ['route' => 'admin.reports.index', 'icon' => 'chart-line', 'label' => 'Reports'],
-                        ['route' => 'admin.coupons.index', 'icon' => 'ticket', 'label' => 'Coupons'],
-                        ['route' => 'admin.delivery.edit', 'icon' => 'truck', 'label' => 'Delivery Charge'],
-                        ['route' => 'admin.messages.index', 'icon' => 'envelope', 'label' => 'Messages'],
-                        ['route' => 'admin.pages.index', 'icon' => 'file-lines', 'label' => 'Pages'],
-                        ['route' => 'admin.about.edit', 'icon' => 'circle-info', 'label' => 'About Page'],
-                        ['route' => 'admin.contact-page.edit', 'icon' => 'address-book', 'label' => 'Contact Page'],
-                        ['route' => 'admin.social-links.edit', 'icon' => 'share-nodes', 'label' => 'Social Links'],
-                        ['route' => 'admin.quick-contact.edit', 'icon' => 'headset', 'label' => 'Quick Contact'],
-                        ['route' => 'admin.telegram.edit', 'icon' => 'paper-plane', 'label' => 'Telegram'],
-                        ['route' => 'admin.smtp.edit', 'icon' => 'envelope-open-text', 'label' => 'SMTP'],
-                        ['route' => 'admin.settings.edit', 'icon' => 'gear', 'label' => 'Settings'],
-                    ];
-                @endphp
+        <aside :class="mobileMenuOpen ? '!flex fixed inset-y-0 left-0 z-50 shadow-2xl' : 'hidden'"
+            class="w-64 shrink-0 flex-col bg-brand-navy text-white lg:!flex lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 overflow-y-auto">
+            <div class="flex items-center justify-between px-6 py-5 border-b border-white/5">
+                <a href="{{ route('admin.dashboard') }}" wire:navigate class="flex items-center gap-2 font-serif text-xl font-bold">
+                    <img src="{{ asset('images/logo-white.png') }}" alt="Raimart" class="h-7">
+                </a>
+                <button type="button" @click="mobileMenuOpen = false" class="lg:hidden text-white/60 hover:text-white cursor-pointer" aria-label="Close menu">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
 
-                @foreach ($navItems as $item)
-                    <a
-                        href="{{ route($item['route']) }}"
-                        wire:navigate
-                        class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition
-                            {{ request()->routeIs($item['route'].'*') || request()->routeIs(str($item['route'])->beforeLast('.').'.*') ? 'bg-white/10 text-white' : 'text-white/60 hover:bg-white/5 hover:text-white' }}"
-                    >
-                        <i class="fa-solid fa-{{ $item['icon'] }} w-4"></i>
-                        {{ $item['label'] }}
-                    </a>
-                @endforeach
+            <nav x-data="{
+                openOrders: {{ request()->routeIs('admin.orders.*') || request()->routeIs('admin.steadfast.*') ? 'true' : 'false' }},
+                openCategories: {{ request()->routeIs('admin.categories.*') ? 'true' : 'false' }},
+                openProducts: {{ request()->routeIs('admin.products.*') || request()->routeIs('admin.brands.*') || request()->routeIs('admin.top-selling.*') || request()->routeIs('admin.product-reviews.*') ? 'true' : 'false' }},
+                openHomepage: {{ request()->routeIs('admin.banners.*') || request()->routeIs('admin.promo-banners.*') || request()->routeIs('admin.homepage.*') || request()->routeIs('admin.testimonials.*') || request()->routeIs('admin.quick-contact.*') ? 'true' : 'false' }}
+            }" class="flex-1 space-y-1 px-3 pb-6">
+
+                <div class="px-3 pt-2 pb-1 text-[11px] font-bold uppercase tracking-wider text-white/40">Management</div>
+
+                {{-- Dashboard --}}
+                <a href="{{ route('admin.dashboard') }}" wire:navigate
+                    class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition cursor-pointer
+                        {{ request()->routeIs('admin.dashboard') ? 'bg-white/10 text-white font-semibold' : 'text-white/70 hover:bg-white/5 hover:text-white' }}">
+                    <i class="fa-solid fa-gauge w-4 text-center"></i>
+                    <span>Overview</span>
+                </a>
+
+                {{-- Orders Accordion --}}
+                <div>
+                    <button type="button" @click="openOrders = !openOrders"
+                        class="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition cursor-pointer
+                            {{ request()->routeIs('admin.orders.*') || request()->routeIs('admin.steadfast.*') ? 'text-white bg-white/5' : 'text-white/70 hover:bg-white/5 hover:text-white' }}">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-bag-shopping w-4 text-center"></i>
+                            <span>Orders</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-down text-[11px] transition-transform duration-200" :class="openOrders ? 'rotate-180' : ''"></i>
+                    </button>
+                    <div x-show="openOrders" x-cloak class="mt-1 space-y-1 pl-9 pr-1">
+                        <a href="{{ route('admin.orders.index') }}" wire:navigate
+                            class="block rounded-lg px-2.5 py-1.5 text-xs transition cursor-pointer
+                                {{ request()->routeIs('admin.orders.index') ? 'text-brand-orange font-bold bg-white/5' : 'text-white/60 hover:text-white hover:bg-white/5' }}">
+                            All Orders
+                        </a>
+                        <a href="{{ route('admin.orders.create') }}" wire:navigate
+                            class="block rounded-lg px-2.5 py-1.5 text-xs transition cursor-pointer
+                                {{ request()->routeIs('admin.orders.create') ? 'text-brand-orange font-bold bg-white/5' : 'text-white/60 hover:text-white hover:bg-white/5' }}">
+                            Create Order
+                        </a>
+                        <a href="{{ route('admin.steadfast.index') }}" wire:navigate
+                            class="block rounded-lg px-2.5 py-1.5 text-xs transition cursor-pointer
+                                {{ request()->routeIs('admin.steadfast.*') ? 'text-brand-orange font-bold bg-white/5' : 'text-white/60 hover:text-white hover:bg-white/5' }}">
+                            Steadfast Courier
+                        </a>
+                    </div>
+                </div>
+
+                {{-- Categories Accordion --}}
+                <div>
+                    <button type="button" @click="openCategories = !openCategories"
+                        class="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition cursor-pointer
+                            {{ request()->routeIs('admin.categories.*') ? 'text-white bg-white/5' : 'text-white/70 hover:bg-white/5 hover:text-white' }}">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-list w-4 text-center"></i>
+                            <span>Categories</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-down text-[11px] transition-transform duration-200" :class="openCategories ? 'rotate-180' : ''"></i>
+                    </button>
+                    <div x-show="openCategories" x-cloak class="mt-1 space-y-1 pl-9 pr-1">
+                        <a href="{{ route('admin.categories.index') }}" wire:navigate
+                            class="block rounded-lg px-2.5 py-1.5 text-xs transition cursor-pointer
+                                {{ request()->routeIs('admin.categories.index') ? 'text-brand-orange font-bold bg-white/5' : 'text-white/60 hover:text-white hover:bg-white/5' }}">
+                            All Categories
+                        </a>
+                        <a href="{{ route('admin.categories.create') }}" wire:navigate
+                            class="block rounded-lg px-2.5 py-1.5 text-xs transition cursor-pointer
+                                {{ request()->routeIs('admin.categories.create') ? 'text-brand-orange font-bold bg-white/5' : 'text-white/60 hover:text-white hover:bg-white/5' }}">
+                            Create Category
+                        </a>
+                    </div>
+                </div>
+
+                {{-- Products Accordion --}}
+                <div>
+                    <button type="button" @click="openProducts = !openProducts"
+                        class="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition cursor-pointer
+                            {{ request()->routeIs('admin.products.*') || request()->routeIs('admin.brands.*') || request()->routeIs('admin.top-selling.*') || request()->routeIs('admin.product-reviews.*') ? 'text-white bg-white/5' : 'text-white/70 hover:bg-white/5 hover:text-white' }}">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-box w-4 text-center"></i>
+                            <span>Products</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-down text-[11px] transition-transform duration-200" :class="openProducts ? 'rotate-180' : ''"></i>
+                    </button>
+                    <div x-show="openProducts" x-cloak class="mt-1 space-y-1 pl-9 pr-1">
+                        <a href="{{ route('admin.products.index') }}" wire:navigate
+                            class="block rounded-lg px-2.5 py-1.5 text-xs transition cursor-pointer
+                                {{ request()->routeIs('admin.products.index') ? 'text-brand-orange font-bold bg-white/5' : 'text-white/60 hover:text-white hover:bg-white/5' }}">
+                            All Products
+                        </a>
+                        <a href="{{ route('admin.products.create') }}" wire:navigate
+                            class="block rounded-lg px-2.5 py-1.5 text-xs transition cursor-pointer
+                                {{ request()->routeIs('admin.products.create') ? 'text-brand-orange font-bold bg-white/5' : 'text-white/60 hover:text-white hover:bg-white/5' }}">
+                            Create Product
+                        </a>
+                        <a href="{{ route('admin.brands.index') }}" wire:navigate
+                            class="block rounded-lg px-2.5 py-1.5 text-xs transition cursor-pointer
+                                {{ request()->routeIs('admin.brands.*') ? 'text-brand-orange font-bold bg-white/5' : 'text-white/60 hover:text-white hover:bg-white/5' }}">
+                            Brands
+                        </a>
+                        <a href="{{ route('admin.top-selling.edit') }}" wire:navigate
+                            class="block rounded-lg px-2.5 py-1.5 text-xs transition cursor-pointer
+                                {{ request()->routeIs('admin.top-selling.*') ? 'text-brand-orange font-bold bg-white/5' : 'text-white/60 hover:text-white hover:bg-white/5' }}">
+                            Top Selling
+                        </a>
+                        <a href="{{ route('admin.product-reviews.index') }}" wire:navigate
+                            class="block rounded-lg px-2.5 py-1.5 text-xs transition cursor-pointer
+                                {{ request()->routeIs('admin.product-reviews.*') ? 'text-brand-orange font-bold bg-white/5' : 'text-white/60 hover:text-white hover:bg-white/5' }}">
+                            Product Reviews
+                        </a>
+                    </div>
+                </div>
+
+                {{-- Homepage Accordion --}}
+                <div>
+                    <button type="button" @click="openHomepage = !openHomepage"
+                        class="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition cursor-pointer
+                            {{ request()->routeIs('admin.banners.*') || request()->routeIs('admin.promo-banners.*') || request()->routeIs('admin.homepage.*') || request()->routeIs('admin.testimonials.*') || request()->routeIs('admin.quick-contact.*') ? 'text-white bg-white/5' : 'text-white/70 hover:bg-white/5 hover:text-white' }}">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-table-columns w-4 text-center"></i>
+                            <span>Homepage</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-down text-[11px] transition-transform duration-200" :class="openHomepage ? 'rotate-180' : ''"></i>
+                    </button>
+                    <div x-show="openHomepage" x-cloak class="mt-1 space-y-1 pl-9 pr-1">
+                        <a href="{{ route('admin.banners.index') }}" wire:navigate
+                            class="block rounded-lg px-2.5 py-1.5 text-xs transition cursor-pointer
+                                {{ request()->routeIs('admin.banners.*') ? 'text-brand-orange font-bold bg-white/5' : 'text-white/60 hover:text-white hover:bg-white/5' }}">
+                            Hero Banner
+                        </a>
+                        <a href="{{ route('admin.promo-banners.index') }}" wire:navigate
+                            class="block rounded-lg px-2.5 py-1.5 text-xs transition cursor-pointer
+                                {{ request()->routeIs('admin.promo-banners.*') ? 'text-brand-orange font-bold bg-white/5' : 'text-white/60 hover:text-white hover:bg-white/5' }}">
+                            Promo Banner
+                        </a>
+                        <a href="{{ route('admin.homepage.category-sections.index') }}" wire:navigate
+                            class="block rounded-lg px-2.5 py-1.5 text-xs transition cursor-pointer
+                                {{ request()->routeIs('admin.homepage.category-sections.*') ? 'text-brand-orange font-bold bg-white/5' : 'text-white/60 hover:text-white hover:bg-white/5' }}">
+                            Category Sections
+                        </a>
+                        <a href="{{ route('admin.testimonials.index') }}" wire:navigate
+                            class="block rounded-lg px-2.5 py-1.5 text-xs transition cursor-pointer
+                                {{ request()->routeIs('admin.testimonials.*') ? 'text-brand-orange font-bold bg-white/5' : 'text-white/60 hover:text-white hover:bg-white/5' }}">
+                            Customer Reviews
+                        </a>
+                        <a href="{{ route('admin.quick-contact.edit') }}" wire:navigate
+                            class="block rounded-lg px-2.5 py-1.5 text-xs transition cursor-pointer
+                                {{ request()->routeIs('admin.quick-contact.*') ? 'text-brand-orange font-bold bg-white/5' : 'text-white/60 hover:text-white hover:bg-white/5' }}">
+                            Quick Contact Widget
+                        </a>
+                    </div>
+                </div>
+
+                {{-- Customers (Accordion) --}}
+                <div x-data="{ open: {{ request()->routeIs('admin.customers.*') || request()->routeIs('admin.staff.*') ? 'true' : 'false' }} }">
+                    <button type="button" @click="open = !open"
+                        class="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition cursor-pointer
+                            {{ request()->routeIs('admin.customers.*') || request()->routeIs('admin.staff.*') ? 'bg-white/10 text-white font-semibold' : 'text-white/70 hover:bg-white/5 hover:text-white' }}">
+                        <span class="flex items-center gap-3">
+                            <i class="fa-solid fa-users w-4 text-center"></i>
+                            <span>Customers</span>
+                        </span>
+                        <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
+                    </button>
+                    <div x-show="open" class="mt-1 space-y-1 pl-9 pr-2">
+                        <a href="{{ route('admin.customers.index') }}" wire:navigate
+                            class="block rounded-lg px-2.5 py-1.5 text-xs transition cursor-pointer
+                                {{ request()->routeIs('admin.customers.*') ? 'text-brand-orange font-bold bg-white/5' : 'text-white/60 hover:text-white hover:bg-white/5' }}">
+                            All Customers
+                        </a>
+                        <a href="{{ route('admin.staff.index') }}" wire:navigate
+                            class="block rounded-lg px-2.5 py-1.5 text-xs transition cursor-pointer
+                                {{ request()->routeIs('admin.staff.*') ? 'text-brand-orange font-bold bg-white/5' : 'text-white/60 hover:text-white hover:bg-white/5' }}">
+                            All Staff
+                        </a>
+                    </div>
+                </div>
+
+                {{-- Reports --}}
+                <a href="{{ route('admin.reports.index') }}" wire:navigate
+                    class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition cursor-pointer
+                        {{ request()->routeIs('admin.reports.*') ? 'bg-white/10 text-white font-semibold' : 'text-white/70 hover:bg-white/5 hover:text-white' }}">
+                    <i class="fa-solid fa-chart-line w-4 text-center"></i>
+                    <span>Reports</span>
+                </a>
+
+                {{-- Coupons --}}
+                <a href="{{ route('admin.coupons.index') }}" wire:navigate
+                    class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition cursor-pointer
+                        {{ request()->routeIs('admin.coupons.*') ? 'bg-white/10 text-white font-semibold' : 'text-white/70 hover:bg-white/5 hover:text-white' }}">
+                    <i class="fa-solid fa-ticket w-4 text-center"></i>
+                    <span>Coupons</span>
+                </a>
+
+                {{-- Messages --}}
+                <a href="{{ route('admin.messages.index') }}" wire:navigate
+                    class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition cursor-pointer
+                        {{ request()->routeIs('admin.messages.*') ? 'bg-white/10 text-white font-semibold' : 'text-white/70 hover:bg-white/5 hover:text-white' }}">
+                    <i class="fa-solid fa-envelope w-4 text-center"></i>
+                    <span>Contact Messages</span>
+                </a>
+
+                {{-- Settings Hub --}}
+                <a href="{{ route('admin.settings.index') }}" wire:navigate
+                    class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition cursor-pointer
+                        {{ request()->routeIs('admin.settings.*') || request()->routeIs('admin.delivery.*') || request()->routeIs('admin.social-links.*') || request()->routeIs('admin.telegram.*') || request()->routeIs('admin.smtp.*') || request()->routeIs('admin.pages.*') || request()->routeIs('admin.about.*') || request()->routeIs('admin.contact-page.*') || request()->routeIs('admin.quick-contact.*') ? 'bg-emerald-600/30 text-emerald-400 font-bold border border-emerald-500/30' : 'text-white/70 hover:bg-white/5 hover:text-white' }}">
+                    <i class="fa-solid fa-gear w-4 text-center"></i>
+                    <span>Settings</span>
+                </a>
+
             </nav>
 
             <form action="{{ route('logout') }}" method="POST" class="px-3 pb-6">
                 @csrf
-                <button type="submit" class="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-white/60 hover:bg-white/5 hover:text-white">
-                    <i class="fa-solid fa-arrow-right-from-bracket w-4"></i>
+                <button type="submit" class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-white/60 hover:bg-white/5 hover:text-white cursor-pointer">
+                    <i class="fa-solid fa-arrow-right-from-bracket w-4 text-center"></i>
                     Logout
                 </button>
             </form>
@@ -83,7 +261,10 @@
 
         <div class="flex-1 flex flex-col min-h-screen lg:ml-64">
             <header class="sticky top-0 z-40 flex items-center justify-between border-b border-gray-200 bg-white/90 backdrop-blur-sm px-6 py-4 shadow-sm">
-                <div class="flex items-center">
+                <div class="flex items-center gap-3">
+                    <button type="button" @click="mobileMenuOpen = true" class="lg:hidden flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-gray-700 hover:text-brand-orange cursor-pointer" aria-label="Open sidebar">
+                        <i class="fa-solid fa-bars text-base"></i>
+                    </button>
                     <a href="{{ route('admin.dashboard') }}" wire:navigate class="lg:hidden flex items-center">
                         <img src="{{ asset('images/logo.png') }}" alt="Raimart" class="h-7">
                     </a>
@@ -118,8 +299,8 @@
                 {{ $slot }}
             </main>
         </div>
-    </div>
-    
-    @livewireScripts
+
+        @stack('scripts')
+        @livewireScripts
 </body>
 </html>

@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 class HomeController extends Controller
 {
     /** Everything a product card renders, eager loaded so cards never query per row. */
-    private const CARD_RELATIONS = ['category:id,name', 'brand:id,name', 'images'];
+    private const CARD_RELATIONS = ['category:id,name', 'brand:id,name', 'images', 'variants:id,product_id'];
 
     public function index()
     {
@@ -43,6 +43,25 @@ class HomeController extends Controller
             fn () => Testimonial::active()->orderBy('sort_order')->get()
         );
 
+        $homeCategorySections = Category::active()
+            ->where('show_on_home', true)
+            ->orderBy('home_order', 'asc')
+            ->orderBy('id', 'asc')
+            ->with(['children:id,parent_id'])
+            ->get()
+            ->map(function ($cat) {
+                $categoryIds = collect([$cat->id])->concat($cat->children->pluck('id'))->unique();
+                $max = $cat->home_max_products ?: 100;
+                $cat->home_products = Product::with(self::CARD_RELATIONS)
+                    ->active()
+                    ->whereIn('category_id', $categoryIds)
+                    ->latest()
+                    ->take($max)
+                    ->get();
+                return $cat;
+            })
+            ->filter(fn ($cat) => $cat->home_products->isNotEmpty());
+
         return view('home', compact(
             'heroBanners',
             'promoBanners',
@@ -51,6 +70,7 @@ class HomeController extends Controller
             'featuredProducts',
             'bestSelling',
             'newArrivals',
+            'homeCategorySections',
             'justForYou',
             'testimonials',
         ));
@@ -64,7 +84,6 @@ class HomeController extends Controller
     {
         $categories = Category::active()
             ->topLevel()
-            ->where('show_on_home', true)
             ->with(['children' => fn ($q) => $q->active()])
             ->orderBy('sort_order')
             ->get();

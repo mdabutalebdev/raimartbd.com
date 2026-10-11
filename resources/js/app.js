@@ -8,18 +8,22 @@ import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 
-    document.addEventListener('livewire:navigated', () => {
+window.Swiper = Swiper;
+
+function initAllSwipers() {
     // Hero Banner Swiper
-    new Swiper('.hero-swiper', {
-        modules: [Navigation, Pagination, Autoplay],
-        loop: true,
-        autoplay: { delay: 4000, disableOnInteraction: false },
-        pagination: { el: '.swiper-pagination', clickable: true },
-        navigation: { nextEl: '.hero-next', prevEl: '.hero-prev' },
+    document.querySelectorAll('.hero-swiper:not(.swiper-initialized)').forEach(el => {
+        new Swiper(el, {
+            modules: [Navigation, Pagination, Autoplay],
+            loop: true,
+            autoplay: { delay: 4000, disableOnInteraction: false },
+            pagination: { el: '.swiper-pagination', clickable: true },
+            navigation: { nextEl: '.hero-next', prevEl: '.hero-prev' },
+        });
     });
 
-    // Product Grid/Row Swipers (Best Selling, New Arrivals)
-    const productSwipers = document.querySelectorAll('.product-swiper');
+    // Product Grid/Row Swipers (Best Selling, New Arrivals, Homepage Category Sections)
+    const productSwipers = document.querySelectorAll('.product-swiper:not(.swiper-initialized)');
     productSwipers.forEach(el => {
         const slideCount = el.querySelectorAll('.swiper-slide').length;
         new Swiper(el, {
@@ -41,6 +45,10 @@ import 'swiper/css/pagination';
             },
             on: {
                 click: function (swiper, event) {
+                    // Ignore clicks on wishlist toggle, add-to-cart, buttons, forms, inputs, links
+                    if (event.target.closest('[data-wishlist-toggle], [data-add-to-cart], button, form, input, select, textarea, a')) {
+                        return;
+                    }
                     // Fallback for duplicated slides where wire:navigate might fail
                     const card = event.target.closest('[data-product-url]');
                     if (card) {
@@ -59,8 +67,7 @@ import 'swiper/css/pagination';
     });
 
     // Category Swiper
-    const categorySwipers = document.querySelectorAll('.category-swiper');
-    categorySwipers.forEach(el => {
+    document.querySelectorAll('.category-swiper:not(.swiper-initialized)').forEach(el => {
         const slideCount = el.querySelectorAll('.swiper-slide').length;
         new Swiper(el, {
             modules: [Navigation],
@@ -83,8 +90,7 @@ import 'swiper/css/pagination';
     });
     
     // Brand Swiper
-    const brandSwipers = document.querySelectorAll('.brand-swiper');
-    brandSwipers.forEach(el => {
+    document.querySelectorAll('.brand-swiper:not(.swiper-initialized)').forEach(el => {
         const slideCount = el.querySelectorAll('.swiper-slide').length;
         new Swiper(el, {
             modules: [Navigation],
@@ -106,38 +112,32 @@ import 'swiper/css/pagination';
         });
     });
 
-    // Suggest Swiper (Cart Suggestions)
-    const suggestSwipers = document.querySelectorAll('.suggest-swiper');
-    suggestSwipers.forEach(el => {
+    // Testimonials Swiper
+    document.querySelectorAll('.testimonial-swiper:not(.swiper-initialized)').forEach(el => {
         new Swiper(el, {
-            modules: [Navigation],
-            slidesPerView: 'auto',
-            spaceBetween: 8,
+            modules: [Pagination, Autoplay],
+            slidesPerView: 1,
+            spaceBetween: 20,
             loop: true,
-            navigation: {
-                nextEl: el.parentElement.querySelector('[data-suggest-next]'),
-                prevEl: el.parentElement.querySelector('[data-suggest-prev]'),
+            autoplay: { delay: 4000, disableOnInteraction: false },
+            pagination: {
+                el: '.testi-pagination',
+                clickable: true,
+            },
+            breakpoints: {
+                768: { slidesPerView: 2 },
+                1024: { slidesPerView: 3 }
             }
         });
     });
+}
 
-    // Testimonials Swiper
-    new Swiper('.testimonial-swiper', {
-        modules: [Pagination, Autoplay],
-        slidesPerView: 1,
-        spaceBetween: 20,
-        loop: true,
-        autoplay: { delay: 4000, disableOnInteraction: false },
-        pagination: {
-            el: '.testi-pagination',
-            clickable: true,
-        },
-        breakpoints: {
-            768: { slidesPerView: 2 },
-            1024: { slidesPerView: 3 }
-        }
-    });
-});
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAllSwipers);
+} else {
+    initAllSwipers();
+}
+document.addEventListener('livewire:navigated', initAllSwipers);
 
 // ---------------------------------------------------------------------------
 // GA4 helper: push an Enhanced Ecommerce event (built server-side and returned
@@ -343,9 +343,8 @@ document.addEventListener('livewire:navigated', () => {
     });
 });
 
-document.addEventListener('livewire:navigated', () => {
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-
+// Wishlist toggle listener (global delegation - works on initial load, livewire navigated, and everywhere)
+(() => {
     const setButtonState = (button, inWishlist) => {
         button.classList.toggle('text-brand-orange', inWishlist);
         button.classList.toggle('text-brand-navy', !inWishlist);
@@ -353,8 +352,8 @@ document.addEventListener('livewire:navigated', () => {
         button.setAttribute('aria-label', inWishlist ? 'Remove from wishlist' : 'Add to wishlist');
 
         // FontAwesome JS replaces <i> with <svg> and moves fa-solid/fa-regular to data-prefix="fas"/"far"
-        const solid = button.querySelector('[data-prefix="fas"]');
-        const regular = button.querySelector('[data-prefix="far"]');
+        const solid = button.querySelector('[data-prefix="fas"], .fa-solid');
+        const regular = button.querySelector('[data-prefix="far"], .fa-regular');
         
         if (solid) solid.style.display = inWishlist ? '' : 'none';
         if (regular) regular.style.display = inWishlist ? 'none' : '';
@@ -372,8 +371,13 @@ document.addEventListener('livewire:navigated', () => {
         if (!button) return;
 
         event.preventDefault();
+        event.stopPropagation();
 
-        fetch(button.dataset.toggleUrl, {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+        const toggleUrl = button.dataset.toggleUrl;
+        if (!toggleUrl) return;
+
+        fetch(toggleUrl, {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': csrfToken,
@@ -384,7 +388,7 @@ document.addEventListener('livewire:navigated', () => {
             .then((data) => {
                 setButtonState(button, data.in_wishlist);
                 updateCountBadges(data.count);
-                window.gaPush(data.ga);
+                if (window.gaPush) window.gaPush(data.ga);
 
                 const wishlistCard = button.closest('[data-wishlist-page] [data-wishlist-card]');
                 if (!data.in_wishlist && wishlistCard) {
@@ -399,9 +403,11 @@ document.addEventListener('livewire:navigated', () => {
                     }, 300);
                 }
             })
-            .catch(() => {});
+            .catch((err) => {
+                console.error('Wishlist toggle error:', err);
+            });
     });
-});
+})();
 
 // ---------------------------------------------------------------------------
 // Drag-to-scroll: make every horizontal slider draggable with the mouse.

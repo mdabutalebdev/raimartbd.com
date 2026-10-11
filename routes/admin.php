@@ -32,10 +32,19 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
         Route::resource('categories', CategoryController::class)->except('show');
+        Route::patch('categories/{category}/toggle-home', [CategoryController::class, 'toggleHome'])->name('categories.toggle-home');
+
+        // Homepage Category Sections (Ariomart Style)
+        Route::get('homepage/category-sections', [\App\Http\Controllers\Admin\CategorySectionController::class, 'index'])->name('homepage.category-sections.index');
+        Route::patch('homepage/category-sections/{category}/toggle', [\App\Http\Controllers\Admin\CategorySectionController::class, 'toggle'])->name('homepage.category-sections.toggle');
+        Route::post('homepage/category-sections/reorder', [\App\Http\Controllers\Admin\CategorySectionController::class, 'reorder'])->name('homepage.category-sections.reorder');
+        Route::put('homepage/category-sections/{category}/settings', [\App\Http\Controllers\Admin\CategorySectionController::class, 'updateSettings'])->name('homepage.category-sections.settings');
+
         Route::resource('brands', BrandController::class)->except('show');
         Route::resource('banners', BannerController::class)->except('show');
         Route::resource('promo-banners', PromoBannerController::class)->except('show')->parameters(['promo-banners' => 'banner']);
         Route::get('products/export', [ProductController::class, 'export'])->name('products.export');
+        Route::get('products/check-sku', [ProductController::class, 'checkSku'])->name('products.check-sku');
         Route::resource('products', ProductController::class);
         Route::delete('products/{product}/images/{image}', [ProductController::class, 'destroyImage'])->name('products.images.destroy');
 
@@ -45,12 +54,18 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::patch('testimonials/{testimonial}/accept', [TestimonialController::class, 'accept'])->name('testimonials.accept');
         Route::patch('testimonials/{testimonial}/reject', [TestimonialController::class, 'reject'])->name('testimonials.reject');
 
-        Route::get('settings', [SiteSettingController::class, 'edit'])->name('settings.edit');
-        Route::put('settings', [SiteSettingController::class, 'update'])->name('settings.update');
+        Route::get('settings', [SiteSettingController::class, 'index'])->name('settings.index');
+        Route::get('settings/general', [SiteSettingController::class, 'edit'])->name('settings.general');
+        Route::put('settings/general', [SiteSettingController::class, 'update'])->name('settings.update');
+        Route::get('settings/edit', fn() => redirect()->route('admin.settings.general'))->name('settings.edit');
 
         Route::get('customers', [CustomerController::class, 'index'])->name('customers.index');
         Route::get('customers/export', [CustomerController::class, 'export'])->name('customers.export');
         Route::get('customers/{customer}', [CustomerController::class, 'show'])->name('customers.show');
+        Route::put('customers/{customer}', [CustomerController::class, 'update'])->name('customers.update');
+
+        Route::get('staff', [\App\Http\Controllers\Admin\StaffController::class, 'index'])->name('staff.index');
+        Route::post('staff', [\App\Http\Controllers\Admin\StaffController::class, 'store'])->name('staff.store');
 
         Route::get('product-reviews', [ProductReviewController::class, 'index'])->name('product-reviews.index');
         Route::patch('product-reviews/{review}/approve', [ProductReviewController::class, 'approve'])->name('product-reviews.approve');
@@ -100,5 +115,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::patch('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
         Route::patch('orders/{order}/payment', [OrderController::class, 'updatePayment'])->name('orders.payment');
         Route::patch('orders/{order}/tracking', [OrderController::class, 'updateTracking'])->name('orders.tracking');
+        Route::get('steadfast', [\App\Http\Controllers\Admin\SteadfastController::class, 'index'])->name('steadfast.index');
+        Route::put('steadfast', [\App\Http\Controllers\Admin\SteadfastController::class, 'update'])->name('steadfast.update');
+        Route::get('steadfast/track', [\App\Http\Controllers\Admin\SteadfastController::class, 'track'])->name('steadfast.track');
     });
 });

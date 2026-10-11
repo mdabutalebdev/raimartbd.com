@@ -25,7 +25,7 @@
             data-toggle-url="{{ route('wishlist.toggle', $product) }}"
             aria-label="{{ $isWishlisted ? 'Remove from wishlist' : 'Add to wishlist' }}"
             aria-pressed="{{ $isWishlisted ? 'true' : 'false' }}"
-            class="wishlist-btn absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm transition hover:bg-brand-orange hover:text-white {{ $isWishlisted ? 'text-brand-orange' : 'text-brand-navy' }}"
+            class="wishlist-btn absolute right-3 top-3 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm transition hover:bg-brand-orange hover:text-white cursor-pointer {{ $isWishlisted ? 'text-brand-orange' : 'text-brand-navy' }}"
         >
             <i class="fa-solid fa-heart text-sm" style="{{ $isWishlisted ? '' : 'display: none;' }}"></i>
             <i class="fa-regular fa-heart text-sm" style="{{ $isWishlisted ? 'display: none;' : '' }}"></i>
@@ -43,8 +43,8 @@
             @endif
         </div>
 
-        @if($product->attributes)
-            <a href="{{ route('products.show', $product) }}" wire:navigate class="relative z-20 mt-auto flex w-full items-center justify-center gap-1.5 rounded-md border border-brand-orange py-1.5 text-[13px] font-medium text-brand-orange transition hover:bg-brand-orange hover:text-white">
+        @if($product->hasVariants())
+            <a href="{{ route('products.show', $product) }}" wire:navigate class="relative z-20 mt-auto flex w-full items-center justify-center gap-1.5 rounded-md border border-brand-orange py-1.5 text-[13px] font-medium text-brand-orange transition hover:bg-brand-orange hover:text-white cursor-pointer">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 text-current">
                     <circle cx="8" cy="21" r="1" />
                     <circle cx="19" cy="21" r="1" />
@@ -55,7 +55,7 @@
         @else
             <form action="{{ route('cart.add', $product) }}" method="POST" class="relative z-20 mt-auto" data-add-to-cart>
                 @csrf
-                <button type="submit" class="flex w-full items-center justify-center gap-1.5 rounded-md border border-brand-orange py-1.5 text-[13px] font-medium text-brand-orange transition hover:bg-brand-orange hover:text-white">
+                <button type="submit" class="flex w-full items-center justify-center gap-1.5 rounded-md border border-brand-orange py-1.5 text-[13px] font-medium text-brand-orange transition hover:bg-brand-orange hover:text-white cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 text-current">
                         <circle cx="8" cy="21" r="1" />
                         <circle cx="19" cy="21" r="1" />

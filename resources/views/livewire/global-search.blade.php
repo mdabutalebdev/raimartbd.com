@@ -10,7 +10,7 @@
                 placeholder="Search for products..."
                 class="w-full rounded-full border border-brand-navy/15 bg-brand-bg py-2.5 pl-5 pr-12 text-sm text-brand-navy placeholder:text-brand-navy/40 focus:border-brand-orange focus:outline-none"
             >
-            <button type="submit" class="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-brand-orange text-white transition hover:bg-brand-navy">
+            <button type="submit" class="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-brand-orange text-white transition hover:bg-brand-navy cursor-pointer">
                 <i class="fa-solid fa-magnifying-glass text-sm"></i>
             </button>
         </div>

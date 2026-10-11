@@ -112,7 +112,7 @@
                     <h4 class="text-sm font-medium text-gray-900 mb-4 pb-2 border-b border-gray-100">Pricing</h4>
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Price (৳) <span class="text-red-500">*</span></label>
+                            <label class="block text-sm font-medium text-gray-700">Discount Price (৳) <span class="text-red-500">*</span></label>
                             <input type="number" step="0.01" name="price" value="{{ old('price', $product->price ?? '') }}"
                                 @input="delete errors.price"
                                 :class="errors.price ? 'border-red-400 ring-1 ring-red-300' : 'border-gray-300'"
@@ -121,7 +121,7 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Compare at Price (৳)</label>
+                            <label class="block text-sm font-medium text-gray-700">Old Price (৳)</label>
                             <input type="number" step="0.01" name="old_price" value="{{ old('old_price', $product->old_price ?? '') }}"
                                 class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange">
                         </div>
@@ -140,10 +140,19 @@
                             <p x-show="errors.stock" x-text="errors.stock" class="mt-1 text-xs text-red-600" style="display:none;"></p>
                         </div>
 
-                        <div>
+                        <div x-data="skuChecker('{{ old('sku', $product->sku ?? '') }}', {{ isset($product) ? $product->id : 'null' }})">
                             <label class="block text-sm font-medium text-gray-700">SKU (Stock Keeping Unit)</label>
-                            <input type="text" name="sku" value="{{ old('sku', $product->sku ?? '') }}"
-                                class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange">
+                            <div class="relative mt-1">
+                                <input type="text" name="sku" x-model="sku" @input.debounce.500ms="checkSku" autocomplete="off"
+                                    class="block w-full rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-1"
+                                    :class="inputClass">
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                    <i x-show="isChecking" class="fa-solid fa-spinner fa-spin text-gray-400"></i>
+                                    <i x-show="!isChecking && isValid === true && sku.length > 0" class="fa-solid fa-check text-green-500"></i>
+                                    <i x-show="!isChecking && isValid === false" class="fa-solid fa-xmark text-red-500"></i>
+                                </div>
+                            </div>
+                            <p x-show="!isChecking && message" x-text="message" class="mt-1 text-xs" :class="isValid ? 'text-green-600' : 'text-red-600'"></p>
                         </div>
 
                         <div>
@@ -156,48 +165,169 @@
             </div>
         </div>
 
-        <!-- Step 3: Product Attributes -->
+        <!-- Step 3: Product Attributes / Variants -->
         <div x-show="step === 3" style="display: none;" x-cloak>
-            <div x-data="attributeBuilder({{ isset($product) && $product->attributes ? json_encode($product->attributes) : '[]' }})">
-                <div class="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
-                    <div>
-                        <h3 class="text-base font-medium text-gray-900">Variants & Options</h3>
-                        <p class="text-xs text-gray-500 mt-1">Does this product come in multiple sizes, colors, or materials?</p>
+            <div x-data="variantBuilder({{ isset($product) && $product->variants ? $product->variants->toJson() : '[]' }}, {{ isset($product) && $product->variants && $product->variants->count() > 0 ? 'true' : 'false' }}, {{ isset($product) && $product->show_variant_image ? 'true' : 'false' }})">
+                
+                <!-- Variable Product Mode Toggle Card -->
+                <div class="flex items-center justify-between p-4 rounded-lg mb-4 transition-colors border" :class="hasVariants ? 'bg-blue-50/50 border-blue-200' : 'bg-gray-50 border-gray-200'">
+                    <div class="flex items-start gap-3">
+                        <div class="mt-0.5 text-lg" :class="hasVariants ? 'text-brand-orange' : 'text-gray-400'">
+                            <i class="fa-solid fa-circle-info"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-semibold" :class="hasVariants ? 'text-brand-navy' : 'text-gray-700'">Variable Product Mode</h4>
+                            <p class="text-xs text-gray-500 mt-1">Add variations like size, color, or material. Each variation can have its own SKU, price, and stock.</p>
+                        </div>
                     </div>
-                    <button type="button" @click="attributes.push({name: '', values: ''})" class="text-sm font-medium text-brand-orange hover:text-brand-navy">
-                        + Add Option
-                    </button>
+                    <div class="ml-4 shrink-0">
+                        <button type="button" @click="hasVariants = !hasVariants" :class="hasVariants ? 'bg-brand-orange' : 'bg-gray-200'" 
+                            class="relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-brand-orange focus:ring-offset-2">
+                            <span aria-hidden="true" :class="hasVariants ? 'translate-x-5' : 'translate-x-0'" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                        </button>
+                        <input type="hidden" name="has_variants" :value="hasVariants ? 1 : 0">
+                    </div>
                 </div>
-                
-                <input type="hidden" name="attributes" :value="JSON.stringify(attributes)">
-                
-                <div class="space-y-4 mt-4">
-                    <template x-for="(attr, index) in attributes" :key="index">
-                        <div class="flex items-start gap-4 p-4 border border-gray-200 rounded-md bg-gray-50/50">
-                            <div class="flex-1 grid sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-700 mb-1">Option Name</label>
-                                    <input type="text" x-model="attr.name" placeholder="e.g., Size, Color" class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange bg-white">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-700 mb-1">Option Values (comma separated)</label>
-                                    <input type="text" x-model="attr.values" placeholder="e.g., Small, Medium, Large" class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange bg-white">
+
+                <!-- Sub-options (only when variant mode ON) -->
+                <div x-show="hasVariants" class="grid grid-cols-2 gap-3 mb-6">
+                    <!-- Show Image Instead of Color -->
+                    <div class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
+                        <div>
+                            <p class="text-xs font-semibold text-gray-700">Show Image Instead of Color</p>
+                            <p class="text-xs text-gray-400 mt-0.5">Uses the variant image as selection button on frontend.</p>
+                        </div>
+                        <button type="button" @click="showVariantImage = !showVariantImage" :class="showVariantImage ? 'bg-brand-orange' : 'bg-gray-200'" 
+                            class="ml-3 shrink-0 relative inline-flex h-5 w-10 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out">
+                            <span :class="showVariantImage ? 'translate-x-5' : 'translate-x-0'" class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200"></span>
+                        </button>
+                        <input type="hidden" name="show_variant_image" :value="showVariantImage ? 1 : 0">
+                    </div>
+                    <!-- Convert & Optimize WebP -->
+                    <div class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
+                        <div>
+                            <p class="text-xs font-semibold text-gray-700">Convert & Optimize (WebP)</p>
+                            <p class="text-xs text-gray-400 mt-0.5">Auto-scale & convert variant images to lightweight WebP.</p>
+                        </div>
+                        <button type="button" @click="optimizeWebp = !optimizeWebp" :class="optimizeWebp ? 'bg-brand-orange' : 'bg-gray-200'" 
+                            class="ml-3 shrink-0 relative inline-flex h-5 w-10 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out">
+                            <span :class="optimizeWebp ? 'translate-x-5' : 'translate-x-0'" class="pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow transition duration-200"></span>
+                        </button>
+                        <input type="hidden" name="optimize_webp" :value="optimizeWebp ? 1 : 0">
+                    </div>
+                </div>
+
+                <!-- Manually Add Variants -->
+                <div x-show="hasVariants" class="space-y-4">
+                    <div class="border-b border-gray-100 pb-2 mb-1">
+                        <p class="text-xs font-semibold text-gray-600 uppercase tracking-wider">Manually Add Variants</p>
+                        <p class="text-xs text-gray-400 mt-0.5">Select an option type (like Color or Size) and define each variant directly.</p>
+                    </div>
+
+                    <template x-for="(variant, index) in variants" :key="index">
+                        <div class="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden">
+                            <!-- Variant Header -->
+                            <div class="flex items-center justify-between px-4 py-3 bg-gray-50 border-b border-gray-100">
+                                <span class="text-sm font-semibold text-brand-navy">Variant Attributes (e.g., Color + Size)</span>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" @click="addOption(index)" class="text-xs font-medium text-brand-orange hover:text-brand-navy flex items-center gap-1">
+                                        <i class="fa-solid fa-plus text-[10px]"></i> Add Attribute
+                                    </button>
+                                    <button type="button" @click="removeVariant(index)" class="text-gray-400 hover:text-red-500 p-1 ml-2">
+                                        <i class="fa-solid fa-trash-can text-xs"></i>
+                                    </button>
                                 </div>
                             </div>
-                            <button type="button" @click="attributes.splice(index, 1)" class="mt-6 text-gray-400 hover:text-red-500 transition-colors p-1">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>
+
+                            <div class="p-4 space-y-4">
+                                <!-- Options -->
+                                <div class="space-y-2">
+                                    <template x-for="(opt, oIndex) in variant.options" :key="oIndex">
+                                        <div class="flex items-center gap-2">
+                                            <input type="text" :name="`variants[${index}][options][${oIndex}][name]`" x-model="opt.name" 
+                                                placeholder="Option Name (e.g., Color, Size, Weight)" 
+                                                class="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange">
+                                            <input type="text" :name="`variants[${index}][options][${oIndex}][value]`" x-model="opt.value" 
+                                                placeholder="Option Value (e.g., Red, XL, 1 KG)" 
+                                                class="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange">
+                                            <button type="button" @click="removeOption(index, oIndex)" class="text-gray-400 hover:text-red-500 p-1" x-show="variant.options.length > 1">
+                                                <i class="fa-solid fa-xmark"></i>
+                                            </button>
+                                        </div>
+                                    </template>
+                                </div>
+
+                                <!-- Price / SKU / Stock row -->
+                                <div class="grid gap-3 sm:grid-cols-4">
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">Price <span class="text-red-500">*</span></label>
+                                        <div class="relative">
+                                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">৳</span>
+                                            <input type="number" step="0.01" :name="`variants[${index}][current_price]`" x-model="variant.current_price" placeholder="0.00"
+                                                class="block w-full pl-6 pr-3 rounded-md border border-gray-300 py-2 text-sm focus:border-brand-orange focus:outline-none">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">Old Price</label>
+                                        <div class="relative">
+                                            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs">৳</span>
+                                            <input type="number" step="0.01" :name="`variants[${index}][original_price]`" x-model="variant.original_price" placeholder="0.00"
+                                                class="block w-full pl-6 pr-3 rounded-md border border-gray-300 py-2 text-sm focus:border-brand-orange focus:outline-none">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">SKU <span class="text-gray-400 font-normal">(Auto if blank)</span></label>
+                                        <input type="text" :name="`variants[${index}][sku]`" x-model="variant.sku" placeholder="e.g. 261010191234"
+                                            class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">Stock Quantity <span class="text-red-500">*</span></label>
+                                        <input type="number" :name="`variants[${index}][stock]`" x-model="variant.stock" placeholder="0"
+                                            class="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none">
+                                    </div>
+                                </div>
+
+                                <!-- Variant Image -->
+                                <div x-data="variantImageUploader(index)" class="border border-dashed border-gray-300 rounded-lg p-3 bg-gray-50">
+                                    <p class="text-xs font-medium text-gray-600 mb-2">
+                                        <i class="fa-solid fa-image mr-1 text-gray-400"></i>
+                                        Variant Image <span class="text-gray-400 font-normal">(Used as selector on frontend)</span>
+                                    </p>
+                                    <div class="flex items-center gap-3">
+                                        <div class="relative w-16 h-16 rounded-lg border border-gray-200 overflow-hidden bg-white shrink-0 flex items-center justify-center cursor-pointer hover:border-brand-orange transition-colors" @click="$refs.variantFileInput.click()">
+                                            <template x-if="previewUrl">
+                                                <img :src="previewUrl" class="w-full h-full object-cover">
+                                            </template>
+                                            <template x-if="!previewUrl && variant.existing_image">
+                                                <img :src="variant.existing_image" class="w-full h-full object-cover">
+                                            </template>
+                                            <template x-if="!previewUrl && !variant.existing_image">
+                                                <i class="fa-regular fa-image text-gray-300 text-xl"></i>
+                                            </template>
+                                        </div>
+                                        <div class="flex-1">
+                                            <button type="button" @click="$refs.variantFileInput.click()" class="text-xs font-medium text-brand-orange hover:underline">
+                                                <i class="fa-solid fa-upload mr-1"></i>
+                                                Upload a swatch or product image.
+                                            </button>
+                                            <p class="text-xs text-gray-400 mt-0.5">Max size: 2MB.</p>
+                                            <input type="file" :name="`variant_images[${index}]`" accept="image/*" class="hidden" x-ref="variantFileInput"
+                                                @change="handleFileChange($event)">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </template>
 
-                    <template x-if="attributes.length === 0">
-                        <div class="text-center py-8 px-4 rounded-md border-2 border-dashed border-gray-200">
-                            <p class="text-sm text-gray-500">This product has no variants.</p>
-                            <button type="button" @click="attributes.push({name: '', values: ''})" class="mt-2 text-sm font-medium text-brand-orange hover:text-brand-navy">
-                                Add variants like size or color
-                            </button>
-                        </div>
-                    </template>
+                    <button type="button" @click="addVariant" class="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-sm font-medium text-brand-orange hover:bg-gray-50 hover:border-brand-orange transition-colors flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-circle-plus"></i> Add New Variant
+                    </button>
+                </div>
+                
+                <div x-show="!hasVariants" class="text-center py-8 px-4 rounded-md border-2 border-dashed border-gray-200 bg-gray-50">
+                    <p class="text-sm text-gray-500">This product is a single variant product.</p>
+                    <p class="text-xs text-gray-400 mt-1">Price and inventory are managed in the Pricing tab.</p>
                 </div>
             </div>
         </div>
@@ -448,8 +578,100 @@
     };
 
     document.addEventListener('alpine:init', () => {
-        Alpine.data('attributeBuilder', (initialAttributes) => ({
-            attributes: initialAttributes || []
+        Alpine.data('skuChecker', (initialSku, ignoreId) => ({
+            sku: initialSku,
+            ignoreId: ignoreId,
+            isChecking: false,
+            isValid: null,
+            message: '',
+            
+            get inputClass() {
+                if (this.isChecking) return 'border-gray-300 focus:border-brand-orange focus:ring-brand-orange';
+                if (this.isValid === false) return 'border-red-500 focus:border-red-500 focus:ring-red-500';
+                if (this.isValid === true && this.sku.length > 0) return 'border-green-500 focus:border-green-500 focus:ring-green-500';
+                return 'border-gray-300 focus:border-brand-orange focus:ring-brand-orange';
+            },
+
+            async checkSku() {
+                if (!this.sku || this.sku.trim() === '') {
+                    this.isValid = null;
+                    this.message = '';
+                    return;
+                }
+                
+                this.isChecking = true;
+                this.message = '';
+                
+                try {
+                    const url = new URL('{{ route("admin.products.check-sku") }}');
+                    url.searchParams.append('sku', this.sku);
+                    if (this.ignoreId) {
+                        url.searchParams.append('ignore_id', this.ignoreId);
+                    }
+                    
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    
+                    this.isValid = data.valid;
+                    this.message = data.message;
+                } catch (e) {
+                    this.isValid = null;
+                    this.message = 'Error checking SKU';
+                } finally {
+                    this.isChecking = false;
+                }
+            }
+        }));
+
+        Alpine.data('variantBuilder', (initialVariants, initialHasVariants, initialShowVariantImage) => ({
+            hasVariants: initialHasVariants || false,
+            showVariantImage: initialShowVariantImage || false,
+            optimizeWebp: false,
+            variants: initialVariants.length ? initialVariants.map(v => ({
+                ...v,
+                options: v.attributes ? Object.entries(v.attributes).map(([name, value]) => ({name, value})) : [{name: '', value: ''}],
+                existing_image: v.images && v.images[0] ? v.images[0] : null
+            })) : [
+                {
+                    id: null,
+                    options: [{name: '', value: ''}],
+                    current_price: '',
+                    original_price: '',
+                    sku: '',
+                    stock: 0,
+                    existing_image: null
+                }
+            ],
+            addVariant() {
+                this.variants.push({
+                    id: null,
+                    options: [{name: '', value: ''}],
+                    current_price: '',
+                    original_price: '',
+                    sku: '',
+                    stock: 0,
+                    existing_image: null
+                });
+            },
+            removeVariant(index) {
+                this.variants.splice(index, 1);
+            },
+            addOption(variantIndex) {
+                this.variants[variantIndex].options.push({name: '', value: ''});
+            },
+            removeOption(variantIndex, optionIndex) {
+                this.variants[variantIndex].options.splice(optionIndex, 1);
+            }
+        }));
+
+        Alpine.data('variantImageUploader', (variantIndex) => ({
+            previewUrl: null,
+            handleFileChange(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    this.previewUrl = URL.createObjectURL(file);
+                }
+            }
         }));
 
         Alpine.data('mainImageUploader', () => ({

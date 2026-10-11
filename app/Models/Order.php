@@ -62,4 +62,24 @@ class Order extends Model
     {
         return $this->hasMany(Payment::class);
     }
+
+    public function getPaymentMethodNameAttribute()
+    {
+        if ($this->payment_method === 'cod') {
+            return 'Cash on Delivery';
+        }
+
+        if ($this->payment_method === 'piprapay') {
+            $payment = $this->payments()->where('status', 'completed')->latest()->first();
+            if ($payment && isset($payment->raw_response['payment_method'])) {
+                return $payment->raw_response['payment_method'];
+            }
+            if ($payment && isset($payment->raw_response['payment_network'])) {
+                return $payment->raw_response['payment_network'];
+            }
+            return 'Online Payment';
+        }
+
+        return strtoupper($this->payment_method);
+    }
 }

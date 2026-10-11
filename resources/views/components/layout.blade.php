@@ -17,7 +17,26 @@
             ?: (\App\Models\SiteSetting::get('site_description')
                 ?: 'Your trusted online shopping destination. Quality products across every category, delivered fast and priced fair.');
         $metaImage = $image ? image_url($image) : asset('images/logo.png');
+        
+        $orgSchema = [
+            '@context' => 'https://schema.org',
+            '@type' => 'Organization',
+            'name' => 'Raimart',
+            'url' => url('/'),
+            'logo' => asset('images/logo.png'),
+            'contactPoint' => [
+                '@type' => 'ContactPoint',
+                'telephone' => \App\Models\SiteSetting::get('contact_phone', '01622243011'),
+                'contactType' => 'customer service',
+                'areaServed' => 'BD',
+                'availableLanguage' => ['English', 'Bengali']
+            ]
+        ];
     @endphp
+
+    <script type="application/ld+json">
+        {!! json_encode($orgSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+    </script>
     <meta name="description" content="{{ \Illuminate\Support\Str::limit(strip_tags($metaDescription), 160) }}">
     <link rel="canonical" href="{{ url()->current() }}">
 

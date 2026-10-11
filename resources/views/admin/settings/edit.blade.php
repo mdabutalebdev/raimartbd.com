@@ -1,5 +1,10 @@
-<x-admin-layout title="Settings - Raimart Admin">
-    <h1 class="font-serif text-2xl font-bold">Site Settings</h1>
+<x-admin-layout title="Site Settings - Raimart Admin">
+    <div class="mb-4">
+        <a href="{{ route('admin.settings.index') }}" wire:navigate class="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-brand-orange transition cursor-pointer">
+            <i class="fa-solid fa-arrow-left"></i> Back to Settings
+        </a>
+    </div>
+    <h1 class="font-serif text-2xl font-bold">Site & Branding Settings</h1>
 
     @if ($errors->any())
         <div class="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">

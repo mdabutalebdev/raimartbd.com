@@ -54,7 +54,7 @@
 
             <div class="mt-4 flex justify-between border-t border-brand-navy/10 pt-4 text-sm">
                 <span class="text-brand-navy/60">Payment Method</span>
-                <span class="capitalize">{{ $order->payment_method === 'cod' ? 'Cash on Delivery' : 'PipraPay' }} &middot; {{ $order->payment_status }}</span>
+                <span class="capitalize">{{ $order->payment_method_name }} &middot; {{ $order->payment_status }}</span>
             </div>
         </div>
 

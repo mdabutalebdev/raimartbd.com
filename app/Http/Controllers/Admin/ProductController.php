@@ -108,6 +108,34 @@ class ProductController extends Controller
         return view('admin.products.create', compact('categoryGroups', 'brands'));
     }
 
+    public function checkSku(Request $request)
+    {
+        $sku = $request->query('sku');
+        $ignoreId = $request->query('ignore_id');
+        
+        if (!$sku) {
+            return response()->json(['valid' => true]);
+        }
+        
+        $query = Product::where('sku', $sku);
+        if ($ignoreId) {
+            $query->where('id', '!=', $ignoreId);
+        }
+        
+        $existsInProducts = $query->exists();
+        
+        $variantQuery = \App\Models\ProductVariant::where('sku', $sku);
+        if ($ignoreId) {
+            $variantQuery->where('product_id', '!=', $ignoreId);
+        }
+        $existsInVariants = $variantQuery->exists();
+        
+        return response()->json([
+            'valid' => !($existsInProducts || $existsInVariants),
+            'message' => ($existsInProducts || $existsInVariants) ? 'This SKU is already taken' : 'SKU is available'
+        ]);
+    }
+
     public function store(Request $request)
     {
         $data = $this->validated($request);
@@ -117,12 +145,14 @@ class ProductController extends Controller
             $data['main_image'] = app(\App\Services\ImageOptimizer::class)->store($request->file('main_image'), 'products');
         }
         
-        if (isset($data['attributes']) && is_string($data['attributes'])) {
-            $data['attributes'] = json_decode($data['attributes'], true);
-        }
-
+        $data['attributes'] = [
+            'show_variant_image' => $request->boolean('show_variant_image'),
+            'optimize_webp' => $request->boolean('optimize_webp'),
+        ];
+        
         $product = Product::create($data);
 
+        $this->storeVariants($request, $product);
         $this->storeImages($request, $product);
 
         return redirect()->route('admin.products.index')->with('status', 'Product created successfully.');
@@ -137,14 +167,14 @@ class ProductController extends Controller
     {
         $categoryGroups = $this->categoryGroups();
         $brands = $this->brands();
-        $product->load('images');
+        $product->load(['images', 'variants']);
 
         return view('admin.products.edit', compact('product', 'categoryGroups', 'brands'));
     }
 
     public function update(Request $request, Product $product)
     {
-        $data = $this->validated($request);
+        $data = $this->validated($request, $product);
 
         if ($request->hasFile('main_image')) {
             if ($product->main_image && !str_starts_with($product->main_image, 'http')) {
@@ -153,12 +183,17 @@ class ProductController extends Controller
             $data['main_image'] = app(\App\Services\ImageOptimizer::class)->store($request->file('main_image'), 'products');
         }
         
-        if (isset($data['attributes']) && is_string($data['attributes'])) {
-            $data['attributes'] = json_decode($data['attributes'], true);
+        $attrs = $product->attributes ?? [];
+        if (!is_array($attrs)) {
+            $attrs = [];
         }
+        $attrs['show_variant_image'] = $request->boolean('show_variant_image');
+        $attrs['optimize_webp'] = $request->boolean('optimize_webp');
+        $data['attributes'] = $attrs;
 
         $product->update($data);
 
+        $this->storeVariants($request, $product);
         $this->storeImages($request, $product);
 
         return redirect()->route('admin.products.index')->with('status', 'Product updated successfully.');
@@ -220,7 +255,54 @@ class ProductController extends Controller
         }
     }
 
-    private function validated(Request $request): array
+    private function storeVariants(Request $request, Product $product): void
+    {
+        if (! $request->boolean('has_variants') || ! $request->has('variants')) {
+            $product->variants()->delete();
+            return;
+        }
+
+        $variantsData = $request->input('variants', []);
+        
+        $keepIds = [];
+        foreach ($variantsData as $index => $vData) {
+            $attributes = [];
+            if (!empty($vData['options'])) {
+                foreach ($vData['options'] as $opt) {
+                    if (!empty($opt['name'])) {
+                        $attributes[$opt['name']] = $opt['value'] ?? '';
+                    }
+                }
+            }
+
+            $existingVariant = !empty($vData['id']) ? $product->variants()->find($vData['id']) : null;
+            $images = $existingVariant ? ($existingVariant->images ?? []) : [];
+
+            if ($request->hasFile("variant_images.{$index}")) {
+                $uploaded = app(\App\Services\ImageOptimizer::class)->store($request->file("variant_images.{$index}"), 'products');
+                $images = [$uploaded];
+            }
+            
+            $payload = [
+                'attributes' => $attributes,
+                'sku' => !empty($vData['sku']) ? trim($vData['sku']) : null,
+                'current_price' => !empty($vData['current_price']) ? $vData['current_price'] : 0,
+                'original_price' => !empty($vData['original_price']) ? $vData['original_price'] : null,
+                'stock' => !empty($vData['stock']) ? (int)$vData['stock'] : 0,
+                'images' => $images,
+            ];
+
+            $variant = $product->variants()->updateOrCreate(
+                ['id' => $vData['id'] ?? null],
+                $payload
+            );
+            $keepIds[] = $variant->id;
+        }
+        
+        $product->variants()->whereNotIn('id', $keepIds)->delete();
+    }
+
+    private function validated(Request $request, ?Product $product = null): array
     {
         $data = $request->validate([
             'category_id' => ['required', 'exists:categories,id'],
@@ -231,7 +313,7 @@ class ProductController extends Controller
             'price' => ['required', 'numeric', 'min:0'],
             'old_price' => ['nullable', 'numeric', 'min:0'],
             'stock' => ['required', 'integer', 'min:0'],
-            'sku' => ['nullable', 'string', 'max:100'],
+            'sku' => ['nullable', 'string', 'max:100', \Illuminate\Validation\Rule::unique('products')->ignore($product)],
             'weight' => ['nullable', 'string', 'max:100'],
             'rating' => ['nullable', 'numeric', 'min:0', 'max:5'],
             'reviews_count' => ['nullable', 'integer', 'min:0'],
@@ -240,16 +322,17 @@ class ProductController extends Controller
             'is_new_arrival' => ['sometimes', 'boolean'],
             'is_active' => ['sometimes', 'boolean'],
             'main_image' => ['nullable', 'image', 'max:2048'],
-            'attributes' => ['nullable'],
             'images' => ['nullable', 'array'],
             'images.*' => ['file', 'mimes:jpeg,jpg,png,webp,gif,mp4,mov,webm,ogv,ogg,m4v,avi,mkv,3gp', 'max:20480'],
+            'has_variants' => ['sometimes', 'boolean'],
+            'variants' => ['nullable', 'array'],
         ]);
 
         foreach (['is_featured', 'is_best_seller', 'is_new_arrival', 'is_active'] as $flag) {
             $data[$flag] = $request->boolean($flag);
         }
 
-        unset($data['images']);
+        unset($data['images'], $data['variants'], $data['has_variants'], $data['attributes']);
 
         return $data;
     }

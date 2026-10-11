@@ -86,10 +86,7 @@
                     </div>
                     <div class="sm:text-right">
                         <p class="text-xs uppercase tracking-wide text-brand-navy/50">Payment</p>
-                        <p class="mt-1 font-medium text-brand-navy">{{ strtoupper($order->payment_method) }}</p>
-                        <span class="mt-1 inline-block rounded-full px-3 py-1 text-xs font-semibold {{ $order->payment_status === 'paid' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700' }}">
-                            {{ ucfirst($order->payment_status) }}
-                        </span>
+                        <p class="mt-1 font-medium text-brand-navy uppercase">{{ $order->payment_method_name }}</p>
                     </div>
                 </div>
 

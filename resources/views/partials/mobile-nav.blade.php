@@ -5,12 +5,12 @@
             Home
         </a>
 
-        <button type="button" data-drawer-open class="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-brand-navy/70">
+        <button type="button" data-drawer-open class="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-brand-navy/70 cursor-pointer">
             <i class="fa-solid fa-bars text-[18px]"></i>
             Menu
         </button>
 
-        <button type="button" data-cart-open class="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-brand-navy/70">
+        <button type="button" data-cart-open class="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-brand-navy/70 cursor-pointer">
             <div class="relative">
                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-current">
                     <circle cx="8" cy="21" r="1" />
@@ -22,7 +22,7 @@
             Cart
         </button>
 
-        <button type="button" @click="searchOpen = true" class="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-brand-navy/70">
+        <button type="button" @click="searchOpen = true" class="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-brand-navy/70 cursor-pointer">
             <i class="fa-solid fa-magnifying-glass text-[18px]"></i>
             Search
         </button>
@@ -46,11 +46,11 @@
             <form action="{{ route('shop') }}" method="GET" class="flex items-center gap-2">
                 <div class="relative flex-1">
                     <input type="text" name="search" value="{{ request('search') }}" placeholder="Search for products..." autofocus class="w-full rounded-full border border-brand-navy/15 bg-brand-bg py-2.5 pl-5 pr-12 text-sm text-brand-navy placeholder:text-brand-navy/40 focus:border-brand-orange focus:outline-none">
-                    <button type="submit" class="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-brand-orange text-white">
+                    <button type="submit" class="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-brand-orange text-white cursor-pointer">
                         <i class="fa-solid fa-magnifying-glass text-sm"></i>
                     </button>
                 </div>
-                <button type="button" @click="searchOpen = false" class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-bg text-brand-navy">
+                <button type="button" @click="searchOpen = false" class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-bg text-brand-navy cursor-pointer">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </form>

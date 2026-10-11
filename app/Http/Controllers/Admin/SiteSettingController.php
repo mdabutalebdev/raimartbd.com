@@ -20,6 +20,11 @@ class SiteSettingController extends Controller
         'contact_email',
     ];
 
+    public function index()
+    {
+        return view('admin.settings.index');
+    }
+
     public function edit()
     {
         $settings = SiteSetting::getAll();

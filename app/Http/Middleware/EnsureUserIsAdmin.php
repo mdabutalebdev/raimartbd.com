@@ -19,8 +19,8 @@ class EnsureUserIsAdmin
             return redirect()->guest(route('login'));
         }
 
-        if (! $request->user()->is_admin) {
-            abort(403);
+        if (! $request->user()->isStaff()) {
+            abort(403, 'Unauthorized access.');
         }
 
         return $next($request);

@@ -148,7 +148,7 @@
                         <td class="px-4 py-2.5 text-brand-navy/70">{{ $order->items->sum('quantity') }}</td>
                         <td class="whitespace-nowrap px-4 py-2.5 font-semibold">৳{{ number_format($order->total) }}</td>
                         <td class="px-4 py-2.5">
-                            <p class="text-xs uppercase text-brand-navy/60">{{ $order->payment_method }}</p>
+                            <p class="text-xs uppercase text-brand-navy/60">{{ $order->payment_method_name }}</p>
                             <span class="rounded px-1.5 py-0.5 text-[10px] font-semibold {{ $order->payment_status === 'paid' ? 'bg-green-100 text-green-700' : ($order->payment_status === 'refunded' ? 'bg-gray-100 text-gray-500' : 'bg-red-100 text-red-700') }}">
                                 {{ ucfirst($order->payment_status) }}
                             </span>

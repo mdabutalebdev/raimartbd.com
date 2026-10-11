@@ -51,19 +51,35 @@
             <tbody class="divide-y divide-brand-navy/5">
                 @forelse ($customers as $customer)
                     <tr class="transition hover:bg-brand-navy/[0.02]">
-                        <td class="px-4 py-2.5 font-medium text-brand-navy">{{ $customer->name }}</td>
-                        <td class="px-4 py-2.5 text-xs text-brand-navy/60">
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                <img src="{{ $customer->avatar_url }}" alt="{{ $customer->name }}" class="h-9 w-9 rounded-full object-cover border border-brand-navy/10">
+                                <div>
+                                    <a href="{{ route('admin.customers.show', $customer) }}" wire:navigate class="font-semibold text-brand-navy hover:text-brand-orange">
+                                        {{ $customer->name }}
+                                    </a>
+                                    @php $badge = $customer->role_badge; @endphp
+                                    <span class="inline-block mt-0.5 rounded-full px-2 py-0.2 text-[10px] font-semibold border {{ $badge['class'] }}">
+                                        {{ $badge['label'] }}
+                                    </span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-xs text-brand-navy/60">
                             <p>{{ $customer->email }}</p>
                             @if ($customer->phone)<p>{{ $customer->phone }}</p>@endif
                         </td>
-                        <td class="px-4 py-2.5 text-brand-navy/70">{{ $customer->city ?: '—' }}</td>
-                        <td class="px-4 py-2.5">
+                        <td class="px-4 py-3 text-brand-navy/70">{{ $customer->city ?: '—' }}</td>
+                        <td class="px-4 py-3">
                             <span class="rounded bg-brand-navy/5 px-2 py-0.5 text-xs font-semibold">{{ $customer->orders_count }}</span>
                         </td>
-                        <td class="px-4 py-2.5 font-semibold text-brand-orange">৳{{ number_format((float) $customer->orders_total) }}</td>
-                        <td class="px-4 py-2.5 text-xs text-brand-navy/50">{{ $customer->created_at?->format('d M Y') }}</td>
-                        <td class="px-4 py-2.5 text-right">
-                            <a href="{{ route('admin.customers.show', $customer) }}" class="font-medium text-brand-orange hover:underline">View</a>
+                        <td class="px-4 py-3 font-semibold text-brand-orange">৳{{ number_format((float) $customer->orders_total) }}</td>
+                        <td class="px-4 py-3 text-xs text-brand-navy/50">{{ $customer->created_at?->format('d M Y') }}</td>
+                        <td class="px-4 py-3 text-right">
+                            <a href="{{ route('admin.customers.show', $customer) }}" wire:navigate
+                                class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-brand-navy/15 text-brand-navy/60 transition hover:border-brand-orange hover:bg-brand-orange/5 hover:text-brand-orange" title="View Details">
+                                <i class="fa-regular fa-eye text-xs"></i>
+                            </a>
                         </td>
                     </tr>
                 @empty
