@@ -1,6 +1,6 @@
 <x-layout title="Register - Raimart">
-    <section class="mx-auto max-w-md px-4 py-14 sm:px-6 lg:px-8">
-        <div class="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-brand-navy/5">
+    <section class="mx-auto max-w-md px-4 pt-3 pb-10 sm:py-12 sm:px-6 lg:px-8">
+        <div class="rounded-2xl bg-white p-6 sm:p-8 shadow-sm ring-1 ring-brand-navy/5">
             <h1 class="text-center font-serif text-2xl font-bold">Create Account</h1>
             <p class="mt-1 text-center text-sm text-brand-navy/50">Join Raimart for faster checkout</p>
 

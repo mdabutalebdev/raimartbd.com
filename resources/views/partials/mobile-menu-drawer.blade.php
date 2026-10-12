@@ -28,6 +28,16 @@
                 <div class="font-medium text-brand-orange">Offers</div>
                 <i class="fa-solid fa-chevron-right ml-auto shrink-0 text-brand-navy/30 text-xs"></i>
             </a>
+            <a href="{{ route('wishlist.index') }}" wire:navigate class="flex items-center gap-3 border-b border-brand-navy/5 px-5 py-4 hover:bg-brand-bg">
+                <i class="fa-regular fa-heart w-6 text-center text-brand-navy/40"></i>
+                <div class="font-medium text-brand-navy">Favorite</div>
+                @if (($wishlistCount ?? 0) > 0)
+                    <span data-wishlist-count class="ml-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-orange px-1.5 text-[11px] font-semibold text-white">{{ $wishlistCount }}</span>
+                @else
+                    <span data-wishlist-count class="ml-1 hidden flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-orange px-1.5 text-[11px] font-semibold text-white">0</span>
+                @endif
+                <i class="fa-solid fa-chevron-right ml-auto shrink-0 text-brand-navy/30 text-xs"></i>
+            </a>
             <a href="{{ route('track') }}" wire:navigate class="flex items-center gap-3 border-b border-brand-navy/5 px-5 py-4 hover:bg-brand-bg">
                 <i class="fa-solid fa-truck-fast w-6 text-center text-brand-navy/40"></i>
                 <div class="font-medium text-brand-navy">Track Order</div>

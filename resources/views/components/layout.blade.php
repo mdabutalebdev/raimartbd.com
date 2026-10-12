@@ -96,6 +96,7 @@
     @include('partials.mobile-menu-drawer')
     @include('partials.cart-drawer')
     @include('partials.quick-contact')
+    @include('partials.toast')
     
     @livewireScripts
 </body>

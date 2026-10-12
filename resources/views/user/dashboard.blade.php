@@ -35,7 +35,7 @@
                         <div class="p-6 border-b border-gray-100 text-center bg-gradient-to-b from-brand-orange/10 to-transparent">
                             <div class="relative w-24 h-24 mx-auto mb-4">
                                 @if($user->avatar)
-                                    <img src="{{ Storage::url($user->avatar) }}" alt="{{ $user->name }}" class="w-full h-full rounded-full object-cover border-4 border-white shadow-md">
+                                    <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="w-full h-full rounded-full object-cover border-4 border-white shadow-md" referrerpolicy="no-referrer">
                                 @else
                                     <div class="w-full h-full rounded-full bg-brand-orange text-white flex items-center justify-center text-3xl font-bold shadow-md mx-auto">
                                         {{ substr($user->name, 0, 1) }}
@@ -257,7 +257,7 @@
                                             <div class="mt-1 flex items-center gap-4">
                                                 <div class="w-16 h-16 rounded-full bg-gray-100 border border-gray-200 overflow-hidden shrink-0">
                                                     @if($user->avatar)
-                                                        <img src="{{ Storage::url($user->avatar) }}" alt="Preview" class="w-full h-full object-cover">
+                                                        <img src="{{ $user->avatar_url }}" alt="Preview" class="w-full h-full object-cover" referrerpolicy="no-referrer">
                                                     @else
                                                         <div class="w-full h-full flex items-center justify-center text-gray-400 text-2xl">
                                                             <i class="fa-regular fa-image"></i>
@@ -278,11 +278,23 @@
                                         
                                         <div class="space-y-2">
                                             <label for="password" class="block text-sm font-medium text-gray-700">New Password</label>
-                                            <input type="password" id="password" name="password" class="w-full rounded-xl border-gray-200 focus:border-brand-orange focus:ring-brand-orange bg-gray-50 focus:bg-white transition-colors shadow-sm py-2.5 px-4">
+                                            <div class="relative">
+                                                <input type="password" id="password" name="password" class="w-full rounded-xl border-gray-200 focus:border-brand-orange focus:ring-brand-orange bg-gray-50 focus:bg-white transition-colors shadow-sm py-2.5 px-4 pr-11" placeholder="Leave blank to keep current">
+                                                <button type="button" onclick="togglePasswordVisibility('password', this)" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-orange focus:outline-none cursor-pointer transition-colors" aria-label="Toggle password visibility">
+                                                    <i class="fa-solid fa-eye text-sm eye-open"></i>
+                                                    <i class="fa-solid fa-eye-slash text-sm eye-closed" style="display: none;"></i>
+                                                </button>
+                                            </div>
                                         </div>
                                         <div class="space-y-2">
                                             <label for="password_confirmation" class="block text-sm font-medium text-gray-700">Confirm New Password</label>
-                                            <input type="password" id="password_confirmation" name="password_confirmation" class="w-full rounded-xl border-gray-200 focus:border-brand-orange focus:ring-brand-orange bg-gray-50 focus:bg-white transition-colors shadow-sm py-2.5 px-4">
+                                            <div class="relative">
+                                                <input type="password" id="password_confirmation" name="password_confirmation" class="w-full rounded-xl border-gray-200 focus:border-brand-orange focus:ring-brand-orange bg-gray-50 focus:bg-white transition-colors shadow-sm py-2.5 px-4 pr-11" placeholder="Re-enter new password">
+                                                <button type="button" onclick="togglePasswordVisibility('password_confirmation', this)" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-orange focus:outline-none cursor-pointer transition-colors" aria-label="Toggle confirm password visibility">
+                                                    <i class="fa-solid fa-eye text-sm eye-open"></i>
+                                                    <i class="fa-solid fa-eye-slash text-sm eye-closed" style="display: none;"></i>
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -330,6 +342,31 @@
             const activeBtn = document.getElementById('tab-btn-' + tabId);
             activeBtn.className = '';
             activeBtn.classList.add(...activeClasses);
+        }
+
+        function togglePasswordVisibility(inputId, button) {
+            const input = document.getElementById(inputId) || button.closest('.relative')?.querySelector('input');
+            if (!input) return;
+
+            const isPassword = input.type === 'password';
+            input.type = isPassword ? 'text' : 'password';
+
+            const openIcon = button.querySelector('.eye-open');
+            const closedIcon = button.querySelector('.eye-closed');
+
+            if (openIcon && closedIcon) {
+                if (isPassword) {
+                    openIcon.style.display = 'none';
+                    closedIcon.style.display = '';
+                    button.classList.add('text-brand-orange');
+                    button.classList.remove('text-gray-400');
+                } else {
+                    openIcon.style.display = '';
+                    closedIcon.style.display = 'none';
+                    button.classList.remove('text-brand-orange');
+                    button.classList.add('text-gray-400');
+                }
+            }
         }
 
         // Handle URL hashes for direct tab links

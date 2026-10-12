@@ -22,6 +22,7 @@
         <button
             type="button"
             data-wishlist-toggle
+            data-product-name="{{ $product->name }}"
             data-toggle-url="{{ route('wishlist.toggle', $product) }}"
             aria-label="{{ $isWishlisted ? 'Remove from wishlist' : 'Add to wishlist' }}"
             aria-pressed="{{ $isWishlisted ? 'true' : 'false' }}"
@@ -53,7 +54,7 @@
                 Add to cart
             </a>
         @else
-            <form action="{{ route('cart.add', $product) }}" method="POST" class="relative z-20 mt-auto" data-add-to-cart>
+            <form action="{{ route('cart.add', $product) }}" method="POST" class="relative z-20 mt-auto" data-add-to-cart data-product-name="{{ $product->name }}">
                 @csrf
                 <button type="submit" class="flex w-full items-center justify-center gap-1.5 rounded-md border border-brand-orange py-1.5 text-[13px] font-medium text-brand-orange transition hover:bg-brand-orange hover:text-white cursor-pointer">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 text-current">

@@ -112,12 +112,12 @@ function initAllSwipers() {
         });
     });
 
-    // Testimonials Swiper
+    // Testimonials Swiper (4 on desktop, 2 on mobile)
     document.querySelectorAll('.testimonial-swiper:not(.swiper-initialized)').forEach(el => {
         new Swiper(el, {
             modules: [Pagination, Autoplay],
-            slidesPerView: 1,
-            spaceBetween: 20,
+            slidesPerView: 2,
+            spaceBetween: 12,
             loop: true,
             autoplay: { delay: 4000, disableOnInteraction: false },
             pagination: {
@@ -125,8 +125,10 @@ function initAllSwipers() {
                 clickable: true,
             },
             breakpoints: {
-                768: { slidesPerView: 2 },
-                1024: { slidesPerView: 3 }
+                640: { slidesPerView: 2, spaceBetween: 14 },
+                768: { slidesPerView: 3, spaceBetween: 16 },
+                1024: { slidesPerView: 4, spaceBetween: 16 },
+                1280: { slidesPerView: 4, spaceBetween: 20 }
             }
         });
     });
@@ -390,6 +392,14 @@ document.addEventListener('livewire:navigated', () => {
                 updateCountBadges(data.count);
                 if (window.gaPush) window.gaPush(data.ga);
 
+                if (window.showToast) {
+                    if (data.in_wishlist) {
+                        window.showToast('Added to favorites successfully!', 'wishlist', 'favorite');
+                    } else {
+                        window.showToast('Removed from favorites successfully!', 'wishlist-removed', 'favorite');
+                    }
+                }
+
                 const wishlistCard = button.closest('[data-wishlist-page] [data-wishlist-card]');
                 if (!data.in_wishlist && wishlistCard) {
                     wishlistCard.classList.add('opacity-0', 'scale-95');
@@ -563,6 +573,9 @@ document.addEventListener('livewire:navigated', () => {
             const data = await send('/cart/' + rm.dataset.id, 'DELETE');
             applyPayload(data);
             window.gaPush(data.ga);
+            if (window.showToast) {
+                window.showToast('Removed from cart successfully!', 'cart-removed', 'cart');
+            }
         }
     });
 
@@ -582,6 +595,11 @@ document.addEventListener('livewire:navigated', () => {
             const data = await res.json();
             applyPayload(data);
             window.gaPush(data.ga);
+
+            if (window.showToast) {
+                window.showToast('Added to cart successfully!', 'cart', 'cart');
+            }
+
             showDrawer();
         } catch (e) { form.submit(); }
     });
@@ -1037,6 +1055,67 @@ window.quickContact = function () {
     return { open: false };
 };
 
+// Typewriter animated placeholder for search input (cycles through categories like ariomart.com)
+window.typewriterSearch = function (categories) {
+    const list = Array.isArray(categories) && categories.length > 0
+        ? categories
+        : ['Beauty', 'Fashion', 'Home & Living', 'Groceries', 'Shampoo', 'Baby Collection'];
+
+    return {
+        open: false,
+        placeholder: 'Search ' + list[0] + '...',
+        categories: list,
+        catIndex: 0,
+        charIndex: 7, // starts after 'Search '
+        isDeleting: false,
+        timeoutId: null,
+
+        init() {
+            this.tick();
+        },
+
+        tick() {
+            const input = this.$refs.searchInput;
+            // If user is focused and has typed text, pause the typewriter and recheck in 1s
+            if (input && document.activeElement === input && input.value.trim().length > 0) {
+                this.timeoutId = setTimeout(() => this.tick(), 1000);
+                return;
+            }
+
+            const prefix = 'Search ';
+            const currentCat = this.categories[this.catIndex] || '';
+            const fullText = prefix + currentCat + '...';
+
+            if (this.isDeleting) {
+                this.charIndex--;
+                this.placeholder = fullText.substring(0, this.charIndex);
+                if (this.charIndex <= prefix.length) {
+                    this.isDeleting = false;
+                    this.catIndex = (this.catIndex + 1) % this.categories.length;
+                    this.timeoutId = setTimeout(() => this.tick(), 350);
+                    return;
+                }
+                this.timeoutId = setTimeout(() => this.tick(), 35);
+            } else {
+                this.charIndex++;
+                this.placeholder = fullText.substring(0, this.charIndex);
+                if (this.charIndex >= fullText.length) {
+                    this.isDeleting = true;
+                    this.timeoutId = setTimeout(() => this.tick(), 2000);
+                    return;
+                }
+                this.timeoutId = setTimeout(() => this.tick(), 75);
+            }
+        },
+
+        destroy() {
+            if (this.timeoutId) {
+                clearTimeout(this.timeoutId);
+            }
+        }
+    };
+};
+
 // ---------------------------------------------------------------------------
 // Product Card Navigation Handler (Capture phase)
 // Intercepts taps/clicks on product cards (including inside Swiper sliders)
@@ -1078,3 +1157,33 @@ window.quickContact = function () {
         }
     }, true);
 })();
+
+// ---------------------------------------------------------------------------
+// Global Password Visibility Toggle
+// ---------------------------------------------------------------------------
+window.togglePasswordVisibility = function (inputOrId, button) {
+    const input = typeof inputOrId === 'string'
+        ? (document.getElementById(inputOrId) || button.closest('.relative')?.querySelector('input'))
+        : inputOrId;
+    if (!input) return;
+
+    const isPassword = input.type === 'password';
+    input.type = isPassword ? 'text' : 'password';
+
+    const openIcon = button.querySelector('.eye-open');
+    const closedIcon = button.querySelector('.eye-closed');
+
+    if (openIcon && closedIcon) {
+        if (isPassword) {
+            openIcon.style.display = 'none';
+            closedIcon.style.display = '';
+            button.classList.add('text-brand-orange');
+            button.classList.remove('text-gray-400', 'text-brand-navy/50');
+        } else {
+            openIcon.style.display = '';
+            closedIcon.style.display = 'none';
+            button.classList.remove('text-brand-orange');
+            button.classList.add(button.dataset.defaultColor || 'text-gray-400');
+        }
+    }
+};

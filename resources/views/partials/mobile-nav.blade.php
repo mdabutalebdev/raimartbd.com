@@ -42,15 +42,21 @@
 
     {{-- Mobile Search Modal --}}
     <div x-show="searchOpen" x-transition.opacity style="display: none;" class="fixed inset-0 z-[100] bg-black/50" @click.self="searchOpen = false">
-        <div x-show="searchOpen" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="-translate-y-full" x-transition:enter-end="translate-y-0" class="absolute inset-x-0 top-0 bg-white p-4 shadow-lg">
+        <div x-show="searchOpen" x-transition:enter="transition ease-out duration-200" x-transition:enter-start="-translate-y-full" x-transition:enter-end="translate-y-0"
+             x-data="typewriterSearch(@js($searchCategories ?? []))"
+             class="absolute inset-x-0 top-0 bg-white p-4 shadow-lg">
             <form action="{{ route('shop') }}" method="GET" class="flex items-center gap-2">
                 <div class="relative flex-1">
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Search for products..." autofocus class="w-full rounded-full border border-brand-navy/15 bg-brand-bg py-2.5 pl-5 pr-12 text-sm text-brand-navy placeholder:text-brand-navy/40 focus:border-brand-orange focus:outline-none">
-                    <button type="submit" class="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-brand-orange text-white cursor-pointer">
+                    <input type="text" name="search" value="{{ request('search') }}"
+                           x-ref="searchInput"
+                           :placeholder="placeholder"
+                           autofocus
+                           class="w-full rounded-full border border-brand-navy/15 bg-brand-bg py-2.5 pl-5 pr-12 text-sm text-brand-navy placeholder:text-brand-navy/40 focus:border-brand-orange focus:bg-white focus:outline-none">
+                    <button type="submit" class="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-brand-orange text-white cursor-pointer" aria-label="Search">
                         <i class="fa-solid fa-magnifying-glass text-sm"></i>
                     </button>
                 </div>
-                <button type="button" @click="searchOpen = false" class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-bg text-brand-navy cursor-pointer">
+                <button type="button" @click="searchOpen = false" class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-bg text-brand-navy cursor-pointer" aria-label="Close search">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
             </form>

@@ -42,11 +42,21 @@ class ShopController extends Controller
             ? Category::active()->where('slug', $selectedCategories->first())->first()
             : null;
 
+        $searchTerm = $request->string('search')->trim()->value();
+        $searchFilter = function ($q) use ($searchTerm) {
+            $q->where(function ($sub) use ($searchTerm) {
+                $sub->where('name', 'like', '%'.$searchTerm.'%')
+                    ->orWhere('description', 'like', '%'.$searchTerm.'%')
+                    ->orWhereHas('category', fn ($c) => $c->where('name', 'like', '%'.$searchTerm.'%'))
+                    ->orWhereHas('brand', fn ($b) => $b->where('name', 'like', '%'.$searchTerm.'%'));
+            });
+        };
+
         // --- Price bounds: derived from the category/brand/search context only ---
         $context = fn () => Product::active()
             ->when($categoryIds->isNotEmpty(), fn ($q) => $q->whereIn('category_id', $categoryIds))
             ->when($brandIds->isNotEmpty(), fn ($q) => $q->whereIn('brand_id', $brandIds))
-            ->when($request->filled('search'), fn ($q) => $q->where('name', 'like', '%'.$request->string('search').'%'));
+            ->when(filled($searchTerm), $searchFilter);
 
         $priceFloor = (int) floor($context()->min('price') ?? 0);
         $priceCeil = (int) ceil($context()->max('price') ?? 0);
@@ -67,7 +77,7 @@ class ShopController extends Controller
             ->active()
             ->when($categoryIds->isNotEmpty(), fn ($q) => $q->whereIn('category_id', $categoryIds))
             ->when($brandIds->isNotEmpty(), fn ($q) => $q->whereIn('brand_id', $brandIds))
-            ->when($request->filled('search'), fn ($q) => $q->where('name', 'like', '%'.$request->string('search').'%'))
+            ->when(filled($searchTerm), $searchFilter)
             ->when($request->filled('min_price'), fn ($q) => $q->where('price', '>=', $minPrice))
             ->when($request->filled('max_price'), fn ($q) => $q->where('price', '<=', $maxPrice))
             ->when($request->boolean('in_stock'), fn ($q) => $q->where('stock', '>', 0))
@@ -81,7 +91,7 @@ class ShopController extends Controller
             ->when($request->sort === 'price_high', fn ($q) => $q->orderByDesc('price'))
             ->when($request->sort === 'popular', fn ($q) => $q->orderByDesc('reviews_count'))
             ->when(! $request->filled('sort'), fn ($q) => $q->latest())
-            ->paginate(12)
+            ->paginate(15)
             ->withQueryString();
 
         // --- Per-option counts (global active products) for the filter labels ---

@@ -12,6 +12,7 @@ use App\Models\SocialLink;
 use App\Services\Cart;
 use App\Services\Wishlist;
 use App\Support\MailConfig;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -31,6 +32,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Paginator::defaultView('vendor.pagination.tailwind');
+
         // Mail credentials saved in the admin panel win over .env (wrapped so a
         // missing settings table during migrate/install can't break booting).
         try {
@@ -46,7 +49,7 @@ class AppServiceProvider extends ServiceProvider
 
         // The header/drawer category tree is identical for every visitor on every
         // page, so it is cached and busted by the CacheBuster observer on save.
-        View::composer(['partials.header', 'partials.category-drawer'], function ($view) {
+        View::composer(['partials.header', 'partials.category-drawer', 'partials.mobile-menu-drawer'], function ($view) {
             $navCategories = Cache::remember('nav:categories', now()->addHours(6), fn () => Category::active()->topLevel()
                 ->withCount('products')
                 ->with(['children' => fn ($query) => $query->active()->orderBy('sort_order')])
@@ -76,6 +79,13 @@ class AppServiceProvider extends ServiceProvider
 
         View::composer('partials.quick-contact', function ($view) {
             $view->with('siteSettings', SiteSetting::getAll());
+        });
+
+        View::composer(['partials.header', 'partials.mobile-nav', 'livewire.global-search'], function ($view) {
+            $searchCategories = Cache::remember('nav:search_categories', now()->addHours(6), function () {
+                return Category::active()->orderBy('sort_order')->pluck('name')->values()->all();
+            });
+            $view->with('searchCategories', $searchCategories);
         });
 
         View::composer('partials.mobile-nav', function ($view) {

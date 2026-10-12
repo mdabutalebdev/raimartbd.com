@@ -24,6 +24,7 @@ class WishlistController extends Controller
             return response()->json([
                 'in_wishlist' => $inWishlist,
                 'count' => $wishlist->count(),
+                'message' => $inWishlist ? "{$product->name} added to your favorites!" : "{$product->name} removed from favorites.",
                 // Only report to GA4 when the item was just ADDED, not removed.
                 'ga' => $inWishlist ? [
                     'event' => 'add_to_wishlist',

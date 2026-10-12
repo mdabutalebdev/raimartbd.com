@@ -1,6 +1,6 @@
 <x-layout>
     {{-- Hero --}}
-    <section class="gb-container pt-5 md:pt-6">
+    <section class="gb-container pt-1.5 sm:pt-3 md:pt-6">
         <div class="grid grid-cols-1 gap-4 lg:grid-cols-[5fr_1fr]">
             <div class="relative overflow-hidden rounded-2xl swiper hero-swiper w-full min-w-0 h-[200px] sm:h-[300px] lg:h-auto">
                 <div class="swiper-wrapper">
@@ -324,24 +324,24 @@
         </section>
     @endforeach
 
-    {{-- Just for you — 15 shown, then 5 more per "Show More" click --}}
+    {{-- Just for you — 15 shown per page, paged client-side --}}
     <section class="gb-container py-4 md:py-6">
-        <div x-data="paginator({{ $justForYou->count() }}, 10)" x-ref="top">
-            <h2 class="text-center text-xl sm:text-3xl font-bold text-gray-800 mb-2 sm:mb-4">Just for you</h2>
+        <div x-data="paginator({{ $justForYou->count() }}, 15)" x-ref="top">
+            <h2 class="text-xl sm:text-3xl font-bold text-gray-800 mb-2 sm:mb-4">Just for you</h2>
 
-            {{-- 10 products per page, paged client-side (no reload) --}}
+            {{-- 15 products per page, paged client-side (no reload) --}}
             <div class="product-row mt-4 md:mt-5">
                 @foreach ($justForYou as $index => $product)
-                    <div x-show="shows({{ $index }})" @if ($index >= 10) style="display:none;" @endif>
+                    <div x-show="shows({{ $index }})" @if ($index >= 15) style="display:none;" @endif>
                         <x-product-card :product="$product" />
                     </div>
                 @endforeach
             </div>
 
-            @if ($justForYou->count() > 10)
-                <nav class="mt-6 flex items-center justify-center gap-1.5" aria-label="Just for you pages">
+            @if ($justForYou->count() > 15)
+                <nav class="my-6 sm:my-8 flex items-center justify-center gap-1.5 sm:gap-2" aria-label="Just for you pages">
                     <button type="button" @click="prev()" :disabled="page === 1"
-                        class="flex h-9 w-9 items-center justify-center rounded-md text-brand-navy/60 transition hover:text-brand-orange disabled:cursor-not-allowed disabled:opacity-30 cursor-pointer"
+                        class="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-md text-brand-navy/70 transition hover:bg-brand-orange/10 hover:text-brand-orange disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-brand-navy/30 cursor-pointer"
                         aria-label="Previous page">
                         <i class="fa-solid fa-chevron-left text-xs"></i>
                     </button>
@@ -349,14 +349,14 @@
                     <template x-for="(n, i) in numbers" :key="i">
                         <button type="button" @click="go(n)" :disabled="n === '…'"
                             :class="n === page
-                                ? 'bg-brand-orange text-white'
-                                : (n === '…' ? 'cursor-default text-brand-navy/40' : 'text-brand-navy hover:bg-brand-orange/10 hover:text-brand-orange cursor-pointer')"
-                            class="flex h-9 min-w-9 items-center justify-center rounded-md px-2 text-sm font-semibold transition"
+                                ? 'bg-brand-orange text-white shadow-xs font-semibold'
+                                : (n === '…' ? 'cursor-default text-brand-navy/40 font-medium' : 'text-brand-navy/80 hover:bg-brand-orange/10 hover:text-brand-orange cursor-pointer font-medium')"
+                            class="flex h-9 min-w-9 sm:h-10 sm:min-w-10 items-center justify-center rounded-md px-2 text-sm transition"
                             x-text="n"></button>
                     </template>
 
                     <button type="button" @click="next()" :disabled="page === pages"
-                        class="flex h-9 w-9 items-center justify-center rounded-md text-brand-navy/60 transition hover:text-brand-orange disabled:cursor-not-allowed disabled:opacity-30 cursor-pointer"
+                        class="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-md text-brand-navy/70 transition hover:bg-brand-orange/10 hover:text-brand-orange disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-brand-navy/30 cursor-pointer"
                         aria-label="Next page">
                         <i class="fa-solid fa-chevron-right text-xs"></i>
                     </button>
@@ -377,31 +377,31 @@
                 <div class="swiper-wrapper flex">
                     @foreach ($testimonials as $testimonial)
                         <div class="swiper-slide !h-auto">
-                            <div class="flex h-full flex-col justify-between rounded-xl bg-brand-bg p-6">
+                            <div class="flex h-full min-h-[175px] sm:min-h-[195px] flex-col justify-between rounded-xl bg-brand-bg p-4 sm:p-5">
                                 <div>
-                                    <div class="flex items-center gap-3">
-                                        @if ($testimonial->avatar)
-                                            <img src="{{ image_url($testimonial->avatar) }}" class="h-10 w-10 rounded-full object-cover shrink-0" alt="{{ $testimonial->name ?? $testimonial->phone }}">
-                                        @else
-                                            <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-brand-navy font-serif text-sm font-semibold text-white">
-                                                <i class="fa-solid fa-user"></i>
-                                            </span>
-                                        @endif
-                                        <div>
-                                            <p class="text-sm font-semibold text-brand-navy">{{ $testimonial->name ?? $testimonial->phone ?? 'Customer' }}</p>
-                                            @if($testimonial->location)
-                                                <p class="text-xs text-brand-navy/50">{{ $testimonial->location }}</p>
-                                            @endif
-                                        </div>
-                                    </div>
-
-                                    <div class="mt-3 text-xs text-brand-orange">
+                                    <div class="text-xs text-brand-orange">
                                         @for ($i = 0; $i < 5; $i++)
                                             <i class="fa-{{ $i < $testimonial->rating ? 'solid' : 'regular' }} fa-star"></i>
                                         @endfor
                                     </div>
 
-                                    <p class="mt-3 text-sm leading-relaxed text-brand-navy/70">{{ $testimonial->text }}</p>
+                                    <p class="mt-2.5 text-sm leading-relaxed text-brand-navy/70">{{ $testimonial->text }}</p>
+                                </div>
+
+                                <div class="mt-3 flex items-center gap-3">
+                                    @if ($testimonial->avatar)
+                                        <img src="{{ image_url($testimonial->avatar) }}" class="h-9 w-9 sm:h-10 sm:w-10 rounded-full object-cover shrink-0" alt="{{ $testimonial->name ?? $testimonial->phone }}">
+                                    @else
+                                        <span class="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full bg-brand-navy font-serif text-sm font-semibold text-white">
+                                            <i class="fa-solid fa-user"></i>
+                                        </span>
+                                    @endif
+                                    <div>
+                                        <p class="text-sm font-semibold text-brand-navy">{{ $testimonial->name ?? $testimonial->phone ?? 'Customer' }}</p>
+                                        @if($testimonial->location)
+                                            <p class="text-xs text-brand-navy/50">{{ $testimonial->location }}</p>
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
                         </div>

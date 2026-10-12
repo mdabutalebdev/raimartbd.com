@@ -390,7 +390,7 @@
                         </div>
 
                         {{-- Add to Cart Form --}}
-                        <form action="{{ route('cart.add', $product) }}" method="POST" data-add-to-cart class="space-y-3.5">
+                        <form action="{{ route('cart.add', $product) }}" method="POST" data-add-to-cart data-product-name="{{ $product->name }}" class="space-y-3.5">
                             @csrf
 
                             {{-- Variant Image Swatches (When show_variant_image is active or variants have images) --}}
@@ -480,6 +480,20 @@
                                         title="WhatsApp">
                                         <i class="fa-brands fa-whatsapp text-2xl text-white"></i>
                                     </a>
+
+                                    {{-- Wishlist Button --}}
+                                    @php
+                                        $isWishlisted = in_array($product->id, $wishlistIds ?? []);
+                                    @endphp
+                                    <button type="button"
+                                        data-wishlist-toggle
+                                        data-toggle-url="{{ route('wishlist.toggle', $product) }}"
+                                        aria-label="{{ $isWishlisted ? 'Remove from wishlist' : 'Add to wishlist' }}"
+                                        aria-pressed="{{ $isWishlisted ? 'true' : 'false' }}"
+                                        class="wishlist-btn h-11 w-11 flex-shrink-0 flex items-center justify-center rounded-[10px] border border-gray-200 bg-white shadow-xs hover:border-brand-orange hover:text-brand-orange transition-all cursor-pointer {{ $isWishlisted ? 'text-brand-orange' : 'text-gray-400' }}">
+                                        <i class="fa-solid fa-heart text-lg" style="{{ $isWishlisted ? '' : 'display: none;' }}"></i>
+                                        <i class="fa-regular fa-heart text-lg" style="{{ $isWishlisted ? 'display: none;' : '' }}"></i>
+                                    </button>
                                 </div>
 
                                 {{-- Row 2: Add to Cart + Buy Now --}}

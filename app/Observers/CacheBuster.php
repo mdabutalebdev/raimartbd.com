@@ -16,6 +16,7 @@ class CacheBuster
         'home:categories',
         'home:testimonials',
         'nav:categories',
+        'nav:search_categories',
     ];
 
     public function saved(Model $model): void

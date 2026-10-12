@@ -28,16 +28,22 @@
             </button>
             @auth
                 <div class="relative group hidden md:block" id="profile-menu">
-                    <button type="button" class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-bg overflow-hidden border border-gray-200 cursor-pointer" aria-label="Profile">
+                    <button type="button" class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-bg overflow-hidden border border-gray-200 hover:ring-2 hover:ring-brand-orange/30 transition cursor-pointer" aria-label="Profile">
                         @if(auth()->user()->avatar)
-                            <img src="{{ Storage::url(auth()->user()->avatar) }}" alt="Profile" class="w-full h-full object-cover">
+                            <img src="{{ auth()->user()->avatar_url }}" alt="{{ auth()->user()->name }}" class="w-full h-full object-cover" referrerpolicy="no-referrer">
                         @else
-                            <i class="fa-regular fa-user"></i>
+                            <span class="text-sm font-bold text-brand-navy">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
                         @endif
                     </button>
-                    <div class="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 border border-gray-100 z-50">
-                        <div class="p-3 border-b border-gray-100">
-                            <p class="font-semibold text-gray-800 text-sm truncate">{{ auth()->user()->name }}</p>
+                    <div class="absolute right-0 top-full mt-2 w-52 bg-white rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 border border-gray-100 z-50">
+                        <div class="p-3 border-b border-gray-100 flex items-center gap-3">
+                            <div class="h-10 w-10 rounded-full overflow-hidden border border-gray-200 shrink-0">
+                                <img src="{{ auth()->user()->avatar_url }}" alt="{{ auth()->user()->name }}" class="w-full h-full object-cover" referrerpolicy="no-referrer">
+                            </div>
+                            <div class="overflow-hidden">
+                                <p class="font-semibold text-gray-800 text-sm truncate">{{ auth()->user()->name }}</p>
+                                <p class="text-xs text-gray-500 truncate">{{ auth()->user()->email }}</p>
+                            </div>
                         </div>
                         <div class="py-1">
                             <a href="{{ route('user.dashboard') }}" wire:navigate class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-brand-orange">Dashboard</a>

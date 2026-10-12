@@ -34,8 +34,8 @@ class HomeController extends Controller
         $featuredProducts = Product::with(self::CARD_RELATIONS)->active()->featured()->latest()->take(10)->get();
         $bestSelling = Product::with(self::CARD_RELATIONS)->active()->bestSeller()->latest()->take(15)->get();
         $newArrivals = Product::with(self::CARD_RELATIONS)->active()->newArrival()->latest()->take(15)->get();
-        // 10 shown per page, paged client-side.
-        $justForYou = Product::with(self::CARD_RELATIONS)->active()->inRandomOrder()->take(40)->get();
+        // 15 shown per page, paged client-side.
+        $justForYou = Product::with(self::CARD_RELATIONS)->active()->inRandomOrder()->take(60)->get();
 
         $testimonials = Cache::remember(
             'home:testimonials',

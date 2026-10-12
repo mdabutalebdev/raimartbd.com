@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 
@@ -37,8 +38,10 @@ class GoogleAuthController extends Controller
         try {
             $googleUser = Socialite::driver('google')->user();
         } catch (\Throwable $e) {
+            Log::error('Google Login Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+
             return redirect()->route('login')->withErrors([
-                'google' => 'Google authentication failed or was cancelled.',
+                'google' => 'Google authentication failed: ' . $e->getMessage(),
             ]);
         }
 
@@ -76,6 +79,6 @@ class GoogleAuthController extends Controller
             return redirect()->intended(route('admin.dashboard'));
         }
 
-        return redirect()->intended(route('home'))->with('status', "Welcome, {$user->name}!");
+        return redirect()->route('user.dashboard')->with('status', "Welcome, {$user->name}!");
     }
 }

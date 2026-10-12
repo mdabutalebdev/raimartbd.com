@@ -53,6 +53,11 @@ return [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI', env('APP_URL', 'http://127.0.0.1:8000') . '/auth/google/callback'),
+        'guzzle' => [
+            'verify' => file_exists(storage_path('cacert.pem'))
+                ? storage_path('cacert.pem')
+                : (file_exists('C:\\php\\cacert.pem') ? 'C:\\php\\cacert.pem' : true),
+        ],
     ],
 
 ];
