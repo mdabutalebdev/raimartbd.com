@@ -25,14 +25,21 @@ class UserController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+            'phone' => ['nullable', 'string', 'max:20'],
+            'city' => ['nullable', 'string', 'max:100'],
+            'address' => ['nullable', 'string', 'max:500'],
             'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,webp', 'max:5120'],
         ]);
 
         $user->name = $validated['name'];
-
-        if ($request->filled('password')) {
-            $user->password = Hash::make($validated['password']);
+        if (array_key_exists('phone', $validated)) {
+            $user->phone = $validated['phone'];
+        }
+        if (array_key_exists('city', $validated)) {
+            $user->city = $validated['city'];
+        }
+        if (array_key_exists('address', $validated)) {
+            $user->address = $validated['address'];
         }
 
         if ($request->hasFile('avatar')) {
@@ -46,6 +53,32 @@ class UserController extends Controller
 
         $user->save();
 
-        return back()->with('success', 'Profile updated successfully.');
+        return redirect()->route('user.dashboard', ['tab' => 'settings'])->with('success', 'Profile details updated successfully.');
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $user = Auth::user();
+
+        $rules = [
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ];
+
+        // If user already has a set password, verify current password
+        if (!empty($user->password)) {
+            $rules['current_password'] = ['required', 'current_password'];
+        }
+
+        $validated = $request->validate($rules, [
+            'current_password.current_password' => 'The current password you entered is incorrect.',
+            'password.required' => 'Please enter a new password.',
+            'password.min' => 'The new password must be at least 8 characters.',
+            'password.confirmed' => 'The new password confirmation does not match.',
+        ]);
+
+        $user->password = Hash::make($validated['password']);
+        $user->save();
+
+        return redirect()->route('user.dashboard', ['tab' => 'password'])->with('success', 'Password updated successfully.');
     }
 }

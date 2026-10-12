@@ -39,6 +39,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->
 Route::middleware('auth')->prefix('user')->name('user.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\UserController::class, 'dashboard'])->name('dashboard');
     Route::post('/profile', [\App\Http\Controllers\UserController::class, 'updateProfile'])->name('profile.update');
+    Route::post('/password', [\App\Http\Controllers\UserController::class, 'updatePassword'])->name('password.update');
 });
 
 Route::get('/', [HomeController::class, 'index'])->name('home');

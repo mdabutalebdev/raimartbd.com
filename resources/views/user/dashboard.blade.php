@@ -34,13 +34,7 @@
                         <!-- Profile Summary -->
                         <div class="p-6 border-b border-gray-100 text-center bg-gradient-to-b from-brand-orange/10 to-transparent">
                             <div class="relative w-24 h-24 mx-auto mb-4">
-                                @if($user->avatar)
-                                    <img src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="w-full h-full rounded-full object-cover border-4 border-white shadow-md" referrerpolicy="no-referrer">
-                                @else
-                                    <div class="w-full h-full rounded-full bg-brand-orange text-white flex items-center justify-center text-3xl font-bold shadow-md mx-auto">
-                                        {{ substr($user->name, 0, 1) }}
-                                    </div>
-                                @endif
+                                <img id="sidebar_avatar_img" src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="w-full h-full rounded-full object-cover border-4 border-white shadow-md" referrerpolicy="no-referrer">
                             </div>
                             <h2 class="text-xl font-bold text-brand-navy">{{ $user->name }}</h2>
                             <p class="text-sm text-gray-500">{{ $user->email }}</p>
@@ -48,17 +42,21 @@
                         
                         <!-- Navigation -->
                         <nav class="p-4 space-y-2">
-                            <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" class="w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 bg-brand-orange text-white font-medium shadow-md shadow-brand-orange/20">
+                            <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" class="w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 bg-brand-orange text-white font-medium shadow-md shadow-brand-orange/20 cursor-pointer">
                                 <i class="fa-solid fa-gauge-high w-5 text-center"></i>
                                 Dashboard
                             </button>
-                            <button onclick="switchTab('orders')" id="tab-btn-orders" class="w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 text-brand-navy hover:bg-brand-bg hover:text-brand-orange font-medium">
+                            <button onclick="switchTab('orders')" id="tab-btn-orders" class="w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 text-brand-navy hover:bg-brand-bg hover:text-brand-orange font-medium cursor-pointer">
                                 <i class="fa-solid fa-box w-5 text-center"></i>
                                 My Orders
                             </button>
-                            <button onclick="switchTab('settings')" id="tab-btn-settings" class="w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 text-brand-navy hover:bg-brand-bg hover:text-brand-orange font-medium">
+                            <button onclick="switchTab('settings')" id="tab-btn-settings" class="w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 text-brand-navy hover:bg-brand-bg hover:text-brand-orange font-medium cursor-pointer">
                                 <i class="fa-solid fa-user-pen w-5 text-center"></i>
                                 Profile Settings
+                            </button>
+                            <button onclick="switchTab('password')" id="tab-btn-password" class="w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 text-brand-navy hover:bg-brand-bg hover:text-brand-orange font-medium cursor-pointer">
+                                <i class="fa-solid fa-shield-halved w-5 text-center"></i>
+                                Change Password
                             </button>
                             
                             <hr class="my-4 border-gray-100">
@@ -224,85 +222,185 @@
                         </div>
                     </div>
 
-                    <!-- SETTINGS TAB -->
+                    <!-- SETTINGS TAB (Personal Details & Avatar) -->
                     <div id="tab-settings" class="hidden animate-fade-in">
                         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                             <div class="p-6 border-b border-gray-100 bg-gray-50/50">
                                 <h3 class="text-xl font-bold text-brand-navy">Profile Settings</h3>
-                                <p class="text-gray-500 text-sm mt-1">Update your personal information and password.</p>
+                                <p class="text-gray-500 text-sm mt-1">Manage your personal information and profile picture.</p>
                             </div>
                             
                             <form action="{{ route('user.profile.update') }}" method="POST" enctype="multipart/form-data" class="p-6 md:p-8">
                                 @csrf
                                 
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                    <!-- Personal Info -->
-                                    <div class="space-y-6">
-                                        <h4 class="text-lg font-semibold text-brand-navy flex items-center gap-2">
-                                            <i class="fa-regular fa-id-card text-brand-orange"></i> Personal Details
-                                        </h4>
-                                        
-                                        <div class="space-y-2">
-                                            <label for="name" class="block text-sm font-medium text-gray-700">Full Name</label>
-                                            <input type="text" id="name" name="name" value="{{ old('name', $user->name) }}" class="w-full rounded-xl border-gray-200 focus:border-brand-orange focus:ring-brand-orange bg-gray-50 focus:bg-white transition-colors shadow-sm py-2.5 px-4" required>
-                                        </div>
-                                        
-                                        <div class="space-y-2">
-                                            <label for="email" class="block text-sm font-medium text-gray-700">Email Address <span class="text-xs text-gray-400 font-normal ml-1">(Cannot be changed)</span></label>
-                                            <input type="email" id="email" value="{{ $user->email }}" class="w-full rounded-xl border-gray-200 bg-gray-100 text-gray-500 cursor-not-allowed shadow-sm py-2.5 px-4" readonly>
+                                <!-- Profile Picture Section with Live Interactive Preview -->
+                                <div class="mb-8 p-5 sm:p-6 bg-gradient-to-r from-brand-orange/5 via-brand-bg/60 to-brand-orange/5 rounded-2xl border border-brand-orange/15 shadow-2xs">
+                                    <div class="flex flex-col sm:flex-row items-center gap-6">
+                                        {{-- Circular Avatar Preview with Camera Overlay --}}
+                                        <div class="relative group cursor-pointer shrink-0" onclick="document.getElementById('avatar_input').click()" title="Click to choose a photo">
+                                            <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden bg-white shadow-md ring-4 ring-brand-orange/30 group-hover:ring-brand-orange transition-all duration-300">
+                                                <img id="avatar_preview" src="{{ $user->avatar_url }}" alt="{{ $user->name }}" class="w-full h-full object-cover" referrerpolicy="no-referrer">
+                                            </div>
+                                            <div class="absolute bottom-0 right-0 w-8 h-8 rounded-full bg-brand-orange text-white flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-200">
+                                                <i class="fa-solid fa-camera text-xs"></i>
+                                            </div>
                                         </div>
 
-                                        <div class="space-y-2">
-                                            <label class="block text-sm font-medium text-gray-700">Profile Picture</label>
-                                            <div class="mt-1 flex items-center gap-4">
-                                                <div class="w-16 h-16 rounded-full bg-gray-100 border border-gray-200 overflow-hidden shrink-0">
-                                                    @if($user->avatar)
-                                                        <img src="{{ $user->avatar_url }}" alt="Preview" class="w-full h-full object-cover" referrerpolicy="no-referrer">
-                                                    @else
-                                                        <div class="w-full h-full flex items-center justify-center text-gray-400 text-2xl">
-                                                            <i class="fa-regular fa-image"></i>
-                                                        </div>
-                                                    @endif
-                                                </div>
-                                                <input type="file" id="avatar" name="avatar" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-orange/10 file:text-brand-orange hover:file:bg-brand-orange/20 cursor-pointer transition">
+                                        {{-- Actions and Information --}}
+                                        <div class="flex-1 text-center sm:text-left space-y-2.5">
+                                            <div>
+                                                <h4 class="text-base font-semibold text-brand-navy">Profile Photo</h4>
+                                                <p class="text-xs text-brand-navy/60 mt-0.5">Click on the avatar or the button below to upload a new picture.</p>
                                             </div>
-                                        </div>
-                                    </div>
 
-                                    <!-- Security -->
-                                    <div class="space-y-6">
-                                        <h4 class="text-lg font-semibold text-brand-navy flex items-center gap-2">
-                                            <i class="fa-solid fa-lock text-brand-orange"></i> Security
-                                        </h4>
-                                        <p class="text-sm text-gray-500 leading-relaxed bg-brand-bg/50 p-3 rounded-lg border border-brand-navy/5">Leave the password fields blank if you don't want to change your current password.</p>
-                                        
-                                        <div class="space-y-2">
-                                            <label for="password" class="block text-sm font-medium text-gray-700">New Password</label>
-                                            <div class="relative">
-                                                <input type="password" id="password" name="password" class="w-full rounded-xl border-gray-200 focus:border-brand-orange focus:ring-brand-orange bg-gray-50 focus:bg-white transition-colors shadow-sm py-2.5 px-4 pr-11" placeholder="Leave blank to keep current">
-                                                <button type="button" onclick="togglePasswordVisibility('password', this)" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-orange focus:outline-none cursor-pointer transition-colors" aria-label="Toggle password visibility">
-                                                    <i class="fa-solid fa-eye text-sm eye-open"></i>
-                                                    <i class="fa-solid fa-eye-slash text-sm eye-closed" style="display: none;"></i>
+                                            <div class="flex flex-wrap items-center justify-center sm:justify-start gap-3">
+                                                <input type="file" id="avatar_input" name="avatar" accept="image/jpeg,image/png,image/webp,image/jpg" class="hidden" onchange="previewAvatar(this)">
+                                                
+                                                <button type="button" onclick="document.getElementById('avatar_input').click()" class="inline-flex items-center gap-2 bg-brand-orange hover:bg-brand-orange/90 text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-xs hover:shadow-md transition cursor-pointer">
+                                                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                                                    Choose Photo
+                                                </button>
+
+                                                <button type="button" id="avatar_cancel_btn" onclick="resetAvatarPreview()" class="hidden inline-flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium px-3.5 py-2.5 rounded-xl transition cursor-pointer">
+                                                    <i class="fa-solid fa-xmark"></i>
+                                                    Cancel
                                                 </button>
                                             </div>
-                                        </div>
-                                        <div class="space-y-2">
-                                            <label for="password_confirmation" class="block text-sm font-medium text-gray-700">Confirm New Password</label>
-                                            <div class="relative">
-                                                <input type="password" id="password_confirmation" name="password_confirmation" class="w-full rounded-xl border-gray-200 focus:border-brand-orange focus:ring-brand-orange bg-gray-50 focus:bg-white transition-colors shadow-sm py-2.5 px-4 pr-11" placeholder="Re-enter new password">
-                                                <button type="button" onclick="togglePasswordVisibility('password_confirmation', this)" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-orange focus:outline-none cursor-pointer transition-colors" aria-label="Toggle confirm password visibility">
-                                                    <i class="fa-solid fa-eye text-sm eye-open"></i>
-                                                    <i class="fa-solid fa-eye-slash text-sm eye-closed" style="display: none;"></i>
-                                                </button>
+
+                                            <div id="avatar_selected_badge" class="hidden items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold rounded-lg inline-flex">
+                                                <i class="fa-solid fa-circle-check text-emerald-500"></i>
+                                                <span id="avatar_selected_text">New photo chosen — click "Save Changes" to apply</span>
                                             </div>
+
+                                            <p class="text-xs text-gray-400">Accepted formats: JPG, PNG, WEBP (Max 5MB). Recommended 1:1 square.</p>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="mt-10 pt-6 border-t border-gray-100 flex justify-end">
-                                    <button type="submit" class="bg-brand-navy hover:bg-brand-orange text-white font-semibold py-3 px-8 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2">
-                                        <i class="fa-solid fa-cloud-arrow-up"></i> Save Changes
+                                <!-- Personal Details Form -->
+                                <div class="space-y-6">
+                                    <h4 class="text-lg font-semibold text-brand-navy flex items-center gap-2 border-b border-gray-100 pb-3">
+                                        <i class="fa-regular fa-id-card text-brand-orange"></i> Personal Details
+                                    </h4>
+
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div class="space-y-2">
+                                            <label for="name" class="block text-sm font-semibold text-gray-700">Full Name <span class="text-red-500">*</span></label>
+                                            <input type="text" id="name" name="name" value="{{ old('name', $user->name) }}" class="w-full rounded-xl border-gray-200 focus:border-brand-orange focus:ring-brand-orange bg-gray-50 focus:bg-white transition-colors shadow-sm py-2.5 px-4" required>
+                                        </div>
+
+                                        <div class="space-y-2">
+                                            <label for="email" class="block text-sm font-semibold text-gray-700 flex items-center justify-between">
+                                                <span>Email Address</span>
+                                                <span class="text-xs text-gray-400 font-normal">Cannot be changed</span>
+                                            </label>
+                                            <div class="relative">
+                                                <input type="email" id="email" value="{{ $user->email }}" class="w-full rounded-xl border-gray-200 bg-gray-100 text-gray-500 cursor-not-allowed shadow-sm py-2.5 px-4 pl-10" readonly>
+                                                <i class="fa-solid fa-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                                            </div>
+                                        </div>
+
+                                        <div class="space-y-2">
+                                            <label for="phone" class="block text-sm font-semibold text-gray-700">Phone Number</label>
+                                            <div class="relative">
+                                                <input type="text" id="phone" name="phone" value="{{ old('phone', $user->phone) }}" placeholder="e.g. 01700000000" class="w-full rounded-xl border-gray-200 focus:border-brand-orange focus:ring-brand-orange bg-gray-50 focus:bg-white transition-colors shadow-sm py-2.5 px-4 pl-10">
+                                                <i class="fa-solid fa-phone absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                                            </div>
+                                        </div>
+
+                                        <div class="space-y-2">
+                                            <label for="city" class="block text-sm font-semibold text-gray-700">City / District</label>
+                                            <div class="relative">
+                                                <input type="text" id="city" name="city" value="{{ old('city', $user->city) }}" placeholder="e.g. Dhaka, Chattogram" class="w-full rounded-xl border-gray-200 focus:border-brand-orange focus:ring-brand-orange bg-gray-50 focus:bg-white transition-colors shadow-sm py-2.5 px-4 pl-10">
+                                                <i class="fa-solid fa-location-dot absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                                            </div>
+                                        </div>
+
+                                        <div class="space-y-2 md:col-span-2">
+                                            <label for="address" class="block text-sm font-semibold text-gray-700">Delivery Address</label>
+                                            <textarea id="address" name="address" rows="2" placeholder="House, Road, Area details..." class="w-full rounded-xl border-gray-200 focus:border-brand-orange focus:ring-brand-orange bg-gray-50 focus:bg-white transition-colors shadow-sm py-2.5 px-4">{{ old('address', $user->address) }}</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-8 pt-6 border-t border-gray-100 flex justify-end">
+                                    <button type="submit" class="bg-brand-navy hover:bg-brand-orange text-white font-semibold py-3 px-8 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 cursor-pointer">
+                                        <i class="fa-solid fa-cloud-arrow-up"></i> Save Profile Details
                                     </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- PASSWORD TAB (Dedicated Security & Password Update) -->
+                    <div id="tab-password" class="hidden animate-fade-in">
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div class="p-6 border-b border-gray-100 bg-gray-50/50">
+                                <h3 class="text-xl font-bold text-brand-navy">Change Password</h3>
+                                <p class="text-gray-500 text-sm mt-1">Update your password to keep your Raimart account safe.</p>
+                            </div>
+                            
+                            <form action="{{ route('user.password.update') }}" method="POST" class="p-6 md:p-8">
+                                @csrf
+
+                                <div class="max-w-xl space-y-6">
+                                    @if(!empty($user->password))
+                                        <div class="space-y-2">
+                                            <label for="current_password" class="block text-sm font-semibold text-gray-700">Current Password <span class="text-red-500">*</span></label>
+                                            <div class="relative">
+                                                <input type="password" id="current_password" name="current_password" class="w-full rounded-xl border-gray-200 focus:border-brand-orange focus:ring-brand-orange bg-gray-50 focus:bg-white transition-colors shadow-sm py-2.5 px-4 pr-11" placeholder="Enter your current password" required>
+                                                <button type="button" onclick="togglePasswordVisibility('current_password', this)" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-orange focus:outline-none cursor-pointer transition-colors" aria-label="Toggle password visibility">
+                                                    <i class="fa-solid fa-eye text-sm eye-open"></i>
+                                                    <i class="fa-solid fa-eye-slash text-sm eye-closed" style="display: none;"></i>
+                                                </button>
+                                            </div>
+                                            @error('current_password')
+                                                <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                                            @enderror
+                                        </div>
+                                    @endif
+
+                                    <div class="space-y-2">
+                                        <label for="new_password" class="block text-sm font-semibold text-gray-700">New Password <span class="text-red-500">*</span></label>
+                                        <div class="relative">
+                                            <input type="password" id="new_password" name="password" class="w-full rounded-xl border-gray-200 focus:border-brand-orange focus:ring-brand-orange bg-gray-50 focus:bg-white transition-colors shadow-sm py-2.5 px-4 pr-11" placeholder="Minimum 8 characters" required>
+                                            <button type="button" onclick="togglePasswordVisibility('new_password', this)" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-orange focus:outline-none cursor-pointer transition-colors" aria-label="Toggle new password visibility">
+                                                <i class="fa-solid fa-eye text-sm eye-open"></i>
+                                                <i class="fa-solid fa-eye-slash text-sm eye-closed" style="display: none;"></i>
+                                            </button>
+                                        </div>
+                                        @error('password')
+                                            <p class="text-xs text-red-600 mt-1">{{ $message }}</p>
+                                        @enderror
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <label for="password_confirmation" class="block text-sm font-semibold text-gray-700">Confirm New Password <span class="text-red-500">*</span></label>
+                                        <div class="relative">
+                                            <input type="password" id="password_confirmation" name="password_confirmation" class="w-full rounded-xl border-gray-200 focus:border-brand-orange focus:ring-brand-orange bg-gray-50 focus:bg-white transition-colors shadow-sm py-2.5 px-4 pr-11" placeholder="Re-enter new password" required>
+                                            <button type="button" onclick="togglePasswordVisibility('password_confirmation', this)" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-brand-orange focus:outline-none cursor-pointer transition-colors" aria-label="Toggle confirm password visibility">
+                                                <i class="fa-solid fa-eye text-sm eye-open"></i>
+                                                <i class="fa-solid fa-eye-slash text-sm eye-closed" style="display: none;"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {{-- Security tips box --}}
+                                    <div class="p-4 bg-blue-50/70 border border-blue-100 rounded-xl text-xs text-blue-800 space-y-1.5">
+                                        <p class="font-semibold flex items-center gap-1.5">
+                                            <i class="fa-solid fa-shield-halved text-blue-600"></i> Password Guidelines:
+                                        </p>
+                                        <ul class="list-disc pl-5 space-y-1 text-blue-700/90">
+                                            <li>At least 8 characters in length</li>
+                                            <li>Combine uppercase, lowercase, numbers and symbols for strong security</li>
+                                        </ul>
+                                    </div>
+
+                                    <div class="pt-4">
+                                        <button type="submit" class="bg-brand-navy hover:bg-brand-orange text-white font-semibold py-3 px-8 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 flex items-center gap-2 cursor-pointer">
+                                            <i class="fa-solid fa-key"></i> Update Password
+                                        </button>
+                                    </div>
                                 </div>
                             </form>
                         </div>
@@ -323,25 +421,89 @@
     </style>
 
     <script>
+        const originalAvatarUrl = @json($user->avatar_url);
+
+        function previewAvatar(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('File size exceeds 5MB limit. Please choose an image smaller than 5MB.');
+                    input.value = '';
+                    return;
+                }
+
+                const objectUrl = URL.createObjectURL(file);
+                
+                const previewImg = document.getElementById('avatar_preview');
+                if (previewImg) previewImg.src = objectUrl;
+
+                const sidebarImg = document.getElementById('sidebar_avatar_img');
+                if (sidebarImg) sidebarImg.src = objectUrl;
+
+                const cancelBtn = document.getElementById('avatar_cancel_btn');
+                if (cancelBtn) cancelBtn.classList.remove('hidden');
+
+                const badge = document.getElementById('avatar_selected_badge');
+                const badgeText = document.getElementById('avatar_selected_text');
+                if (badge && badgeText) {
+                    const sizeInMb = (file.size / (1024 * 1024)).toFixed(2);
+                    badgeText.textContent = `${file.name} (${sizeInMb} MB) — Click "Save Profile Details" to apply`;
+                    badge.classList.remove('hidden');
+                    badge.classList.add('inline-flex');
+                }
+            }
+        }
+
+        function resetAvatarPreview() {
+            const input = document.getElementById('avatar_input');
+            if (input) input.value = '';
+
+            const previewImg = document.getElementById('avatar_preview');
+            if (previewImg) previewImg.src = originalAvatarUrl;
+
+            const sidebarImg = document.getElementById('sidebar_avatar_img');
+            if (sidebarImg) sidebarImg.src = originalAvatarUrl;
+
+            const cancelBtn = document.getElementById('avatar_cancel_btn');
+            if (cancelBtn) cancelBtn.classList.add('hidden');
+
+            const badge = document.getElementById('avatar_selected_badge');
+            if (badge) {
+                badge.classList.add('hidden');
+                badge.classList.remove('inline-flex');
+            }
+        }
+
         function switchTab(tabId) {
-            document.getElementById('tab-dashboard').classList.add('hidden');
-            document.getElementById('tab-orders').classList.add('hidden');
-            document.getElementById('tab-settings').classList.add('hidden');
+            const tabs = ['dashboard', 'orders', 'settings', 'password'];
+            tabs.forEach(id => {
+                const el = document.getElementById('tab-' + id);
+                if (el) el.classList.add('hidden');
+            });
             
-            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            const targetEl = document.getElementById('tab-' + tabId);
+            if (targetEl) targetEl.classList.remove('hidden');
 
-            const inactiveClasses = 'w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 text-brand-navy hover:bg-brand-bg hover:text-brand-orange font-medium'.split(' ');
-            const activeClasses = 'w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 bg-brand-orange text-white font-medium shadow-md shadow-brand-orange/20'.split(' ');
+            const inactiveClasses = 'w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 text-brand-navy hover:bg-brand-bg hover:text-brand-orange font-medium cursor-pointer'.split(' ');
+            const activeClasses = 'w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 bg-brand-orange text-white font-medium shadow-md shadow-brand-orange/20 cursor-pointer'.split(' ');
 
-            ['dashboard', 'orders', 'settings'].forEach(id => {
+            tabs.forEach(id => {
                 const btn = document.getElementById('tab-btn-' + id);
-                btn.className = '';
-                btn.classList.add(...inactiveClasses);
+                if (btn) {
+                    btn.className = '';
+                    btn.classList.add(...inactiveClasses);
+                }
             });
 
             const activeBtn = document.getElementById('tab-btn-' + tabId);
-            activeBtn.className = '';
-            activeBtn.classList.add(...activeClasses);
+            if (activeBtn) {
+                activeBtn.className = '';
+                activeBtn.classList.add(...activeClasses);
+            }
+
+            if (history.replaceState) {
+                history.replaceState(null, null, '#' + tabId);
+            }
         }
 
         function togglePasswordVisibility(inputId, button) {
@@ -369,11 +531,25 @@
             }
         }
 
-        // Handle URL hashes for direct tab links
+        // Initialize active tab
+        (() => {
+            const defaultTab = @json(request('tab') ?: ($errors->has('current_password') || $errors->has('password') ? 'password' : ($errors->any() ? 'settings' : 'dashboard')));
+            let tabToOpen = defaultTab;
+
+            if (window.location.hash) {
+                const hash = window.location.hash.substring(1);
+                if (['dashboard', 'orders', 'settings', 'password'].includes(hash)) {
+                    tabToOpen = hash;
+                }
+            }
+            switchTab(tabToOpen);
+        })();
+
+        // Handle URL hashes on Livewire navigation
         window.addEventListener('livewire:navigated', () => {
-            if(window.location.hash) {
+            if (window.location.hash) {
                 const tab = window.location.hash.substring(1);
-                if(['dashboard', 'orders', 'settings'].includes(tab)) {
+                if (['dashboard', 'orders', 'settings', 'password'].includes(tab)) {
                     switchTab(tab);
                 }
             }
