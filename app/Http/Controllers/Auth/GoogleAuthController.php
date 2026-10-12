@@ -36,12 +36,22 @@ class GoogleAuthController extends Controller
     public function callback()
     {
         try {
-            $googleUser = Socialite::driver('google')->user();
+            try {
+                $googleUser = Socialite::driver('google')->user();
+            } catch (\Laravel\Socialite\Two\InvalidStateException $e) {
+                // If session state was lost across cross-site redirect in production, fallback to stateless
+                Log::info('Google Login: InvalidStateException occurred, retrying with stateless()');
+                $googleUser = Socialite::driver('google')->stateless()->user();
+            }
         } catch (\Throwable $e) {
-            Log::error('Google Login Error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            Log::error('Google Login Error: ' . ($e->getMessage() ?: get_class($e)), [
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
 
             return redirect()->route('login')->withErrors([
-                'google' => 'Google authentication failed: ' . $e->getMessage(),
+                'google' => 'Google authentication failed: ' . ($e->getMessage() ?: 'Session expired or invalid state. Please try again.'),
             ]);
         }
 
