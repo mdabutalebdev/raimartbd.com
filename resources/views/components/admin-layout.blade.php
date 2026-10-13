@@ -40,7 +40,7 @@
             </div>
 
             <nav x-data="{
-                openOrders: {{ request()->routeIs('admin.orders.*') || request()->routeIs('admin.steadfast.*') ? 'true' : 'false' }},
+                openOrders: {{ request()->routeIs('admin.orders.*') ? 'true' : 'false' }},
                 openCategories: {{ request()->routeIs('admin.categories.*') ? 'true' : 'false' }},
                 openProducts: {{ request()->routeIs('admin.products.*') || request()->routeIs('admin.brands.*') || request()->routeIs('admin.top-selling.*') || request()->routeIs('admin.product-reviews.*') ? 'true' : 'false' }},
                 openHomepage: {{ request()->routeIs('admin.banners.*') || request()->routeIs('admin.promo-banners.*') || request()->routeIs('admin.homepage.*') || request()->routeIs('admin.testimonials.*') || request()->routeIs('admin.quick-contact.*') ? 'true' : 'false' }}
@@ -60,7 +60,7 @@
                 <div>
                     <button type="button" @click="openOrders = !openOrders"
                         class="flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm font-medium transition cursor-pointer
-                            {{ request()->routeIs('admin.orders.*') || request()->routeIs('admin.steadfast.*') ? 'text-white bg-white/5' : 'text-white/70 hover:bg-white/5 hover:text-white' }}">
+                            {{ request()->routeIs('admin.orders.*') ? 'text-white bg-white/5' : 'text-white/70 hover:bg-white/5 hover:text-white' }}">
                         <div class="flex items-center gap-3">
                             <i class="fa-solid fa-bag-shopping w-4 text-center"></i>
                             <span>Orders</span>
@@ -77,11 +77,6 @@
                             class="block rounded-lg px-2.5 py-1.5 text-xs transition cursor-pointer
                                 {{ request()->routeIs('admin.orders.create') ? 'text-brand-orange font-bold bg-white/5' : 'text-white/60 hover:text-white hover:bg-white/5' }}">
                             Create Order
-                        </a>
-                        <a href="{{ route('admin.steadfast.index') }}" wire:navigate
-                            class="block rounded-lg px-2.5 py-1.5 text-xs transition cursor-pointer
-                                {{ request()->routeIs('admin.steadfast.*') ? 'text-brand-orange font-bold bg-white/5' : 'text-white/60 hover:text-white hover:bg-white/5' }}">
-                            Steadfast Courier
                         </a>
                     </div>
                 </div>
@@ -240,10 +235,10 @@
                     <span>Contact Messages</span>
                 </a>
 
-                {{-- Settings Hub --}}
+                {{-- Settings --}}
                 <a href="{{ route('admin.settings.index') }}" wire:navigate
                     class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition cursor-pointer
-                        {{ request()->routeIs('admin.settings.*') || request()->routeIs('admin.delivery.*') || request()->routeIs('admin.social-links.*') || request()->routeIs('admin.telegram.*') || request()->routeIs('admin.smtp.*') || request()->routeIs('admin.pages.*') || request()->routeIs('admin.about.*') || request()->routeIs('admin.contact-page.*') || request()->routeIs('admin.quick-contact.*') ? 'bg-emerald-600/30 text-emerald-400 font-bold border border-emerald-500/30' : 'text-white/70 hover:bg-white/5 hover:text-white' }}">
+                        {{ request()->routeIs('admin.settings.*') || request()->routeIs('admin.pixel.*') || request()->routeIs('admin.logs.*') || request()->routeIs('admin.steadfast.*') || request()->routeIs('admin.delivery.*') || request()->routeIs('admin.social-links.*') || request()->routeIs('admin.telegram.*') || request()->routeIs('admin.smtp.*') || request()->routeIs('admin.pages.*') || request()->routeIs('admin.about.*') || request()->routeIs('admin.contact-page.*') || request()->routeIs('admin.quick-contact.*') ? 'bg-emerald-600/30 text-emerald-400 font-bold border border-emerald-500/30' : 'text-white/70 hover:bg-white/5 hover:text-white' }}">
                     <i class="fa-solid fa-gear w-4 text-center"></i>
                     <span>Settings</span>
                 </a>

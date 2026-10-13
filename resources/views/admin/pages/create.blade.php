@@ -1,4 +1,9 @@
 <x-admin-layout title="Add Page - Raimart Admin">
+    <div class="mb-4">
+        <a href="{{ route('admin.pages.index') }}" wire:navigate class="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-brand-orange transition cursor-pointer">
+            <i class="fa-solid fa-arrow-left"></i> Back to Pages
+        </a>
+    </div>
     <h1 class="font-serif text-2xl font-bold">Add Page</h1>
 
     @if ($errors->any())

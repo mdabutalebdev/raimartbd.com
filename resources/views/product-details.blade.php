@@ -952,4 +952,23 @@
             @endif
         </div>
     </div>
+
+    @php
+        $trackViewContent = (\App\Models\SiteSetting::get('pixel_track_view_content', '1')) === '1';
+    @endphp
+    @if ($trackViewContent)
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                if (typeof window.trackPixelEvent === 'function') {
+                    window.trackPixelEvent('ViewContent', {
+                        content_name: @json($product->name),
+                        content_ids: [@json((string) $product->id)],
+                        content_type: 'product',
+                        value: {{ (float) $product->price }},
+                        currency: 'BDT'
+                    });
+                }
+            });
+        </script>
+    @endif
 </x-layout>

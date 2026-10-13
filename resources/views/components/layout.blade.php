@@ -73,6 +73,9 @@
     
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
+
+    {{-- Meta Pixel & Analytics Tracker --}}
+    @include('partials.pixel-tracker')
 </head>
 <body class="bg-[#FBF9F5] font-sans text-brand-navy antialiased">
     @if (config('services.ga4.gtm_id'))
@@ -99,5 +102,8 @@
     @include('partials.toast')
     
     @livewireScripts
+
+    {{-- Custom Body Tracking Scripts --}}
+    @include('partials.pixel-body')
 </body>
 </html>

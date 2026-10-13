@@ -62,4 +62,24 @@
             <a href="{{ route('shop') }}" class="text-sm font-medium text-brand-orange hover:underline">Continue Shopping &rarr;</a>
         </div>
     </section>
+
+    @php
+        $trackPurchase = (\App\Models\SiteSetting::get('pixel_track_purchase', '1')) === '1';
+    @endphp
+    @if ($trackPurchase)
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                if (typeof window.trackPixelEvent === 'function') {
+                    window.trackPixelEvent('Purchase', {
+                        content_type: 'product',
+                        content_ids: @json($order->items->pluck('product_id')->map(fn($id) => (string)$id)->values()),
+                        value: {{ (float) $order->total }},
+                        currency: 'BDT',
+                        num_items: {{ (int) $order->items->sum('quantity') }},
+                        order_id: @json($order->order_number)
+                    });
+                }
+            });
+        </script>
+    @endif
 </x-layout>

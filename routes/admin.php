@@ -20,6 +20,8 @@ use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\PromoBannerController;
+use App\Http\Controllers\Admin\LogViewerController;
+use App\Http\Controllers\Admin\PixelSettingController;
 use App\Http\Controllers\Admin\SiteSettingController;
 use App\Http\Controllers\Admin\SocialLinkController;
 use App\Http\Controllers\Admin\TestimonialController;
@@ -58,6 +60,17 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('settings/general', [SiteSettingController::class, 'edit'])->name('settings.general');
         Route::put('settings/general', [SiteSettingController::class, 'update'])->name('settings.update');
         Route::get('settings/edit', fn() => redirect()->route('admin.settings.general'))->name('settings.edit');
+
+        // Laravel Logs (Settings Submenu)
+        Route::get('logs', [LogViewerController::class, 'index'])->name('logs.index');
+        Route::put('logs', [LogViewerController::class, 'update'])->name('logs.update');
+        Route::post('logs/clear', [LogViewerController::class, 'clear'])->name('logs.clear');
+        Route::get('logs/download', [LogViewerController::class, 'download'])->name('logs.download');
+        Route::post('logs/test-entry', [LogViewerController::class, 'testEntry'])->name('logs.test-entry');
+        // Pixel & Tracking Settings
+        Route::get('pixel', [PixelSettingController::class, 'edit'])->name('pixel.edit');
+        Route::put('pixel', [PixelSettingController::class, 'update'])->name('pixel.update');
+        Route::post('pixel/test-capi', [PixelSettingController::class, 'testCapi'])->name('pixel.test-capi');
 
         Route::get('customers', [CustomerController::class, 'index'])->name('customers.index');
         Route::get('customers/export', [CustomerController::class, 'export'])->name('customers.export');

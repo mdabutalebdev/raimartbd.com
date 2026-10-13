@@ -92,6 +92,20 @@
                         'route' => 'admin.contact-page.edit',
                         'color' => 'bg-blue-50 text-blue-600',
                     ],
+                    [
+                        'title' => 'Laravel Logs',
+                        'desc' => 'View, edit, download & clear system logs',
+                        'icon' => 'fa-solid fa-file-code',
+                        'route' => 'admin.logs.index',
+                        'color' => 'bg-rose-50 text-rose-600',
+                    ],
+                    [
+                        'title' => 'Pixel Setup',
+                        'desc' => 'Meta Pixel, CAPI, GTM & tracking setup',
+                        'icon' => 'fa-brands fa-facebook',
+                        'route' => 'admin.pixel.edit',
+                        'color' => 'bg-blue-50 text-blue-600',
+                    ],
                 ];
             @endphp
 
