@@ -7,6 +7,7 @@ use App\Models\OrderItem;
 use App\Models\Payment;
 use App\Services\Cart;
 use App\Services\CouponService;
+use App\Services\FacebookCapiService;
 use App\Services\Ga4MeasurementProtocol;
 use App\Services\PipraPayService;
 use App\Services\TelegramNotifier;
@@ -20,6 +21,7 @@ class CheckoutController extends Controller
 {
     public function __construct(
         private Ga4MeasurementProtocol $ga4,
+        private FacebookCapiService $capi,
         private TelegramNotifier $telegram,
         private CouponService $coupons,
     ) {
@@ -198,6 +200,7 @@ class CheckoutController extends Controller
 
         // COD: the order is confirmed the moment it's placed → track purchase server-side.
         $this->ga4->purchase($order);
+        $this->capi->sendPurchase($order);
 
         return redirect()->route('checkout.confirmation', $order);
     }
@@ -308,6 +311,7 @@ class CheckoutController extends Controller
             // Online payment confirmed → track purchase (guarded against double-send
             // when both the callback and the webhook fire for the same order).
             $this->ga4->purchase($order->fresh());
+            $this->capi->sendPurchase($order->fresh());
         }
     }
 

@@ -39,4 +39,10 @@ class Page extends Model
     {
         return $query->active()->where('show_in_footer', true)->orderBy('sort_order')->orderBy('title');
     }
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => \App\Http\Controllers\SitemapController::clearCache());
+        static::deleted(fn () => \App\Http\Controllers\SitemapController::clearCache());
+    }
 }

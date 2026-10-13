@@ -6,6 +6,41 @@
         'items' => \App\Support\Ga4::cartItems($items),
     ]" />
 
+    {{-- Meta & TikTok Pixel: InitiateCheckout --}}
+    @php
+        $trackInitiateCheckout = (\App\Models\SiteSetting::get('pixel_track_initiate_checkout', '1')) === '1';
+        $checkoutProductIds = $items->map(fn($it) => (string) ($it->product->id ?? ''))->filter()->values()->all();
+        $checkoutContents = $items->map(fn($it) => [
+            'id' => (string) ($it->product->id ?? ''),
+            'name' => $it->product->name ?? '',
+            'quantity' => (int) $it->quantity,
+            'item_price' => (float) ($it->product->price ?? 0),
+        ])->values()->all();
+    @endphp
+    @if ($trackInitiateCheckout)
+        <script>
+            (function() {
+                function fireInitiateCheckout() {
+                    if (typeof window.trackPixelEvent === 'function') {
+                        window.trackPixelEvent('InitiateCheckout', {
+                            content_type: 'product',
+                            content_ids: @json($checkoutProductIds),
+                            contents: @json($checkoutContents),
+                            value: {{ (float) $subtotal }},
+                            currency: 'BDT',
+                            num_items: {{ (int) $items->sum('quantity') }}
+                        });
+                    }
+                }
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', fireInitiateCheckout, { once: true });
+                } else {
+                    fireInitiateCheckout();
+                }
+            })();
+        </script>
+    @endif
+
     @php
         // Selecting Dhaka bills the "inside" rate, every other district the "outside" rate.
         $selectedDistrict = old('city', auth()->user()->city ?? '');

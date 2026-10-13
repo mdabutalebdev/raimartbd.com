@@ -326,11 +326,40 @@ class ProductController extends Controller
             'images.*' => ['file', 'mimes:jpeg,jpg,png,webp,gif,mp4,mov,webm,ogv,ogg,m4v,avi,mkv,3gp', 'max:20480'],
             'has_variants' => ['sometimes', 'boolean'],
             'variants' => ['nullable', 'array'],
+
+            // SEO Metadata
+            'meta_title' => ['nullable', 'string', 'max:255'],
+            'meta_description' => ['nullable', 'string', 'max:500'],
+
+            // Sales & Rating Metrics Strategy
+            'sales_metrics_mode' => ['nullable', 'string', 'in:organic,optimized'],
+            'base_sold_count' => ['nullable', 'integer', 'min:0'],
+            'sales_start_date' => ['nullable', 'date'],
+            'daily_sales_volume' => ['nullable', 'integer', 'min:0'],
+
+            'rating_metrics_mode' => ['nullable', 'string', 'in:organic,optimized'],
+            'base_reviews_count' => ['nullable', 'integer', 'min:0'],
+            'rating_start_date' => ['nullable', 'date'],
+            'rating_interval_days' => ['nullable', 'integer', 'min:1'],
+            'ratings_per_interval' => ['nullable', 'integer', 'min:0'],
+            'min_rating' => ['nullable', 'numeric', 'min:0', 'max:5'],
+            'max_rating' => ['nullable', 'numeric', 'min:0', 'max:5'],
         ]);
 
         foreach (['is_featured', 'is_best_seller', 'is_new_arrival', 'is_active'] as $flag) {
             $data[$flag] = $request->boolean($flag);
         }
+
+        // Set defaults if null
+        $data['sales_metrics_mode'] = $data['sales_metrics_mode'] ?? 'organic';
+        $data['rating_metrics_mode'] = $data['rating_metrics_mode'] ?? 'organic';
+        $data['base_sold_count'] = (int) ($data['base_sold_count'] ?? 0);
+        $data['daily_sales_volume'] = (int) ($data['daily_sales_volume'] ?? 2);
+        $data['base_reviews_count'] = (int) ($data['base_reviews_count'] ?? 0);
+        $data['rating_interval_days'] = max(1, (int) ($data['rating_interval_days'] ?? 4));
+        $data['ratings_per_interval'] = max(0, (int) ($data['ratings_per_interval'] ?? 1));
+        $data['min_rating'] = $data['min_rating'] ?? 4.50;
+        $data['max_rating'] = $data['max_rating'] ?? 5.00;
 
         unset($data['images'], $data['variants'], $data['has_variants'], $data['attributes']);
 

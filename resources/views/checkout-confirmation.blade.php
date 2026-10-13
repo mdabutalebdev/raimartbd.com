@@ -76,7 +76,8 @@
                         value: {{ (float) $order->total }},
                         currency: 'BDT',
                         num_items: {{ (int) $order->items->sum('quantity') }},
-                        order_id: @json($order->order_number)
+                        order_id: @json($order->order_number),
+                        event_id: @json($order->order_number)
                     });
                 }
             });

@@ -31,7 +31,7 @@
                             <!-- Titles -->
                             <span class="mt-2 text-xs font-medium transition-colors duration-300" 
                                   :class="step === i ? 'text-brand-orange' : (step > i ? 'text-gray-900' : 'text-gray-400')"
-                                  x-text="['Basic Info', 'Pricing', 'Attributes', 'Media', 'Settings'][i-1]">
+                                  x-text="['Basic Info', 'Pricing', 'Attributes', 'Media', 'Visibility', 'Metrics'][i-1]">
                             </span>
                         </button>
                     </li>
@@ -473,6 +473,192 @@
             </div>
         </div>
 
+        <!-- Step 6: Sales & Ratings Metrics Strategy -->
+        <div x-show="step === 6" style="display: none;" x-cloak>
+            <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-gray-100 pb-4">
+                <div>
+                    <h3 class="text-base font-bold text-gray-900">Sales & Ratings Metrics Strategy</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">Simulate realistic, organic-looking sales and rating growth over time without suspicious jumps or reload changes.</p>
+                </div>
+                <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 w-fit">
+                    <i class="fa-solid fa-shield-halved text-[11px]"></i> Refresh-Safe Natural Growth
+                </span>
+            </div>
+
+            <!-- Current Calculated Live Status (If editing product) -->
+            @if(!empty($product) && $product->id)
+                <div class="mb-6 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-circle-check text-blue-600 text-sm"></i>
+                            <span class="text-xs font-bold text-blue-900 uppercase tracking-wide">Live Result on Details Page Today:</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-xs font-semibold text-gray-700">
+                            <span class="bg-white px-2.5 py-1 rounded-md border border-blue-200 shadow-2xs">
+                                Sold: <strong class="text-emerald-600">{{ $product->display_sold_count }} units</strong>
+                            </span>
+                            <span class="bg-white px-2.5 py-1 rounded-md border border-blue-200 shadow-2xs flex items-center gap-1">
+                                Rating: <i class="fa-solid fa-star text-amber-400 text-[11px]"></i>
+                                <strong class="text-gray-900">{{ number_format($product->display_rating, 1) }} / 5</strong>
+                                <span class="text-gray-500">({{ $product->display_reviews_count }} Ratings)</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            <div class="space-y-6">
+                <!-- 1. Sales & Sold Count Strategy Card -->
+                <div class="rounded-xl border border-gray-200 bg-white p-5 sm:p-6 shadow-2xs space-y-5">
+                    <div class="flex items-center gap-2.5 pb-3 border-b border-gray-100">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+                            <i class="fa-solid fa-chart-line text-sm"></i>
+                        </span>
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm">Sales & Sold Count Strategy</h4>
+                            <p class="text-xs text-gray-500">Configure how sold units are calculated and displayed.</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">Metrics Mode</label>
+                        <select name="sales_metrics_mode" x-model="salesMetricsMode" class="block w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-xs sm:text-sm text-gray-800 bg-white focus:border-brand-orange focus:ring-1 focus:ring-brand-orange">
+                            <option value="organic">Organic (Show actual order volume)</option>
+                            <option value="optimized">Optimized (Show calculated growth trend over time)</option>
+                        </select>
+                        <p class="text-[11px] text-gray-500 mt-1">
+                            <span x-show="salesMetricsMode === 'organic'">Organic shows actual customer order volume.</span>
+                            <span x-show="salesMetricsMode === 'optimized'">Optimized simulates steady sold count growth based on parameters below. Refreshes will NOT jump randomly.</span>
+                        </p>
+                    </div>
+
+                    <div x-show="salesMetricsMode === 'optimized'" class="grid gap-4 sm:grid-cols-3 pt-2">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Base / Initial Sold Count</label>
+                            <input type="number" name="base_sold_count" min="0" value="{{ old('base_sold_count', $product->base_sold_count ?? 15) }}"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm text-gray-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange">
+                            <p class="text-[11px] text-gray-400 mt-1">Starting baseline units (e.g. 15)</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Trend Start Date</label>
+                            <input type="date" name="sales_start_date" value="{{ old('sales_start_date', !empty($product->sales_start_date) ? \Carbon\Carbon::parse($product->sales_start_date)->format('Y-m-d') : now()->subDays(7)->format('Y-m-d')) }}"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm text-gray-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange">
+                            <p class="text-[11px] text-gray-400 mt-1">Start date of growth calculation</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Estimated Daily Sales Volume</label>
+                            <input type="number" name="daily_sales_volume" min="0" value="{{ old('daily_sales_volume', $product->daily_sales_volume ?? 2) }}"
+                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm text-gray-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange">
+                            <p class="text-[11px] text-gray-400 mt-1">Average units per day (e.g. 2)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Ratings & Review Strategy Card -->
+                <div class="rounded-xl border border-gray-200 bg-white p-5 sm:p-6 shadow-2xs space-y-5">
+                    <div class="flex items-center gap-2.5 pb-3 border-b border-gray-100">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-500">
+                            <i class="fa-solid fa-star text-sm"></i>
+                        </span>
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm">Ratings & Review Strategy</h4>
+                            <p class="text-xs text-gray-500">Configure auto-generated rating score and review volume over time.</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-700 mb-1.5">Rating Mode</label>
+                        <select name="rating_metrics_mode" x-model="ratingMetricsMode" class="block w-full rounded-lg border border-gray-300 px-3.5 py-2.5 text-xs sm:text-sm text-gray-800 bg-white focus:border-brand-orange focus:ring-1 focus:ring-brand-orange">
+                            <option value="organic">Organic (Show actual customer ratings)</option>
+                            <option value="optimized">Optimized (Auto generate ratings over time)</option>
+                        </select>
+                        <p class="text-[11px] text-gray-500 mt-1">
+                            <span x-show="ratingMetricsMode === 'organic'">Only verified customer reviews and stars will be shown.</span>
+                            <span x-show="ratingMetricsMode === 'optimized'">Simulates realistic ratings and reviews growing over calendar intervals.</span>
+                        </p>
+                    </div>
+
+                    <div x-show="ratingMetricsMode === 'optimized'" class="space-y-4 pt-2">
+                        <div class="grid gap-4 sm:grid-cols-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Base / Initial Ratings Count</label>
+                                <input type="number" name="base_reviews_count" min="0" value="{{ old('base_reviews_count', $product->base_reviews_count ?? 3) }}"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm text-gray-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange">
+                                <p class="text-[11px] text-gray-400 mt-1">Starting reviews (e.g. 3)</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Start Date</label>
+                                <input type="date" name="rating_start_date" value="{{ old('rating_start_date', !empty($product->rating_start_date) ? \Carbon\Carbon::parse($product->rating_start_date)->format('Y-m-d') : now()->subDays(10)->format('Y-m-d')) }}"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm text-gray-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange">
+                                <p class="text-[11px] text-gray-400 mt-1">Baseline start date</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Interval (Days)</label>
+                                <input type="number" name="rating_interval_days" min="1" value="{{ old('rating_interval_days', $product->rating_interval_days ?? 4) }}"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm text-gray-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange">
+                                <p class="text-[11px] text-gray-400 mt-1">Days between new reviews (e.g. 4)</p>
+                            </div>
+                        </div>
+
+                        <div class="grid gap-4 sm:grid-cols-3">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Ratings per Interval</label>
+                                <input type="number" name="ratings_per_interval" min="0" value="{{ old('ratings_per_interval', $product->ratings_per_interval ?? 1) }}"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm text-gray-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange">
+                                <p class="text-[11px] text-gray-400 mt-1">Ratings added per interval</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Min Rating</label>
+                                <input type="number" step="0.05" min="1" max="5" name="min_rating" value="{{ old('min_rating', $product->min_rating ?? 4.50) }}"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm text-gray-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange">
+                                <p class="text-[11px] text-gray-400 mt-1">Lowest rating (e.g. 4.50)</p>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700 mb-1">Max Rating</label>
+                                <input type="number" step="0.05" min="1" max="5" name="max_rating" value="{{ old('max_rating', $product->max_rating ?? 5.00) }}"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm text-gray-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange">
+                                <p class="text-[11px] text-gray-400 mt-1">Highest rating (e.g. 5.00)</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. SEO Metadata Card (Meta Title & Meta Description) -->
+                <div class="rounded-xl border border-gray-200 bg-white p-5 sm:p-6 shadow-2xs space-y-4">
+                    <div class="flex items-center gap-2.5 pb-3 border-b border-gray-100">
+                        <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                            <i class="fa-brands fa-google text-sm"></i>
+                        </span>
+                        <div>
+                            <h4 class="font-bold text-gray-900 text-sm">Search Engine Optimization (SEO)</h4>
+                            <p class="text-xs text-gray-500">Custom Meta Title & Description for Google search results.</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Meta Title</label>
+                        <input type="text" name="meta_title" value="{{ old('meta_title', $product->meta_title ?? '') }}"
+                            placeholder="e.g. {{ !empty($product->name) ? $product->name . ' | Raimart' : 'Product Name | Raimart' }}"
+                            class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs sm:text-sm text-gray-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange">
+                        <p class="text-[11px] text-gray-400 mt-1">Leave empty to use <code>{Product Name} - Raimart</code> automatically.</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Meta Description</label>
+                        <textarea name="meta_description" rows="2"
+                            placeholder="Brief search summary displayed in Google search results..."
+                            class="w-full rounded-lg border border-gray-300 p-3 text-xs sm:text-sm text-gray-800 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange resize-none">{{ old('meta_description', $product->meta_description ?? '') }}</textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Navigation Actions -->
         <div class="sticky bottom-0 z-40 mt-8 flex items-center justify-end border-t border-gray-200 bg-white py-4 w-full gap-3">
             <button type="button" @click="step--" x-show="step > 1" class="mr-auto rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-brand-orange focus:ring-offset-2 shadow-sm" style="display: none;">
@@ -520,7 +706,9 @@
     window.productWizard = function () {
         return {
             step: 1,
-            maxStep: 5,
+            maxStep: 6,
+            salesMetricsMode: '{{ old('sales_metrics_mode', $product->sales_metrics_mode ?? 'organic') }}',
+            ratingMetricsMode: '{{ old('rating_metrics_mode', $product->rating_metrics_mode ?? 'organic') }}',
             errors: {},
 
             // Required fields per step (main_image only when marked required).
@@ -565,7 +753,7 @@
             validateAll() {
                 const errs = {};
                 let firstBad = null;
-                [1, 2, 3, 4, 5].forEach((n) => {
+                [1, 2, 3, 4, 5, 6].forEach((n) => {
                     if (!this.check(this.stepFields[n], errs) && firstBad === null) {
                         firstBad = n;
                     }

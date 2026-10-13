@@ -61,8 +61,22 @@ class PixelSettingController extends Controller
             'custom_body_scripts' => ['nullable', 'string'],
         ]);
 
+        $booleanKeys = [
+            'fb_pixel_enabled',
+            'pixel_track_pageview',
+            'pixel_track_view_content',
+            'pixel_track_add_to_cart',
+            'pixel_track_initiate_checkout',
+            'pixel_track_purchase',
+            'pixel_advanced_matching',
+        ];
+
         foreach (self::KEYS as $key) {
-            SiteSetting::set($key, $data[$key] ?? '0');
+            if (in_array($key, $booleanKeys, true)) {
+                SiteSetting::set($key, $data[$key] ?? '0');
+            } else {
+                SiteSetting::set($key, isset($data[$key]) ? trim((string) $data[$key]) : '');
+            }
         }
 
         return redirect()->route('admin.pixel.edit')->with('status', 'Pixel & Tracking settings updated successfully.');

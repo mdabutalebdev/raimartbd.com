@@ -54,14 +54,19 @@
 @source '../**/*.js';
 
 @theme {
-    --font-sans: 'Geist', 'Geist Fallback', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
+    --font-sans: 'Geist', 'Hind Siliguri', 'Geist Fallback', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
         'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-    --font-serif: 'Geist', 'Geist Fallback', ui-sans-serif, system-ui, sans-serif;
+    --font-serif: 'Geist', 'Hind Siliguri', 'Geist Fallback', ui-sans-serif, system-ui, sans-serif;
+    --font-bangla: 'Hind Siliguri', 'Geist', sans-serif;
 
     --color-brand-bg: #F5F2F2;
     --color-brand-navy: #011939;
     --color-brand-navy-light: #083369;
     --color-brand-orange: #F58502;
+}
+
+.font-bangla {
+    font-family: 'Hind Siliguri', sans-serif;
 }
 
 /* Hide elements until Alpine has initialised (accordions, drawers) */

@@ -106,6 +106,13 @@
                         'route' => 'admin.pixel.edit',
                         'color' => 'bg-blue-50 text-blue-600',
                     ],
+                    [
+                        'title' => 'Site Scripts & Tracking',
+                        'desc' => 'Header & body tracking scripts',
+                        'icon' => 'fa-solid fa-code',
+                        'route' => 'admin.scripts.edit',
+                        'color' => 'bg-emerald-50 text-emerald-600',
+                    ],
                 ];
             @endphp
 

@@ -8,7 +8,12 @@
     </div>
 @endif
 
-<div x-data="{ type: '{{ old('parent_id', $category->parent_id ?? '') ? 'sub' : 'main' }}' }" class="space-y-8">
+<div x-data="{ 
+    type: '{{ old('parent_id', $category->parent_id ?? '') ? 'sub' : 'main' }}',
+    name: '{{ addslashes(old('name', $category->name ?? '')) }}',
+    metaTitle: '{{ addslashes(old('meta_title', $category->meta_title ?? '')) }}',
+    metaDesc: '{{ addslashes(old('meta_description', $category->meta_description ?? '')) }}'
+}" class="space-y-8">
     <!-- Category Type Selection (Only on create, on edit we can disable it or just let it be) -->
     <div class="flex items-center gap-6 p-5 bg-gray-50 border border-gray-100 rounded-xl">
         <label class="flex items-center gap-2 cursor-pointer">
@@ -40,7 +45,7 @@
                 <span x-text="type === 'sub' ? 'Sub Category Name' : 'Category Name'">Category Name</span> 
                 <span class="text-red-500">*</span>
             </label>
-            <input type="text" name="name" value="{{ old('name', $category->name ?? '') }}" required
+            <input type="text" name="name" x-model="name" value="{{ old('name', $category->name ?? '') }}" required
                 placeholder="e.g. Electronics, Men's Fashion, Laptops"
                 class="mt-1 w-full rounded-lg border border-brand-navy/15 px-4 py-3 text-sm focus:border-brand-orange focus:ring-brand-orange">
         </div>
@@ -119,6 +124,71 @@
                     </div>
                     <span class="text-sm font-medium text-gray-700">Show in "Browse Category" (Home Page)</span>
                 </label>
+            </div>
+        </div>
+
+        <!-- Search Engine Optimization (SEO) Section -->
+        <div class="sm:col-span-2 rounded-xl border border-gray-200 bg-white p-5 sm:p-6 space-y-5 shadow-2xs">
+            <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+                <div class="flex items-center gap-2.5">
+                    <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                        <i class="fa-brands fa-google text-base"></i>
+                    </span>
+                    <div>
+                        <h3 class="font-bold text-gray-900 text-sm sm:text-base">Search Engine Optimization (SEO)</h3>
+                        <p class="text-xs text-gray-500">How this category will appear in Google search results.</p>
+                    </div>
+                </div>
+                <span class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-700">
+                    <i class="fa-solid fa-eye text-[10px]"></i> Live Preview
+                </span>
+            </div>
+
+            <!-- Google SERP Snippet Preview Box -->
+            <div class="rounded-xl border border-gray-200 bg-[#f8f9fa] p-4">
+                <p class="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Google Search Snippet Preview</p>
+                <div class="bg-white rounded-lg p-3.5 border border-gray-200/80 shadow-2xs space-y-1">
+                    <div class="flex items-center gap-2">
+                        <div class="w-4 h-4 rounded-full bg-gray-100 flex items-center justify-center text-[10px] text-gray-500 font-bold">R</div>
+                        <span class="text-xs text-[#202124] font-medium truncate">raimartbd.com</span>
+                        <span class="text-xs text-[#5f6368]">› shop › <span x-text="name ? name.toLowerCase().replace(/[^a-z0-9]+/g, '-') : 'category-slug'"></span></span>
+                    </div>
+                    <h4 class="text-base sm:text-lg font-medium text-[#1a0dab] hover:underline cursor-pointer leading-snug line-clamp-1"
+                        x-text="metaTitle ? (metaTitle + ' - Raimart') : (name ? (name + ' - Raimart') : 'Category Name - Raimart')">
+                    </h4>
+                    <p class="text-xs sm:text-sm text-[#4d5156] leading-relaxed line-clamp-2"
+                        x-text="metaDesc ? metaDesc : (name ? ('Shop the latest trending ' + name + ' products at Raimart Bangladesh. Best prices, fast home delivery & Cash on Delivery.') : 'Shop the latest trending products at Raimart Bangladesh. Best prices, fast home delivery & Cash on Delivery.')">
+                    </p>
+                </div>
+            </div>
+
+            <!-- Meta Title Input -->
+            <div>
+                <div class="flex items-center justify-between">
+                    <label class="text-xs font-bold uppercase tracking-wider text-gray-700">Meta Title</label>
+                    <span class="text-[11px] text-gray-400 font-mono">
+                        <span :class="metaTitle.length > 60 ? 'text-amber-600 font-bold' : ''" x-text="metaTitle.length"></span>/60 chars (Recommended: 50-60)
+                    </span>
+                </div>
+                <input type="text" name="meta_title" x-model="metaTitle"
+                    value="{{ old('meta_title', $category->meta_title ?? '') }}"
+                    placeholder="e.g. Women's Fashion Online in Bangladesh | Raimart"
+                    class="mt-1.5 w-full rounded-lg border border-gray-200 px-3.5 py-2.5 text-xs sm:text-sm text-gray-800 placeholder-gray-400 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition">
+                <p class="text-[11px] text-gray-400 mt-1">Leave empty to use <code>{Category Name} - Raimart</code> automatically.</p>
+            </div>
+
+            <!-- Meta Description Textarea -->
+            <div>
+                <div class="flex items-center justify-between">
+                    <label class="text-xs font-bold uppercase tracking-wider text-gray-700">Meta Description</label>
+                    <span class="text-[11px] text-gray-400 font-mono">
+                        <span :class="metaDesc.length > 160 ? 'text-amber-600 font-bold' : ''" x-text="metaDesc.length"></span>/160 chars (Recommended: 120-160)
+                    </span>
+                </div>
+                <textarea name="meta_description" x-model="metaDesc" rows="3"
+                    placeholder="e.g. Shop the latest authentic collection of category products at Raimart Bangladesh. Best prices, fast shipping & Cash on Delivery."
+                    class="mt-1.5 w-full rounded-lg border border-gray-200 p-3.5 text-xs sm:text-sm text-gray-800 placeholder-gray-400 focus:border-brand-orange focus:ring-1 focus:ring-brand-orange transition resize-none">{{ old('meta_description', $category->meta_description ?? '') }}</textarea>
+                <p class="text-[11px] text-gray-400 mt-1">A concise, appealing summary shown under the title in Google search results.</p>
             </div>
         </div>
     </div>

@@ -77,6 +77,14 @@ class CartController extends Controller
                         ], fn ($v) => $v !== null))],
                     ],
                 ],
+                'pixel' => [
+                    'content_name' => $product->name,
+                    'content_ids' => [(string) $product->id],
+                    'content_type' => 'product',
+                    'value' => round((float) $product->price * $quantity, 2),
+                    'currency' => 'BDT',
+                    'num_items' => (int) $quantity,
+                ],
             ]);
         }
 

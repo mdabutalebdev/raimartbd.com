@@ -35,7 +35,11 @@ n.queue=[];t=b.createElement(e);t.async=!0;
 t.src=v;s=b.getElementsByTagName(e)[0];
 s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
-fbq('init', '{{ $fbPixelId }}', @json($userData));
+@if (!empty($userData))
+fbq('init', '{{ $fbPixelId }}', @json((object) $userData));
+@else
+fbq('init', '{{ $fbPixelId }}');
+@endif
 @if ($trackPageView)
 fbq('track', 'PageView');
 @endif
@@ -88,7 +92,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 window.trackPixelEvent = function(eventName, data) {
     data = data || {};
     if (typeof window.fbq === 'function') {
-        window.fbq('track', eventName, data);
+        var eventId = data.event_id || data.order_id || null;
+        if (eventId) {
+            window.fbq('track', eventName, data, { eventID: String(eventId) });
+        } else {
+            window.fbq('track', eventName, data);
+        }
     }
     if (typeof window.ttq !== 'undefined' && typeof window.ttq.track === 'function') {
         window.ttq.track(eventName, data);

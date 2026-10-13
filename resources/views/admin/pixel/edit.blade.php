@@ -132,7 +132,7 @@
                             Meta Test Event Code (Optional)
                         </label>
                         <input type="text" name="fb_test_event_code"
-                            value="{{ old('fb_test_event_code', $settings['fb_test_event_code'] ?? '') }}"
+                            value="{{ old('fb_test_event_code', (!empty($settings['fb_test_event_code']) && $settings['fb_test_event_code'] !== '0') ? $settings['fb_test_event_code'] : '') }}"
                             placeholder="e.g. TEST12345 (Leave empty in live production)"
                             class="mt-1.5 w-full rounded-xl border border-gray-200 bg-gray-50/40 px-4 py-2 text-xs font-mono text-gray-900 focus:border-brand-orange focus:bg-white focus:outline-none">
                         <p class="mt-1 text-[11px] text-gray-500">
@@ -327,7 +327,7 @@
                     <div>
                         <label class="block text-[11px] font-bold text-gray-700 uppercase">Test Event Code</label>
                         <input type="text" name="test_event_code"
-                            value="{{ $settings['fb_test_event_code'] ?? '' }}"
+                            value="{{ (!empty($settings['fb_test_event_code']) && $settings['fb_test_event_code'] !== '0') ? $settings['fb_test_event_code'] : '' }}"
                             placeholder="e.g. TEST12345"
                             class="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/50 px-3 py-2 text-xs font-mono text-gray-900 focus:border-blue-500 focus:outline-none">
                         <span class="text-[10px] text-gray-400">Get this from Meta Events Manager &gt; Test Events.</span>

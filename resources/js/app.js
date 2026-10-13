@@ -584,7 +584,16 @@ document.addEventListener('livewire:navigated', () => {
         const form = event.target.closest('form[data-add-to-cart]');
         if (!form) return;
         // Let the "Buy Now" button (name="redirect") post normally → server redirects to checkout.
-        if (event.submitter && event.submitter.name === 'redirect') return;
+        if (event.submitter && event.submitter.name === 'redirect') {
+            if (typeof window.trackPixelEvent === 'function') {
+                const prodName = form.getAttribute('data-product-name') || '';
+                window.trackPixelEvent('AddToCart', {
+                    content_name: prodName,
+                    currency: 'BDT',
+                });
+            }
+            return;
+        }
         event.preventDefault();
         try {
             const res = await fetch(form.action, {
@@ -595,6 +604,11 @@ document.addEventListener('livewire:navigated', () => {
             const data = await res.json();
             applyPayload(data);
             window.gaPush(data.ga);
+
+            // Track Meta / TikTok Pixel AddToCart event
+            if (data.pixel && typeof window.trackPixelEvent === 'function') {
+                window.trackPixelEvent('AddToCart', data.pixel);
+            }
 
             if (window.showToast) {
                 window.showToast('Added to cart successfully!', 'cart', 'cart');

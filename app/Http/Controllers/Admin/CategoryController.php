@@ -90,6 +90,8 @@ class CategoryController extends Controller
             'sort_order' => ['nullable', 'integer'],
             'is_active' => ['sometimes', 'boolean'],
             'show_on_home' => ['sometimes', 'boolean'],
+            'meta_title' => ['nullable', 'string', 'max:255'],
+            'meta_description' => ['nullable', 'string', 'max:500'],
         ]);
 
         $data['is_active'] = $request->boolean('is_active');

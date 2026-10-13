@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\PromoBannerController;
+use App\Http\Controllers\Admin\CustomScriptController;
 use App\Http\Controllers\Admin\LogViewerController;
 use App\Http\Controllers\Admin\PixelSettingController;
 use App\Http\Controllers\Admin\SiteSettingController;
@@ -71,6 +72,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('pixel', [PixelSettingController::class, 'edit'])->name('pixel.edit');
         Route::put('pixel', [PixelSettingController::class, 'update'])->name('pixel.update');
         Route::post('pixel/test-capi', [PixelSettingController::class, 'testCapi'])->name('pixel.test-capi');
+
+        // Site Scripts & Tracking (Header & Body code injection)
+        Route::get('scripts', [CustomScriptController::class, 'edit'])->name('scripts.edit');
+        Route::put('scripts', [CustomScriptController::class, 'update'])->name('scripts.update');
 
         Route::get('customers', [CustomerController::class, 'index'])->name('customers.index');
         Route::get('customers/export', [CustomerController::class, 'export'])->name('customers.export');

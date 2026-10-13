@@ -37,4 +37,10 @@ class Brand extends Model
     {
         return $query->where('show_on_home', true);
     }
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => \App\Http\Controllers\SitemapController::clearCache());
+        static::deleted(fn () => \App\Http\Controllers\SitemapController::clearCache());
+    }
 }

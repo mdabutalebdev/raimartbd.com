@@ -2,6 +2,8 @@
     :title="($product->meta_title ?: $product->name).' - Raimart'"
     :description="$product->meta_description ?: $product->short_description"
     :image="$product->main_image"
+    type="product"
+    :product="$product"
 >
     @php
         $phone = preg_replace('/\D+/', '', \App\Models\SiteSetting::get('contact_phone', ''));
@@ -65,11 +67,11 @@
             ];
         }
 
-        if ($product->reviews_count > 0 && $product->rating > 0) {
+        if ($product->display_reviews_count > 0 && $product->display_rating > 0) {
             $schema['aggregateRating'] = [
                 '@type' => 'AggregateRating',
-                'ratingValue' => (float)$product->rating,
-                'reviewCount' => (int)$product->reviews_count,
+                'ratingValue' => (float)$product->display_rating,
+                'reviewCount' => (int)$product->display_reviews_count,
             ];
             
             if (isset($reviews) && $reviews->count() > 0) {
@@ -356,15 +358,15 @@
                                 <div class="mt-2 flex items-center gap-2.5 text-xs sm:text-sm text-gray-500 flex-wrap">
                                     <div class="flex items-center text-amber-400">
                                         @for ($i = 1; $i <= 5; $i++)
-                                            <i class="fa-{{ $i <= round($product->rating) ? 'solid' : 'regular' }} fa-star text-xs"></i>
+                                            <i class="fa-{{ $i <= round($product->display_rating) ? 'solid' : 'regular' }} fa-star text-xs"></i>
                                         @endfor
                                     </div>
-                                    <span>({{ number_format($product->rating, 1) }} / 5)</span>
+                                    <span>({{ number_format($product->display_rating, 1) }} / 5)</span>
                                     <span class="text-gray-300">•</span>
-                                    <span>{{ $product->reviews_count }} Ratings</span>
+                                    <span>{{ $product->display_reviews_count }} Ratings</span>
                                     <span class="text-gray-300">|</span>
                                     <span class="text-gray-300">•</span>
-                                    <span>Sold: <strong class="text-gray-500 font-semibold">{{ max(1, $product->order_items_count ?? 1) }} units</strong></span>
+                                    <span>Sold: <strong class="text-gray-500 font-semibold">{{ $product->display_sold_count }} units</strong></span>
                                 </div>
 
                                 @if($product->short_description)
@@ -533,15 +535,15 @@
                             <div class="flex items-center gap-2.5 text-xs sm:text-sm text-gray-500 flex-wrap">
                                 <div class="flex items-center text-amber-400">
                                     @for ($i = 1; $i <= 5; $i++)
-                                        <i class="fa-{{ $i <= round($product->rating) ? 'solid' : 'regular' }} fa-star text-xs"></i>
+                                        <i class="fa-{{ $i <= round($product->display_rating) ? 'solid' : 'regular' }} fa-star text-xs"></i>
                                     @endfor
                                 </div>
-                                <span>({{ number_format($product->rating, 1) }} / 5)</span>
+                                <span>({{ number_format($product->display_rating, 1) }} / 5)</span>
                                 <span class="text-gray-300">•</span>
-                                <span>{{ $product->reviews_count }} Ratings</span>
+                                <span>{{ $product->display_reviews_count }} Ratings</span>
                                 <span class="text-gray-300">|</span>
                                 <span class="text-gray-300">•</span>
-                                <span>Sold: <strong class="text-gray-500 font-semibold">{{ max(1, $product->order_items_count ?? 1) }} units</strong></span>
+                                <span>Sold: <strong class="text-gray-500 font-semibold">{{ $product->display_sold_count }} units</strong></span>
                             </div>
 
                             @if($product->short_description)
@@ -779,21 +781,30 @@
                             <div class="grid gap-5 sm:gap-6 md:grid-cols-[180px_1fr] md:items-center">
                                 {{-- Score Summary --}}
                                 <div class="text-left border-b border-gray-200/70 pb-4 md:border-b-0 md:pb-0 md:border-r md:border-gray-200/80 md:pr-6">
-                                    <p class="text-4xl sm:text-5xl font-black text-gray-900 tracking-tight leading-none">{{ number_format($product->rating, 1) }}</p>
+                                    <p class="text-4xl sm:text-5xl font-black text-gray-900 tracking-tight leading-none">{{ number_format($product->display_rating, 1) }}</p>
                                     <div class="mt-2 flex items-center justify-start gap-1 text-amber-400 text-base sm:text-lg">
                                         @for ($i = 1; $i <= 5; $i++)
-                                            <i class="fa-{{ $i <= round($product->rating) ? 'solid' : 'regular' }} fa-star"></i>
+                                            <i class="fa-{{ $i <= round($product->display_rating) ? 'solid' : 'regular' }} fa-star"></i>
                                         @endfor
                                     </div>
-                                    <p class="mt-1.5 text-xs sm:text-sm text-gray-500 font-medium">Based on {{ $reviews->count() }} {{ Str::plural('review', $reviews->count()) }}</p>
+                                    <p class="mt-1.5 text-xs sm:text-sm text-gray-500 font-medium">Based on {{ $product->display_reviews_count }} {{ Str::plural('rating', $product->display_reviews_count) }}</p>
                                 </div>
 
                                 {{-- Star Distribution Bars (Balanced Width) --}}
                                 <div class="space-y-2 sm:space-y-2.5 max-w-md w-full">
                                     @foreach ([5, 4, 3, 2, 1] as $star)
                                         @php
-                                            $count = $ratingCounts[$star] ?? 0;
-                                            $percent = $reviews->count() > 0 ? round(($count / $reviews->count()) * 100) : 0;
+                                            if ($reviews->count() > 0) {
+                                                $count = $ratingCounts[$star] ?? 0;
+                                                $percent = round(($count / $reviews->count()) * 100);
+                                            } elseif ($product->display_reviews_count > 0) {
+                                                $simulatedShares = [5 => 0.75, 4 => 0.20, 3 => 0.05, 2 => 0.00, 1 => 0.00];
+                                                $count = (int) round($product->display_reviews_count * ($simulatedShares[$star] ?? 0));
+                                                $percent = round(($simulatedShares[$star] ?? 0) * 100);
+                                            } else {
+                                                $count = 0;
+                                                $percent = 0;
+                                            }
                                         @endphp
                                         <div class="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm">
                                             <span class="w-8 sm:w-10 text-gray-700 font-semibold flex items-center gap-1">

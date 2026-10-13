@@ -18,6 +18,8 @@ class Category extends Model
         'home_max_products',
         'home_per_page',
         'home_order',
+        'meta_title',
+        'meta_description',
     ];
 
     protected function casts(): array
@@ -54,5 +56,11 @@ class Category extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => \App\Http\Controllers\SitemapController::clearCache());
+        static::deleted(fn () => \App\Http\Controllers\SitemapController::clearCache());
     }
 }

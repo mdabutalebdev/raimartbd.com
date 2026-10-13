@@ -1,4 +1,8 @@
-<x-layout :title="($activeCategory->name ?? 'Shop').' - Raimart'">
+@php
+    $shopTitle = ($activeCategory?->meta_title ?: ($activeCategory?->name ?? 'Shop')).' - Raimart';
+    $shopDesc = $activeCategory?->meta_description ?: ($activeCategory?->description ?: 'Shop the latest trending products at Raimart Bangladesh. Best prices, fast home delivery & Cash on Delivery.');
+@endphp
+<x-layout :title="$shopTitle" :description="$shopDesc">
     @php
         // Normalise the query into array form so each chip can drop just its own value.
         $base = collect(request()->except(['page', 'category', 'brand']))

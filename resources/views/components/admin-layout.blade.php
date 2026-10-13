@@ -238,7 +238,7 @@
                 {{-- Settings --}}
                 <a href="{{ route('admin.settings.index') }}" wire:navigate
                     class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition cursor-pointer
-                        {{ request()->routeIs('admin.settings.*') || request()->routeIs('admin.pixel.*') || request()->routeIs('admin.logs.*') || request()->routeIs('admin.steadfast.*') || request()->routeIs('admin.delivery.*') || request()->routeIs('admin.social-links.*') || request()->routeIs('admin.telegram.*') || request()->routeIs('admin.smtp.*') || request()->routeIs('admin.pages.*') || request()->routeIs('admin.about.*') || request()->routeIs('admin.contact-page.*') || request()->routeIs('admin.quick-contact.*') ? 'bg-emerald-600/30 text-emerald-400 font-bold border border-emerald-500/30' : 'text-white/70 hover:bg-white/5 hover:text-white' }}">
+                        {{ request()->routeIs('admin.settings.*') || request()->routeIs('admin.scripts.*') || request()->routeIs('admin.pixel.*') || request()->routeIs('admin.logs.*') || request()->routeIs('admin.steadfast.*') || request()->routeIs('admin.delivery.*') || request()->routeIs('admin.social-links.*') || request()->routeIs('admin.telegram.*') || request()->routeIs('admin.smtp.*') || request()->routeIs('admin.pages.*') || request()->routeIs('admin.about.*') || request()->routeIs('admin.contact-page.*') || request()->routeIs('admin.quick-contact.*') ? 'bg-emerald-600/30 text-emerald-400 font-bold border border-emerald-500/30' : 'text-white/70 hover:bg-white/5 hover:text-white' }}">
                     <i class="fa-solid fa-gear w-4 text-center"></i>
                     <span>Settings</span>
                 </a>
