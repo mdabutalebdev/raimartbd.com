@@ -23,12 +23,19 @@
             </p>
         </div>
 
-        <a href="https://adsmanager.facebook.com/events_manager2" target="_blank"
-            class="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-xs font-semibold text-gray-700 shadow-2xs hover:bg-gray-50 hover:text-blue-600 transition">
-            <i class="fa-brands fa-facebook text-blue-600"></i>
-            <span>Meta Events Manager</span>
-            <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-gray-400"></i>
-        </a>
+        <div class="flex items-center gap-2.5">
+            <a href="https://adsmanager.facebook.com/events_manager2" target="_blank"
+                class="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-xs font-semibold text-gray-700 shadow-2xs hover:bg-gray-50 hover:text-blue-600 transition">
+                <i class="fa-brands fa-facebook text-blue-600"></i>
+                <span>Meta Events Manager</span>
+                <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-gray-400"></i>
+            </a>
+            <button type="submit" form="pixelSettingsForm"
+                class="inline-flex items-center gap-2 rounded-xl bg-brand-orange px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-brand-navy transition cursor-pointer">
+                <i class="fa-solid fa-floppy-disk"></i>
+                <span>Save All Settings</span>
+            </button>
+        </div>
     </div>
 
     @if (session('status'))
@@ -57,9 +64,9 @@
         </div>
     @endif
 
-    <div class="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]" x-data="{ showCapiToken: false }">
+    <div class="mt-6 grid gap-6 lg:grid-cols-[1fr_360px]" x-data="{ showCapiToken: true }">
         {{-- Main Settings Form --}}
-        <form action="{{ route('admin.pixel.update') }}" method="POST" class="space-y-6">
+        <form id="pixelSettingsForm" action="{{ route('admin.pixel.update') }}" method="POST" class="space-y-6">
             @csrf
             @method('PUT')
 
@@ -106,19 +113,27 @@
                     {{-- Conversions API (CAPI) Access Token --}}
                     <div>
                         <div class="flex items-center justify-between">
-                            <label class="block text-xs font-bold text-gray-800 uppercase tracking-wide">
-                                Conversions API (CAPI) Access Token
-                            </label>
+                            <div class="flex items-center gap-2">
+                                <label class="block text-xs font-bold text-gray-800 uppercase tracking-wide">
+                                    Conversions API (CAPI) Access Token
+                                </label>
+                                @if(!empty($settings['fb_capi_token']))
+                                    <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                                        <i class="fa-solid fa-circle-check text-[10px]"></i> Token Saved ({{ strlen($settings['fb_capi_token']) }} chars)
+                                    </span>
+                                @endif
+                            </div>
                             <button type="button" @click="showCapiToken = !showCapiToken"
-                                class="text-[11px] font-semibold text-blue-600 hover:text-blue-800 cursor-pointer">
-                                <span x-text="showCapiToken ? 'Hide Token' : 'Show Token'"></span>
+                                class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-600 hover:text-blue-800 cursor-pointer">
+                                <i class="fa-solid" :class="showCapiToken ? 'fa-eye-slash' : 'fa-eye'"></i>
+                                <span x-text="showCapiToken ? 'Mask Token' : 'Show Full Token'"></span>
                             </button>
                         </div>
                         <div class="mt-1.5">
                             <textarea name="fb_capi_token" rows="3"
                                 placeholder="e.g. EAAGm0PX4ZC8... (Generate in Events Manager > Settings > Conversions API)"
-                                class="w-full rounded-xl border border-gray-200 bg-gray-50/40 px-4 py-2.5 text-xs font-mono text-gray-900 focus:border-brand-orange focus:bg-white focus:outline-none"
-                                :class="!showCapiToken && 'filter blur-[3px] hover:filter-none transition-all'"
+                                class="w-full rounded-xl border border-gray-200 bg-gray-50/40 px-4 py-2.5 text-xs font-mono text-gray-900 focus:border-brand-orange focus:bg-white focus:outline-none transition-all"
+                                :class="!showCapiToken && 'filter blur-[4px] hover:filter-none'"
                             >{{ old('fb_capi_token', $settings['fb_capi_token'] ?? '') }}</textarea>
                         </div>
                         <p class="mt-1 text-[11px] text-gray-500">
@@ -212,6 +227,15 @@
                                 </div>
                             </label>
                         </div>
+                    </div>
+
+                    {{-- Meta Pixel Card Save Footer --}}
+                    <div class="flex items-center justify-between border-t border-gray-100 bg-gray-50/70 -mx-6 -mb-6 p-4 mt-6">
+                        <span class="text-xs text-gray-500 font-medium">Save Meta Pixel ID and CAPI Token to activate tracking</span>
+                        <button type="submit" form="pixelSettingsForm"
+                            class="inline-flex items-center gap-1.5 rounded-xl bg-brand-orange px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-brand-navy transition cursor-pointer">
+                            <i class="fa-solid fa-floppy-disk"></i> Save Meta Settings
+                        </button>
                     </div>
                 </div>
             </div>
@@ -322,12 +346,20 @@
                     Send a test payload directly from your server to Meta to verify your Pixel ID and Access Token without creating an ad.
                 </p>
 
-                <form action="{{ route('admin.pixel.test-capi') }}" method="POST" class="mt-4 space-y-3">
+                <form id="capiTestForm" action="{{ route('admin.pixel.test-capi') }}" method="POST" class="mt-4 space-y-3"
+                    onsubmit="
+                        const pid = document.querySelector('input[name=fb_pixel_id]')?.value?.trim() || '';
+                        const tok = document.querySelector('textarea[name=fb_capi_token]')?.value?.trim() || '';
+                        this.querySelector('input[name=fb_pixel_id]').value = pid;
+                        this.querySelector('input[name=fb_capi_token]').value = tok;
+                    ">
                     @csrf
+                    <input type="hidden" name="fb_pixel_id" value="">
+                    <input type="hidden" name="fb_capi_token" value="">
                     <div>
                         <label class="block text-[11px] font-bold text-gray-700 uppercase">Test Event Code</label>
                         <input type="text" name="test_event_code"
-                            value="{{ (!empty($settings['fb_test_event_code']) && $settings['fb_test_event_code'] !== '0') ? $settings['fb_test_event_code'] : '' }}"
+                            value="{{ old('test_event_code', (!empty($settings['fb_test_event_code']) && $settings['fb_test_event_code'] !== '0') ? $settings['fb_test_event_code'] : '') }}"
                             placeholder="e.g. TEST12345"
                             class="mt-1 w-full rounded-xl border border-gray-200 bg-gray-50/50 px-3 py-2 text-xs font-mono text-gray-900 focus:border-blue-500 focus:outline-none">
                         <span class="text-[10px] text-gray-400">Get this from Meta Events Manager &gt; Test Events.</span>

@@ -15,6 +15,8 @@ class LogViewerController extends Controller
      */
     public function index(Request $request)
     {
+        @ini_set('memory_limit', '256M');
+
         $logPath = storage_path('logs');
 
         // Ensure storage/logs directory exists
@@ -80,7 +82,7 @@ class LogViewerController extends Controller
 
         $rawContent = '';
         $isTruncated = false;
-        $maxReadBytes = 10 * 1024 * 1024; // 10MB safe ceiling for editor memory
+        $maxReadBytes = 512 * 1024; // 512 KB safe ceiling to prevent PHP memory exhaustion
 
         if ($fileExists) {
             if ($fileSize > $maxReadBytes) {
@@ -98,6 +100,11 @@ class LogViewerController extends Controller
 
         $lineCount = $rawContent !== '' ? substr_count($rawContent, "\n") + 1 : 0;
         $entries = $this->parseLogContent($rawContent);
+
+        // Cap parsed entries at 200 most recent to prevent browser memory/DOM freeze
+        if (count($entries) > 200) {
+            $entries = array_slice($entries, 0, 200);
+        }
 
         // Calculate severity stats
         $stats = [

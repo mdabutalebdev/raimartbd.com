@@ -34,26 +34,25 @@ class SiteSetting extends Model
         return static::all_();
     }
 
-    /**
-     * The whole settings table as key => value, memoised for the request and
-     * cached across requests (settings change only when an admin saves).
-     */
     private static function all_(): array
     {
         if (static::$memo !== null) {
             return static::$memo;
         }
 
-        return static::$memo = Cache::remember(
-            self::CACHE_KEY,
-            now()->addHours(12),
-            fn () => static::query()->pluck('value', 'key')->all()
-        );
+        try {
+            return static::$memo = static::query()->pluck('value', 'key')->all();
+        } catch (\Throwable $e) {
+            return [];
+        }
     }
 
     public static function flushCache(): void
     {
         static::$memo = null;
-        Cache::forget(self::CACHE_KEY);
+        try {
+            Cache::forget(self::CACHE_KEY);
+        } catch (\Throwable $e) {
+        }
     }
 }

@@ -523,14 +523,22 @@
             return {
                 activeTab: 'editor',
                 currentFile: config.currentFile,
-                content: @js($rawContent),
-                initialContent: @js($rawContent),
+                content: '',
+                initialContent: '',
                 isDirty: false,
                 wordWrap: true,
                 searchQuery: '',
                 filterLevel: 'ALL',
                 testModalOpen: false,
                 clearModalOpen: false,
+
+                init() {
+                    const el = document.getElementById('rawLogEditor');
+                    if (el) {
+                        this.content = el.value;
+                        this.initialContent = el.value;
+                    }
+                },
 
                 get editorLines() {
                     if (!this.content) return 0;

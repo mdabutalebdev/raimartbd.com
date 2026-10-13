@@ -38,6 +38,23 @@ class PixelSettingController extends Controller
     {
         $settings = SiteSetting::getAll();
 
+        // Clean up legacy '0' values stored in text fields by old code
+        $booleanKeys = [
+            'fb_pixel_enabled',
+            'pixel_track_pageview',
+            'pixel_track_view_content',
+            'pixel_track_add_to_cart',
+            'pixel_track_initiate_checkout',
+            'pixel_track_purchase',
+            'pixel_advanced_matching',
+        ];
+
+        foreach (self::KEYS as $k) {
+            if (!in_array($k, $booleanKeys, true) && isset($settings[$k]) && $settings[$k] === '0') {
+                $settings[$k] = '';
+            }
+        }
+
         return view('admin.pixel.edit', compact('settings'));
     }
 
@@ -84,14 +101,27 @@ class PixelSettingController extends Controller
 
     public function testCapi(Request $request)
     {
-        $pixelId = trim((string) SiteSetting::get('fb_pixel_id'));
-        $token = trim((string) SiteSetting::get('fb_capi_token'));
+        $pixelId = trim((string) ($request->input('fb_pixel_id') ?: SiteSetting::get('fb_pixel_id')));
+        $token = trim((string) ($request->input('fb_capi_token') ?: SiteSetting::get('fb_capi_token')));
         $testCode = trim((string) ($request->input('test_event_code') ?: SiteSetting::get('fb_test_event_code', '')));
 
+        // If credentials were provided in the request, save them so they are never lost
+        if (!empty($pixelId)) {
+            SiteSetting::set('fb_pixel_id', $pixelId);
+        }
+        if (!empty($token)) {
+            SiteSetting::set('fb_capi_token', $token);
+        }
+        if (!empty($testCode)) {
+            SiteSetting::set('fb_test_event_code', $testCode);
+        }
+
         if (empty($pixelId) || empty($token)) {
-            return redirect()->back()->withErrors([
-                'capi' => 'Both Meta Pixel ID and Conversions API Access Token are required to test CAPI.',
-            ]);
+            return redirect()->back()
+                ->withInput()
+                ->withErrors([
+                    'capi' => 'Both Meta Pixel ID and Conversions API Access Token are required to test CAPI. Please enter them and click "Save Meta Settings" first.',
+                ]);
         }
 
         try {
@@ -133,13 +163,17 @@ class PixelSettingController extends Controller
             $errData = $response->json();
             $errMsg = $errData['error']['message'] ?? $response->body();
 
-            return redirect()->back()->withErrors([
-                'capi' => "Meta API Error: {$errMsg}",
-            ]);
+            return redirect()->back()
+                ->withInput()
+                ->withErrors([
+                    'capi' => "Meta API Error: {$errMsg}",
+                ]);
         } catch (\Throwable $e) {
-            return redirect()->back()->withErrors([
-                'capi' => "Connection Error: {$e->getMessage()}",
-            ]);
+            return redirect()->back()
+                ->withInput()
+                ->withErrors([
+                    'capi' => "Connection Error: {$e->getMessage()}",
+                ]);
         }
     }
 }
