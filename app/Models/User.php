@@ -61,6 +61,11 @@ class User extends Authenticatable
         return $this->hasMany(Order::class);
     }
 
+    public function isGoogleUser(): bool
+    {
+        return !empty($this->google_id);
+    }
+
     public function isStaff(): bool
     {
         return in_array($this->role, ['staff', 'admin', 'super_admin']) || $this->is_admin;

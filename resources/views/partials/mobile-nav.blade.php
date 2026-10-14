@@ -5,9 +5,9 @@
             Home
         </a>
 
-        <button type="button" data-drawer-open class="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-brand-navy/70 cursor-pointer">
-            <i class="fa-solid fa-bars text-[18px]"></i>
-            Menu
+        <button type="button" data-drawer-open="category-drawer" class="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-brand-navy/70 hover:text-brand-orange transition-colors cursor-pointer">
+            <i class="fa-solid fa-table-cells-large text-[18px]"></i>
+            Category
         </button>
 
         <button type="button" data-cart-open class="flex flex-col items-center gap-0.5 py-2 text-[10px] font-medium text-brand-navy/70 cursor-pointer">

@@ -154,10 +154,21 @@
                                 class="w-full rounded border border-brand-navy/15 px-3 py-2.5 text-sm placeholder:text-brand-navy/40 focus:border-brand-orange focus:outline-none">
                         </div>
 
-                        <div class="flex">
-                            <span class="flex shrink-0 items-center rounded-l border border-r-0 border-brand-navy/15 bg-brand-bg px-3 text-sm font-medium text-brand-navy/70">88</span>
-                            <input type="text" name="phone" value="{{ old('phone', auth()->user()->phone ?? '') }}" required placeholder="01712345678"
-                                class="w-full rounded-r border border-brand-navy/15 px-4 py-3 text-sm placeholder:text-brand-navy/40 focus:border-brand-orange focus:outline-none">
+                        <div>
+                            <div class="flex">
+                                <span class="flex shrink-0 items-center rounded-l border border-r-0 border-brand-navy/15 bg-brand-bg px-3 text-sm font-medium text-brand-navy/70">88</span>
+                                <input type="tel" name="phone" id="checkout-phone" value="{{ old('phone', auth()->user()->phone ?? '') }}" required
+                                    autocomplete="tel"
+                                    inputmode="numeric"
+                                    pattern="[0-9]*"
+                                    maxlength="11"
+                                    placeholder="01712345678"
+                                    class="w-full rounded-r border border-brand-navy/15 px-3 py-2.5 text-sm placeholder:text-brand-navy/40 focus:border-brand-orange focus:outline-none transition">
+                            </div>
+                            <div class="mt-1 flex items-center justify-between text-[11px]">
+                                <span id="checkout-phone-hint" class="text-brand-navy/45">11-digit mobile number starting with 01</span>
+                                <span id="checkout-phone-counter" class="font-mono text-brand-navy/40">0/11</span>
+                            </div>
                         </div>
 
                         <div class="sm:col-span-2">
@@ -391,4 +402,110 @@
 
     {{-- district → thanas, so the thana picker refills when the district changes --}}
     <script type="application/json" id="thana-map">{!! json_encode($thanaMap, JSON_HEX_TAG | JSON_UNESCAPED_UNICODE) !!}</script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            initCheckoutPhoneValidation();
+        });
+        window.addEventListener('livewire:navigated', () => {
+            initCheckoutPhoneValidation();
+        });
+
+        function initCheckoutPhoneValidation() {
+            const phoneInput = document.getElementById('checkout-phone');
+            const phoneCounter = document.getElementById('checkout-phone-counter');
+            const phoneHint = document.getElementById('checkout-phone-hint');
+            const checkoutForm = document.getElementById('checkout-form');
+
+            if (!phoneInput) return;
+
+            const validatePhone = () => {
+                // Strictly allow digits only (strip any letters/special characters)
+                let digits = phoneInput.value.replace(/\D/g, '').slice(0, 11);
+                phoneInput.value = digits;
+
+                if (phoneCounter) {
+                    phoneCounter.innerText = `${digits.length}/11`;
+                }
+
+                if (digits.length === 0) {
+                    if (phoneHint) {
+                        phoneHint.innerText = '11-digit mobile number starting with 01';
+                        phoneHint.className = 'text-brand-navy/45';
+                    }
+                    phoneInput.classList.remove('border-red-400', 'border-emerald-500');
+                    phoneInput.classList.add('border-brand-navy/15');
+                    return false;
+                }
+
+                if (digits.length === 11 && /^01[3-9]\d{8}$/.test(digits)) {
+                    if (phoneHint) {
+                        phoneHint.innerText = '✓ Valid Bangladeshi phone number';
+                        phoneHint.className = 'text-emerald-600 font-medium';
+                    }
+                    phoneInput.classList.remove('border-red-400', 'border-brand-navy/15');
+                    phoneInput.classList.add('border-emerald-500');
+                    return true;
+                }
+
+                if (digits.length === 11 && !/^01[3-9]\d{8}$/.test(digits)) {
+                    if (phoneHint) {
+                        phoneHint.innerText = 'Must be a valid operator number starting with 013-019';
+                        phoneHint.className = 'text-red-600 font-medium';
+                    }
+                    phoneInput.classList.remove('border-emerald-500', 'border-brand-navy/15');
+                    phoneInput.classList.add('border-red-400');
+                    return false;
+                }
+
+                // Still typing (less than 11 digits)
+                if (phoneHint) {
+                    phoneHint.innerText = `${digits.length}/11 digits (e.g. 01712345678)`;
+                    phoneHint.className = 'text-brand-navy/45';
+                }
+                phoneInput.classList.remove('border-red-400', 'border-emerald-500');
+                phoneInput.classList.add('border-brand-navy/15');
+                return false;
+            };
+
+            phoneInput.addEventListener('input', validatePhone);
+            phoneInput.addEventListener('change', validatePhone);
+            phoneInput.addEventListener('paste', () => setTimeout(validatePhone, 20));
+
+            // Initial check on load
+            if (phoneInput.value) {
+                validatePhone();
+            }
+
+            // Intercept checkout form submission if phone is invalid
+            if (checkoutForm && !checkoutForm._phoneValidationBound) {
+                checkoutForm._phoneValidationBound = true;
+                checkoutForm.addEventListener('submit', (e) => {
+                    const isValid = validatePhone();
+                    const digits = phoneInput.value.replace(/\D/g, '');
+
+                    if (!isValid || digits.length !== 11 || !/^01[3-9]\d{8}$/.test(digits)) {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        phoneInput.classList.remove('border-brand-navy/15', 'border-emerald-500');
+                        phoneInput.classList.add('border-red-500');
+                        phoneInput.focus();
+
+                        if (phoneHint) {
+                            phoneHint.innerText = 'Please enter a valid 11-digit phone number starting with 01 (e.g. 01712345678)';
+                            phoneHint.className = 'text-red-600 font-medium';
+                        }
+
+                        if (typeof window.showToast === 'function') {
+                            window.showToast('Please enter a valid 11-digit phone number (e.g. 01712345678).', 'error');
+                        }
+
+                        phoneInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        return false;
+                    }
+                });
+            }
+        }
+    </script>
 </x-layout>

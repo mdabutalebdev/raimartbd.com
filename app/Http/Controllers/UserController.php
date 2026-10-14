@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
+use App\Models\SiteSetting;
 use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\Auth;
@@ -17,6 +19,27 @@ class UserController extends Controller
         $orders = $user->orders()->latest()->get();
 
         return view('user.dashboard', compact('user', 'orders'));
+    }
+
+    public function showOrder(Order $order)
+    {
+        abort_unless($order->user_id === Auth::id(), 403);
+
+        $order->load(['items.product', 'payments']);
+
+        return view('user.orders.show', compact('order'));
+    }
+
+    public function invoice(Order $order)
+    {
+        abort_unless($order->user_id === Auth::id(), 403);
+
+        $order->load(['items.product', 'payments']);
+
+        return view('admin.orders.invoice', [
+            'order' => $order,
+            'settings' => SiteSetting::getAll(),
+        ]);
     }
 
     public function updateProfile(Request $request)
@@ -59,6 +82,12 @@ class UserController extends Controller
     public function updatePassword(Request $request)
     {
         $user = Auth::user();
+
+        if ($user->isGoogleUser()) {
+            return redirect()->route('user.dashboard')->withErrors([
+                'error' => 'Password change is disabled for accounts signed in with Google.',
+            ]);
+        }
 
         $rules = [
             'password' => ['required', 'string', 'min:8', 'confirmed'],

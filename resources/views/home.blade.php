@@ -1,6 +1,6 @@
 <x-layout>
     {{-- Hero --}}
-    <section class="gb-container pt-1.5 sm:pt-3 md:pt-6">
+    <section class="gb-container pt-1 sm:pt-2 md:pt-[12px]">
         <div class="grid grid-cols-1 gap-4 lg:grid-cols-[5fr_1fr]">
             <div class="relative overflow-hidden rounded-2xl swiper hero-swiper w-full min-w-0 h-[200px] sm:h-[300px] lg:h-auto">
                 <div class="swiper-wrapper">

@@ -82,7 +82,7 @@
                         <p class="text-xs uppercase tracking-wide text-brand-navy/50">Deliver To</p>
                         <p class="mt-1 font-medium text-brand-navy">{{ $order->name }}</p>
                         <p class="text-brand-navy/60">{{ $order->phone }}</p>
-                        <p class="text-brand-navy/60">{{ $order->address }}, {{ $order->city }}</p>
+                        <p class="text-brand-navy/60">{{ $order->address }}{{ $order->thana ? ', ' . $order->thana : '' }}, {{ $order->city }}</p>
                     </div>
                     <div class="sm:text-right">
                         <p class="text-xs uppercase tracking-wide text-brand-navy/50">Payment</p>

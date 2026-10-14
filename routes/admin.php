@@ -48,6 +48,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('promo-banners', PromoBannerController::class)->except('show')->parameters(['promo-banners' => 'banner']);
         Route::get('products/export', [ProductController::class, 'export'])->name('products.export');
         Route::get('products/check-sku', [ProductController::class, 'checkSku'])->name('products.check-sku');
+        Route::get('products/check-slug', [ProductController::class, 'checkSlug'])->name('products.check-slug');
         Route::resource('products', ProductController::class);
         Route::delete('products/{product}/images/{image}', [ProductController::class, 'destroyImage'])->name('products.images.destroy');
 

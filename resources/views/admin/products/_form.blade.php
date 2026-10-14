@@ -49,10 +49,54 @@
                 <div class="sm:col-span-2">
                     <label class="block text-sm font-medium text-gray-700">Product Name <span class="text-red-500">*</span></label>
                     <input type="text" name="name" value="{{ old('name', $product->name ?? '') }}"
-                        @input="delete errors.name"
+                        @input="delete errors.name; window.dispatchEvent(new CustomEvent('product-name-changed', { detail: $event.target.value }))"
                         :class="errors.name ? 'border-red-400 ring-1 ring-red-300' : 'border-gray-300'"
                         class="mt-1 block w-full rounded-md border px-3 py-2 text-sm focus:border-brand-orange focus:outline-none focus:ring-1 focus:ring-brand-orange">
                     <p x-show="errors.name" x-text="errors.name" class="mt-1 text-xs text-red-600" style="display:none;"></p>
+                </div>
+
+                <!-- Product Slug (URL) with Realtime Uniqueness Check -->
+                <div class="sm:col-span-2" x-data="slugChecker('{{ old('slug', $product->slug ?? '') }}', {{ isset($product) ? $product->id : 'null' }})">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-sm font-medium text-gray-700">
+                            Product Slug (URL)
+                            <span class="text-xs font-normal text-gray-400 ml-1">(auto-generated or custom clean URL)</span>
+                        </label>
+                        <button type="button" @click="generateFromName()" class="text-xs text-brand-orange hover:text-brand-navy font-medium hover:underline inline-flex items-center gap-1 cursor-pointer">
+                            <i class="fa-solid fa-arrows-rotate text-[10px]"></i> Auto-generate from name
+                        </button>
+                    </div>
+
+                    <div class="relative mt-1">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-xs text-gray-400 font-mono">
+                            /products/
+                        </div>
+                        <input type="text" name="slug" x-model="slug" @input="onSlugInput" autocomplete="off"
+                            placeholder="e.g. loreal-paris-shampoo"
+                            class="block w-full rounded-md border pl-22 pr-10 py-2 text-sm font-mono focus:outline-none focus:ring-1 transition-colors"
+                            :class="inputClass">
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <i x-show="isChecking" class="fa-solid fa-spinner fa-spin text-gray-400" style="display: none;"></i>
+                            <i x-show="!isChecking && isValid === true && slug.length > 0" class="fa-solid fa-circle-check text-green-500" style="display: none;"></i>
+                            <i x-show="!isChecking && isValid === false" class="fa-solid fa-circle-xmark text-red-500" style="display: none;"></i>
+                        </div>
+                    </div>
+
+                    <!-- Live Feedback & URL Preview -->
+                    <div class="mt-1.5 flex flex-wrap items-center justify-between gap-2 text-xs">
+                        <div>
+                            <span x-show="isChecking" class="text-gray-400 flex items-center gap-1" style="display: none;">
+                                <i class="fa-solid fa-spinner fa-spin text-[10px]"></i> Checking availability...
+                            </span>
+                            <span x-show="!isChecking && message" x-text="message" :class="isValid ? 'text-green-600 font-medium' : 'text-red-600 font-medium'" style="display: none;"></span>
+                        </div>
+                        <div class="text-gray-400 text-[11px] truncate max-w-full">
+                            Preview: <span class="text-brand-navy font-mono">{{ url('/products') }}/<span x-text="slug || 'your-slug'" class="text-brand-orange font-semibold"></span></span>
+                        </div>
+                    </div>
+                    @error('slug')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div class="sm:col-span-2">
@@ -805,6 +849,103 @@
                 } catch (e) {
                     this.isValid = null;
                     this.message = 'Error checking SKU';
+                } finally {
+                    this.isChecking = false;
+                }
+            }
+        }));
+
+        Alpine.data('slugChecker', (initialSlug, ignoreId) => ({
+            slug: initialSlug || '',
+            ignoreId: ignoreId,
+            isChecking: false,
+            isValid: null,
+            message: '',
+            isCustomized: !!initialSlug,
+            debounceTimeout: null,
+
+            init() {
+                if (this.slug) {
+                    this.checkSlug();
+                }
+
+                window.addEventListener('product-name-changed', (e) => {
+                    if (!this.isCustomized) {
+                        this.slug = this.slugify(e.detail);
+                        this.debouncedCheck();
+                    }
+                });
+            },
+
+            slugify(text) {
+                return (text || '')
+                    .toString()
+                    .toLowerCase()
+                    .trim()
+                    .replace(/\s+/g, '-')
+                    .replace(/[^\w\-]+/g, '')
+                    .replace(/\-\-+/g, '-')
+                    .replace(/^-+/, '')
+                    .replace(/-+$/, '');
+            },
+
+            generateFromName() {
+                const nameEl = document.querySelector('input[name="name"]');
+                if (nameEl && nameEl.value.trim()) {
+                    this.slug = this.slugify(nameEl.value);
+                    this.isCustomized = true;
+                    this.checkSlug();
+                }
+            },
+
+            onSlugInput() {
+                this.isCustomized = true;
+                this.debouncedCheck();
+            },
+
+            debouncedCheck() {
+                clearTimeout(this.debounceTimeout);
+                this.debounceTimeout = setTimeout(() => {
+                    this.checkSlug();
+                }, 400);
+            },
+
+            get inputClass() {
+                if (this.isChecking) return 'border-gray-300 focus:border-brand-orange focus:ring-brand-orange';
+                if (this.isValid === false) return 'border-red-500 text-red-900 focus:border-red-500 focus:ring-red-500';
+                if (this.isValid === true && this.slug.length > 0) return 'border-green-500 text-gray-900 focus:border-green-500 focus:ring-green-500';
+                return 'border-gray-300 focus:border-brand-orange focus:ring-brand-orange';
+            },
+
+            async checkSlug() {
+                if (!this.slug || this.slug.trim() === '') {
+                    this.isValid = null;
+                    this.message = '';
+                    this.isChecking = false;
+                    return;
+                }
+
+                this.isChecking = true;
+                this.message = '';
+
+                try {
+                    const url = new URL('{{ route("admin.products.check-slug") }}');
+                    url.searchParams.append('slug', this.slug);
+                    if (this.ignoreId) {
+                        url.searchParams.append('ignore_id', this.ignoreId);
+                    }
+
+                    const response = await fetch(url);
+                    const data = await response.json();
+
+                    this.isValid = data.valid;
+                    this.message = data.message;
+                    if (data.slug) {
+                        this.slug = data.slug;
+                    }
+                } catch (e) {
+                    this.isValid = null;
+                    this.message = 'Error verifying slug availability';
                 } finally {
                     this.isChecking = false;
                 }

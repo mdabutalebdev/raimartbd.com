@@ -136,10 +136,52 @@ class ProductController extends Controller
         ]);
     }
 
+    public function checkSlug(Request $request)
+    {
+        $raw = $request->query('slug');
+        $ignoreId = $request->query('ignore_id');
+
+        if (!$raw || trim($raw) === '') {
+            return response()->json([
+                'valid' => null,
+                'slug' => '',
+                'message' => '',
+            ]);
+        }
+
+        $slug = Str::slug($raw);
+
+        if (!$slug) {
+            return response()->json([
+                'valid' => false,
+                'slug' => '',
+                'message' => 'Please enter a valid slug containing letters, numbers, or dashes.',
+            ]);
+        }
+
+        $query = Product::where('slug', $slug);
+        if ($ignoreId) {
+            $query->where('id', '!=', $ignoreId);
+        }
+
+        $isTaken = $query->exists();
+
+        return response()->json([
+            'valid' => !$isTaken,
+            'slug' => $slug,
+            'message' => $isTaken ? 'This slug is already in use by another product.' : 'Slug is available!',
+        ]);
+    }
+
     public function store(Request $request)
     {
         $data = $this->validated($request);
-        $data['slug'] = Str::slug($data['name']).'-'.Str::lower(Str::random(4));
+
+        if ($request->filled('slug')) {
+            $data['slug'] = Str::slug($request->input('slug'));
+        } else {
+            $data['slug'] = Str::slug($data['name']).'-'.Str::lower(Str::random(4));
+        }
 
         if ($request->hasFile('main_image')) {
             $data['main_image'] = app(\App\Services\ImageOptimizer::class)->store($request->file('main_image'), 'products');
@@ -175,6 +217,10 @@ class ProductController extends Controller
     public function update(Request $request, Product $product)
     {
         $data = $this->validated($request, $product);
+
+        if ($request->filled('slug')) {
+            $data['slug'] = Str::slug($request->input('slug'));
+        }
 
         if ($request->hasFile('main_image')) {
             if ($product->main_image && !str_starts_with($product->main_image, 'http')) {
@@ -308,6 +354,7 @@ class ProductController extends Controller
             'category_id' => ['required', 'exists:categories,id'],
             'brand_id' => ['nullable', 'exists:brands,id'],
             'name' => ['required', 'string', 'max:255'],
+            'slug' => ['nullable', 'string', 'max:255', \Illuminate\Validation\Rule::unique('products', 'slug')->ignore($product)],
             'short_description' => ['nullable', 'string', 'max:1000'],
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],

@@ -25,10 +25,32 @@
                 <tbody>
                     @foreach ($order->items as $item)
                         <tr class="border-b border-brand-navy/5">
-                            <td class="py-3">{{ $item->product_name }}</td>
-                            <td class="py-3">৳{{ number_format($item->price, 2) }}</td>
+                            <td class="py-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="h-12 w-12 rounded-lg border border-brand-navy/10 bg-gray-50 overflow-hidden shrink-0 flex items-center justify-center">
+                                        <img src="{{ image_url($item->product?->main_image, urlencode($item->product_name)) }}" alt="{{ $item->product_name }}" class="h-full w-full object-cover">
+                                    </div>
+                                    <div class="min-w-0">
+                                        @if ($item->product)
+                                            <a href="{{ route('products.show', $item->product->slug) }}" target="_blank" class="font-medium text-brand-navy hover:text-brand-orange transition line-clamp-2" title="View product on site">
+                                                {{ $item->product_name }}
+                                            </a>
+                                        @else
+                                            <span class="font-medium text-brand-navy">{{ $item->product_name }}</span>
+                                        @endif
+                                        @if (! empty($item->options))
+                                            <p class="text-xs text-brand-navy/50 mt-0.5">
+                                                @foreach ($item->options as $key => $val)
+                                                    {{ ucfirst($key) }}: {{ $val }}@if (! $loop->last) &middot; @endif
+                                                @endforeach
+                                            </p>
+                                        @endif
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3 whitespace-nowrap">৳{{ number_format($item->price, 2) }}</td>
                             <td class="py-3">{{ $item->quantity }}</td>
-                            <td class="py-3">৳{{ number_format($item->subtotal, 2) }}</td>
+                            <td class="py-3 whitespace-nowrap">৳{{ number_format($item->subtotal, 2) }}</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -72,7 +94,13 @@
                     <div><dt class="text-brand-navy/50">Name</dt><dd>{{ $order->name }}</dd></div>
                     <div><dt class="text-brand-navy/50">Phone</dt><dd>{{ $order->phone }}</dd></div>
                     <div><dt class="text-brand-navy/50">Email</dt><dd>{{ $order->email ?: '—' }}</dd></div>
-                    <div><dt class="text-brand-navy/50">Address</dt><dd>{{ $order->address }}, {{ $order->city }}</dd></div>
+                    <div><dt class="text-brand-navy/50">Address</dt><dd class="font-medium text-brand-navy">{{ $order->address }}{{ $order->thana ? ', ' . $order->thana : '' }}{{ $order->city ? ', ' . $order->city : '' }}</dd></div>
+                    @if ($order->thana)
+                        <div><dt class="text-brand-navy/50">Thana / Upazila</dt><dd class="font-medium text-brand-navy">{{ $order->thana }}</dd></div>
+                    @endif
+                    @if ($order->city)
+                        <div><dt class="text-brand-navy/50">District</dt><dd class="font-medium text-brand-navy">{{ $order->city }}</dd></div>
+                    @endif
                     @if ($order->notes)
                         <div><dt class="text-brand-navy/50">Notes</dt><dd>{{ $order->notes }}</dd></div>
                     @endif

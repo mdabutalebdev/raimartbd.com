@@ -145,18 +145,57 @@
             selectedPrice: '{{ number_format($product->price) }}',
             selectedOldPrice: '{{ $product->old_price ? number_format($product->old_price) : '' }}',
             selectedSku: '{{ $product->sku ?: 'RM-'.$product->id }}',
-            qty: 1,
-            maxQty: {{ max(1, (int)$product->stock) }},
-            shareOpen: false,
+            qty: {{ $product->stock > 0 ? 1 : 0 }},
+            maxQty: {{ (int)$product->stock }},
+            shareModalOpen: false,
+            shareUrl: '{{ url()->current() }}',
             copied: false,
             get current() { return this.items[this.idx] || { url: '', type: 'image' } },
             go(i) { this.idx = (i + this.items.length) % this.items.length },
+            incrementQty() {
+                if (this.maxQty <= 0 || this.qty >= this.maxQty) {
+                    if (window.showToast) {
+                        window.showToast('Oops! You have already added all available items into your cart.', 'stock-error', 'center');
+                    }
+                    return;
+                }
+                this.qty++;
+            },
+            decrementQty() {
+                if (this.qty > 1) {
+                    this.qty--;
+                }
+            },
+            validateQtyInput() {
+                if (this.maxQty > 0 && this.qty > this.maxQty) {
+                    this.qty = this.maxQty;
+                    if (window.showToast) {
+                        window.showToast('Oops! You have already added all available items into your cart.', 'stock-error', 'center');
+                    }
+                } else if (this.maxQty <= 0) {
+                    this.qty = 0;
+                    if (window.showToast) {
+                        window.showToast('Oops! You have already added all available items into your cart.', 'stock-error', 'center');
+                    }
+                } else if (this.qty < 1 && this.maxQty > 0) {
+                    this.qty = 1;
+                }
+            },
             selectVariant(v) {
                 this.selectedVariant = v;
                 this.selectedPrice = Number(v.current_price).toLocaleString();
                 this.selectedOldPrice = v.original_price ? Number(v.original_price).toLocaleString() : '';
                 if (v.sku) this.selectedSku = v.sku;
-                if (v.stock) this.maxQty = v.stock;
+                if (v.stock !== undefined && v.stock !== null) {
+                    this.maxQty = parseInt(v.stock, 10);
+                    if (this.maxQty <= 0) {
+                        this.qty = 0;
+                    } else if (this.qty > this.maxQty) {
+                        this.qty = this.maxQty;
+                    } else if (this.qty < 1 && this.maxQty > 0) {
+                        this.qty = 1;
+                    }
+                }
                 if (v.image) {
                     let fIdx = this.items.findIndex(it => it.url === v.image);
                     if (fIdx >= 0) {
@@ -167,11 +206,45 @@
                     }
                 }
             },
+            triggerShare() {
+                this.shareUrl = window.location.href;
+                this.shareModalOpen = true;
+            },
             copyShareLink() {
-                navigator.clipboard.writeText(window.location.href).then(() => {
-                    this.copied = true;
-                    setTimeout(() => { this.copied = false; }, 2500);
-                });
+                const url = this.shareUrl || window.location.href;
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(url).then(() => {
+                        this.copied = true;
+                        setTimeout(() => { this.copied = false; }, 2500);
+                    }).catch(() => {
+                        this.fallbackCopy(url);
+                    });
+                } else {
+                    this.fallbackCopy(url);
+                }
+            },
+            fallbackCopy(text) {
+                const input = document.getElementById('shareModalInput');
+                if (input) {
+                    input.select();
+                    input.setSelectionRange(0, 99999);
+                    try {
+                        document.execCommand('copy');
+                        this.copied = true;
+                        setTimeout(() => { this.copied = false; }, 2500);
+                    } catch (e) {}
+                }
+            },
+            shareNative() {
+                if (navigator.share) {
+                    navigator.share({
+                        title: '{{ addslashes($product->name) }}',
+                        text: '{{ addslashes($product->name) }} - Raimart',
+                        url: this.shareUrl || window.location.href,
+                    }).catch(() => {});
+                } else {
+                    this.copyShareLink();
+                }
             },
             thumbSwiper: null,
             initThumbSwiper() {
@@ -203,16 +276,6 @@
                         this.thumbSwiper.slideTo(val);
                     }
                 });
-            },
-            triggerShare() {
-                if (navigator.share) {
-                    navigator.share({
-                        title: '{{ addslashes($product->name) }}',
-                        url: window.location.href,
-                    }).catch(() => {});
-                } else {
-                    this.shareOpen = !this.shareOpen;
-                }
             }
         }">
 
@@ -466,11 +529,11 @@
                                 <div class="flex items-center gap-3">
                                     {{-- Quantity Selector (Count product barano komano) --}}
                                     <div class="flex h-11 w-32 items-center justify-between rounded-xl border border-gray-300 bg-white px-2.5 shadow-xs flex-shrink-0">
-                                        <button type="button" @click="if(qty > 1) qty--" class="h-8 w-8 flex items-center justify-center text-gray-500 hover:text-gray-900 transition-colors cursor-pointer">
+                                        <button type="button" @click="decrementQty()" class="h-8 w-8 flex items-center justify-center text-gray-500 hover:text-gray-900 transition-colors cursor-pointer">
                                             <i class="fa-solid fa-minus text-xs"></i>
                                         </button>
-                                        <input type="number" name="quantity" x-model="qty" min="1" :max="maxQty" class="w-8 text-center font-bold text-gray-800 border-none p-0 focus:outline-none bg-transparent text-base" readonly>
-                                        <button type="button" @click="if(qty < maxQty) qty++" class="h-8 w-8 flex items-center justify-center text-gray-500 hover:text-gray-900 transition-colors cursor-pointer">
+                                        <input type="number" name="quantity" x-model="qty" min="1" :max="maxQty" @input="validateQtyInput()" class="w-8 text-center font-bold text-gray-800 border-none p-0 focus:outline-none bg-transparent text-base" readonly>
+                                        <button type="button" @click="incrementQty()" class="h-8 w-8 flex items-center justify-center text-gray-500 hover:text-gray-900 transition-colors cursor-pointer">
                                             <i class="fa-solid fa-plus text-xs"></i>
                                         </button>
                                     </div>
@@ -492,16 +555,18 @@
                                         data-toggle-url="{{ route('wishlist.toggle', $product) }}"
                                         aria-label="{{ $isWishlisted ? 'Remove from wishlist' : 'Add to wishlist' }}"
                                         aria-pressed="{{ $isWishlisted ? 'true' : 'false' }}"
-                                        class="wishlist-btn h-11 w-11 flex-shrink-0 flex items-center justify-center rounded-[10px] border border-gray-200 bg-white shadow-xs hover:border-brand-orange hover:text-brand-orange transition-all cursor-pointer {{ $isWishlisted ? 'text-brand-orange' : 'text-gray-400' }}">
-                                        <i class="fa-solid fa-heart text-lg" style="{{ $isWishlisted ? '' : 'display: none;' }}"></i>
-                                        <i class="fa-regular fa-heart text-lg" style="{{ $isWishlisted ? 'display: none;' : '' }}"></i>
+                                        class="wishlist-btn h-11 w-11 flex-shrink-0 flex items-center justify-center rounded-[10px] border shadow-xs transition-all cursor-pointer {{ $isWishlisted ? 'text-brand-orange bg-orange-50 border-brand-orange' : 'text-gray-400 bg-white border-gray-200 hover:border-brand-orange hover:text-brand-orange' }}"
+                                        title="{{ $isWishlisted ? 'In Wishlist' : 'Add to Wishlist' }}">
+                                        <i class="fa-solid fa-heart text-xl text-brand-orange" style="{{ $isWishlisted ? '' : 'display: none;' }}"></i>
+                                        <i class="fa-regular fa-heart text-xl text-gray-400" style="{{ $isWishlisted ? 'display: none;' : '' }}"></i>
                                     </button>
                                 </div>
 
                                 {{-- Row 2: Add to Cart + Buy Now --}}
                                 <div class="grid grid-cols-2 gap-3 sm:gap-4 mt-3">
                                     {{-- Add to Cart Button (Theme Brand Orange #F58502) --}}
-                                    <button type="submit" @disabled($product->stock <= 0)
+                                    <button type="submit" :disabled="maxQty <= 0"
+                                        @click="if(maxQty <= 0 || qty > maxQty) { $event.preventDefault(); if(window.showToast) window.showToast('Oops! You have already added all available items into your cart.', 'stock-error', 'center'); }"
                                         style="background-color: #F58502; color: #ffffff;"
                                         class="py-3 flex items-center justify-center gap-2 rounded-xl font-bold text-sm sm:text-base tracking-wide transition shadow-sm hover:opacity-90 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                                         <i class="fa-solid fa-cart-shopping text-base text-white"></i>
@@ -509,7 +574,8 @@
                                     </button>
 
                                     {{-- Buy Now Button (Theme Brand Navy #011939 - Clean, No Icon) --}}
-                                    <button type="submit" name="redirect" value="checkout" @disabled($product->stock <= 0)
+                                    <button type="submit" name="redirect" value="checkout" :disabled="maxQty <= 0"
+                                        @click="if(maxQty <= 0 || qty > maxQty) { $event.preventDefault(); if(window.showToast) window.showToast('Oops! You have already added all available items into your cart.', 'stock-error', 'center'); }"
                                         style="background-color: #011939; color: #ffffff;"
                                         class="py-[13px] flex items-center justify-center rounded-xl font-bold text-sm sm:text-base tracking-wide transition shadow-sm hover:opacity-90 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
                                         <span class="text-white">Buy Now</span>
@@ -559,8 +625,8 @@
                                 SKU: <span class="text-gray-400 font-semibold" x-text="selectedSku">{{ $product->sku ?: 'RM-'.$product->id }}</span>
                             </p>
 
-                            {{-- Share Product Full Options --}}
-                            <div class="relative mt-2.5 pt-2.5 border-t border-gray-100">
+                            {{-- Share Product Button --}}
+                            <div class="mt-2.5 pt-2.5 border-t border-gray-100">
                                 <button type="button" @click="triggerShare()" class="inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-gray-500 hover:text-brand-orange transition-colors cursor-pointer group">
                                     <svg class="w-4 h-4 text-gray-500 mt-[2px] group-hover:text-brand-orange transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                                         <circle cx="18" cy="5" r="3"></circle>
@@ -571,50 +637,6 @@
                                     </svg>
                                     <span>Share Product</span>
                                 </button>
-
-                                {{-- Share Menu / Popover --}}
-                                <div x-show="shareOpen" @click.outside="shareOpen = false" style="display: none;"
-                                    x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
-                                    class="absolute right-0 bottom-full mb-2 p-3 bg-white rounded-xl border border-gray-200 shadow-xl z-30 min-w-[260px]">
-                                    <p class="text-xs font-semibold text-gray-700 mb-2">Share this product:</p>
-                                    <div class="flex items-center gap-2 flex-wrap">
-                                        {{-- Facebook --}}
-                                        <a :href="'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(window.location.href)" target="_blank" rel="noopener"
-                                            style="background-color: #1877F2;"
-                                            class="flex h-8 w-8 items-center justify-center rounded-lg text-white hover:opacity-90 transition shadow-sm cursor-pointer" title="Share on Facebook">
-                                            <i class="fa-brands fa-facebook-f text-xs text-white"></i>
-                                        </a>
-                                        {{-- WhatsApp --}}
-                                        <a :href="'https://api.whatsapp.com/send?text=' + encodeURIComponent('{{ addslashes($product->name) }}: ') + encodeURIComponent(window.location.href)" target="_blank" rel="noopener"
-                                            style="background-color: #25D366;"
-                                            class="flex h-8 w-8 items-center justify-center rounded-lg text-white hover:opacity-90 transition shadow-sm cursor-pointer" title="Share on WhatsApp">
-                                            <i class="fa-brands fa-whatsapp text-xs text-white"></i>
-                                        </a>
-                                        {{-- Twitter / X --}}
-                                        <a :href="'https://twitter.com/intent/tweet?text=' + encodeURIComponent('{{ addslashes($product->name) }}') + '&url=' + encodeURIComponent(window.location.href)" target="_blank" rel="noopener"
-                                            style="background-color: #000000;"
-                                            class="flex h-8 w-8 items-center justify-center rounded-lg text-white hover:opacity-90 transition shadow-sm cursor-pointer" title="Share on X">
-                                            <i class="fa-brands fa-x-twitter text-xs text-white"></i>
-                                        </a>
-                                        {{-- Telegram --}}
-                                        <a :href="'https://t.me/share/url?url=' + encodeURIComponent(window.location.href) + '&text=' + encodeURIComponent('{{ addslashes($product->name) }}')" target="_blank" rel="noopener"
-                                            style="background-color: #229ED9;"
-                                            class="flex h-8 w-8 items-center justify-center rounded-lg text-white hover:opacity-90 transition shadow-sm cursor-pointer" title="Share on Telegram">
-                                            <i class="fa-brands fa-telegram text-xs text-white"></i>
-                                        </a>
-                                        {{-- Copy Link Button --}}
-                                        <button type="button" @click="copyShareLink()"
-                                            class="flex items-center gap-1 px-2.5 h-8 rounded-lg border border-gray-300 bg-gray-50 hover:bg-gray-100 text-[11px] font-semibold text-gray-700 transition cursor-pointer">
-                                            <i class="fa-solid fa-link text-xs"></i>
-                                            <span x-text="copied ? 'Copied!' : 'Copy'">Copy</span>
-                                        </button>
-                                    </div>
-                                    <template x-if="copied">
-                                        <p class="text-[11px] text-emerald-600 font-semibold mt-1.5">
-                                            <i class="fa-solid fa-check mr-1"></i> Product link copied!
-                                        </p>
-                                    </template>
-                                </div>
                             </div>
                         </div>
 
@@ -915,11 +937,16 @@
 
                         {{-- Review List --}}
                         @if ($reviews->count())
-                            <div class="mt-8 border-t border-gray-200/80 pt-6">
-                                <h4 class="text-base sm:text-lg font-bold text-gray-900 mb-4">Customer Feedback ({{ $reviews->count() }})</h4>
-                                <div class="space-y-4">
-                                    @foreach ($reviews as $review)
-                                        <div class="rounded-2xl border border-gray-100 bg-gray-50/50 p-5 transition hover:border-gray-200">
+                            <div class="mt-8 border-t border-gray-200/80 pt-6" id="reviews-section">
+                                <div class="flex items-center justify-between mb-4 flex-wrap gap-2">
+                                    <h4 class="text-base sm:text-lg font-bold text-gray-900">Customer Feedback ({{ $reviews->count() }})</h4>
+                                    @if ($reviews->count() > 5)
+                                        <span id="reviews-range-text" class="text-xs text-gray-500 font-medium bg-gray-100 px-2.5 py-1 rounded-full"></span>
+                                    @endif
+                                </div>
+                                <div id="reviews-list" class="space-y-4">
+                                    @foreach ($reviews as $index => $review)
+                                        <div class="review-item rounded-2xl border border-gray-100 bg-gray-50/50 p-5 transition hover:border-gray-200" data-index="{{ $index }}">
                                             <div class="flex items-start gap-3.5">
                                                 @if ($review->profile_image)
                                                     <img src="{{ image_url($review->profile_image) }}" alt="{{ $review->name }}" class="h-10 w-10 flex-shrink-0 rounded-full object-cover border border-gray-200">
@@ -931,7 +958,10 @@
                                                 <div class="flex-1 min-w-0">
                                                     <div class="flex flex-wrap items-center justify-between gap-1">
                                                         <p class="font-bold text-gray-900 text-xs sm:text-sm">{{ $review->name }}</p>
-                                                        <span class="text-[11px] text-gray-400">{{ $review->created_at->format('d M, Y') }}</span>
+                                                        <span class="text-[11px] text-gray-400 flex items-center gap-1 font-medium" title="{{ $review->created_at->format('d M, Y h:i A') }}">
+                                                            <i class="fa-regular fa-clock text-[10px]"></i>
+                                                            {{ $review->created_at->diffForHumans() }}
+                                                        </span>
                                                     </div>
                                                     <div class="mt-1 flex items-center gap-1 text-amber-400 text-xs">
                                                         @for ($i = 1; $i <= 5; $i++)
@@ -944,6 +974,12 @@
                                         </div>
                                     @endforeach
                                 </div>
+
+                                @if ($reviews->count() > 5)
+                                    <div id="reviews-pagination" class="flex flex-wrap items-center justify-center sm:justify-between gap-3 mt-6 pt-5 border-t border-gray-100">
+                                        {{-- Populated by JavaScript --}}
+                                    </div>
+                                @endif
                             </div>
                         @endif
                     </div>
@@ -961,6 +997,183 @@
                     </div>
                 </div>
             @endif
+        </div>
+
+        {{-- Custom Product Share Modal (Ariomart Styled with Raimart Brand Theme) --}}
+        <div x-show="shareModalOpen"
+             style="display: none;"
+             x-cloak
+             class="fixed inset-0 z-[120] flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
+             @keydown.escape.window="shareModalOpen = false"
+             role="dialog"
+             aria-modal="true"
+             aria-labelledby="share-modal-title">
+
+            {{-- Backdrop with soft blur and brand-navy tint --}}
+            <div x-show="shareModalOpen"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0"
+                 x-transition:enter-end="opacity-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100"
+                 x-transition:leave-end="opacity-0"
+                 class="fixed inset-0 bg-brand-navy/60 backdrop-blur-xs transition-opacity"
+                 @click="shareModalOpen = false"></div>
+
+            {{-- Modal Card --}}
+            <div x-show="shareModalOpen"
+                 x-transition:enter="transition ease-out duration-300"
+                 x-transition:enter-start="opacity-0 translate-y-4 scale-95"
+                 x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+                 x-transition:leave="transition ease-in duration-200"
+                 x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+                 x-transition:leave-end="opacity-0 translate-y-4 scale-95"
+                 @click.stop
+                 class="relative w-full max-w-[460px] rounded-3xl bg-white p-5 sm:p-7 shadow-2xl border border-gray-100 z-10 overflow-hidden">
+
+                {{-- Decorative Brand Color Line --}}
+                <div class="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-brand-orange via-amber-400 to-brand-navy"></div>
+
+                {{-- Modal Header --}}
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <span class="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand-orange/10 text-brand-orange shadow-2xs">
+                            <i class="fa-solid fa-share-nodes text-lg"></i>
+                        </span>
+                        <div>
+                            <h3 id="share-modal-title" class="text-base sm:text-lg font-bold text-gray-900 tracking-tight">
+                                Share Product
+                            </h3>
+                            <p class="text-xs text-gray-500">
+                                Spread the word about this product
+                            </p>
+                        </div>
+                    </div>
+
+                    <button type="button"
+                        @click="shareModalOpen = false"
+                        class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-700 transition cursor-pointer"
+                        aria-label="Close share modal">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
+
+                {{-- Product Mini Preview --}}
+                <div class="mt-4 flex items-center gap-3 rounded-2xl border border-gray-100 bg-gray-50/70 p-2.5">
+                    <img src="{{ $product->primary_image_url }}" alt="{{ $product->name }}" class="h-12 w-12 rounded-xl object-cover bg-white border border-gray-200 flex-shrink-0">
+                    <div class="min-w-0 flex-1">
+                        <h4 class="text-xs font-semibold text-gray-800 truncate">{{ $product->name }}</h4>
+                        <p class="text-xs font-bold text-brand-orange mt-0.5">৳ {{ number_format($product->price) }}</p>
+                    </div>
+                </div>
+
+                {{-- Product Link Section --}}
+                <div class="mt-4">
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-1.5">
+                        Product Link
+                    </label>
+                    <div class="relative flex items-center rounded-xl border border-gray-200 bg-gray-50/70 p-1 focus-within:border-brand-orange focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-orange/20 transition">
+                        <input id="shareModalInput"
+                            type="text"
+                            readonly
+                            :value="shareUrl"
+                            @click="$el.select()"
+                            class="w-full bg-transparent px-3 py-1.5 text-xs font-mono text-gray-600 focus:outline-none select-all truncate">
+                        
+                        <button type="button"
+                            @click="copyShareLink()"
+                            class="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition cursor-pointer flex-shrink-0"
+                            :class="copied ? 'bg-emerald-600 text-white shadow-xs' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-100 shadow-2xs'">
+                            <i class="fa-solid" :class="copied ? 'fa-check' : 'fa-copy'"></i>
+                            <span x-text="copied ? 'Copied!' : 'Copy'">Copy</span>
+                        </button>
+                    </div>
+                </div>
+
+                {{-- Social Media Share Channels --}}
+                <div class="mt-5">
+                    <label class="block text-xs font-bold text-gray-700 uppercase tracking-wide mb-3">
+                        Share on Social Media
+                    </label>
+                    <div class="grid grid-cols-6 gap-2.5 sm:gap-3">
+                        {{-- WhatsApp --}}
+                        <a :href="'https://api.whatsapp.com/send?text=' + encodeURIComponent('{{ addslashes($product->name) }}\n' + shareUrl)"
+                            target="_blank" rel="noopener"
+                            class="group flex flex-col items-center gap-1.5 cursor-pointer"
+                            title="Share on WhatsApp">
+                            <span class="flex h-11 w-11 items-center justify-center rounded-full bg-[#25D366] text-white shadow-sm transition transform group-hover:scale-110 group-hover:shadow-md">
+                                <i class="fa-brands fa-whatsapp text-xl"></i>
+                            </span>
+                            <span class="text-[10px] text-gray-500 font-medium group-hover:text-gray-800">WhatsApp</span>
+                        </a>
+
+                        {{-- Messenger --}}
+                        <a :href="'https://www.facebook.com/dialog/send?link=' + encodeURIComponent(shareUrl) + '&app_id=291494419107518&redirect_uri=' + encodeURIComponent(shareUrl)"
+                            target="_blank" rel="noopener"
+                            class="group flex flex-col items-center gap-1.5 cursor-pointer"
+                            title="Share on Messenger">
+                            <span class="flex h-11 w-11 items-center justify-center rounded-full bg-[#0084FF] text-white shadow-sm transition transform group-hover:scale-110 group-hover:shadow-md">
+                                <i class="fa-brands fa-facebook-messenger text-xl"></i>
+                            </span>
+                            <span class="text-[10px] text-gray-500 font-medium group-hover:text-gray-800">Messenger</span>
+                        </a>
+
+                        {{-- Facebook --}}
+                        <a :href="'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(shareUrl)"
+                            target="_blank" rel="noopener"
+                            class="group flex flex-col items-center gap-1.5 cursor-pointer"
+                            title="Share on Facebook">
+                            <span class="flex h-11 w-11 items-center justify-center rounded-full bg-[#1877F2] text-white shadow-sm transition transform group-hover:scale-110 group-hover:shadow-md">
+                                <i class="fa-brands fa-facebook-f text-lg"></i>
+                            </span>
+                            <span class="text-[10px] text-gray-500 font-medium group-hover:text-gray-800">Facebook</span>
+                        </a>
+
+                        {{-- LinkedIn --}}
+                        <a :href="'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(shareUrl)"
+                            target="_blank" rel="noopener"
+                            class="group flex flex-col items-center gap-1.5 cursor-pointer"
+                            title="Share on LinkedIn">
+                            <span class="flex h-11 w-11 items-center justify-center rounded-full bg-[#0A66C2] text-white shadow-sm transition transform group-hover:scale-110 group-hover:shadow-md">
+                                <i class="fa-brands fa-linkedin-in text-lg"></i>
+                            </span>
+                            <span class="text-[10px] text-gray-500 font-medium group-hover:text-gray-800">LinkedIn</span>
+                        </a>
+
+                        {{-- Telegram --}}
+                        <a :href="'https://t.me/share/url?url=' + encodeURIComponent(shareUrl) + '&text=' + encodeURIComponent('{{ addslashes($product->name) }}')"
+                            target="_blank" rel="noopener"
+                            class="group flex flex-col items-center gap-1.5 cursor-pointer"
+                            title="Share on Telegram">
+                            <span class="flex h-11 w-11 items-center justify-center rounded-full bg-[#229ED9] text-white shadow-sm transition transform group-hover:scale-110 group-hover:shadow-md">
+                                <i class="fa-brands fa-telegram text-xl"></i>
+                            </span>
+                            <span class="text-[10px] text-gray-500 font-medium group-hover:text-gray-800">Telegram</span>
+                        </a>
+
+                        {{-- Twitter / X --}}
+                        <a :href="'https://twitter.com/intent/tweet?text=' + encodeURIComponent('{{ addslashes($product->name) }}') + '&url=' + encodeURIComponent(shareUrl)"
+                            target="_blank" rel="noopener"
+                            class="group flex flex-col items-center gap-1.5 cursor-pointer"
+                            title="Share on X">
+                            <span class="flex h-11 w-11 items-center justify-center rounded-full bg-black text-white shadow-sm transition transform group-hover:scale-110 group-hover:shadow-md">
+                                <i class="fa-brands fa-x-twitter text-base"></i>
+                            </span>
+                            <span class="text-[10px] text-gray-500 font-medium group-hover:text-gray-800">X</span>
+                        </a>
+                    </div>
+                </div>
+
+                {{-- More Options Button (Theme Colored) --}}
+                <div class="mt-6">
+                    <button type="button"
+                        @click="shareNative()"
+                        class="w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-orange hover:bg-brand-navy px-5 py-3 text-xs sm:text-sm font-bold text-white shadow-md shadow-brand-orange/20 transition-all duration-200 cursor-pointer active:scale-[0.99]">
+                        <i class="fa-solid fa-ellipsis text-base"></i>
+                        <span>More Options</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -982,4 +1195,84 @@
             });
         </script>
     @endif
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const items = document.querySelectorAll('.review-item');
+            const paginationContainer = document.getElementById('reviews-pagination');
+            const rangeText = document.getElementById('reviews-range-text');
+            const perPage = 5;
+            const total = items.length;
+
+            if (total <= perPage) return;
+
+            const totalPages = Math.ceil(total / perPage);
+            let currentPage = 1;
+
+            function renderPage(page) {
+                currentPage = page;
+                const start = (page - 1) * perPage;
+                const end = start + perPage;
+
+                items.forEach((item, idx) => {
+                    if (idx >= start && idx < end) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+
+                if (rangeText) {
+                    const currentEnd = Math.min(end, total);
+                    rangeText.textContent = `Showing ${start + 1}–${currentEnd} of ${total}`;
+                }
+
+                renderControls();
+            }
+
+            function renderControls() {
+                if (!paginationContainer) return;
+
+                let html = '<div class="flex items-center gap-1.5">';
+
+                // Prev Button
+                html += `<button type="button" class="px-3 h-8 rounded-lg flex items-center gap-1 text-xs font-semibold border transition ${currentPage === 1 ? 'opacity-40 cursor-not-allowed border-gray-200 text-gray-400 bg-gray-50' : 'border-gray-200 bg-white text-brand-navy hover:bg-brand-navy hover:text-white cursor-pointer'}" ${currentPage === 1 ? 'disabled' : ''} data-page="${currentPage - 1}">
+                    <i class="fa-solid fa-angle-left text-[10px]"></i> Prev
+                </button>`;
+
+                // Page numbers
+                for (let p = 1; p <= totalPages; p++) {
+                    if (p === currentPage) {
+                        html += `<button type="button" class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold bg-brand-orange text-white shadow-sm cursor-default" data-page="${p}">${p}</button>`;
+                    } else {
+                        html += `<button type="button" class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold bg-white border border-gray-200 text-brand-navy hover:bg-brand-orange hover:text-white hover:border-brand-orange transition cursor-pointer" data-page="${p}">${p}</button>`;
+                    }
+                }
+
+                // Next Button
+                html += `<button type="button" class="px-3 h-8 rounded-lg flex items-center gap-1 text-xs font-semibold border transition ${currentPage === totalPages ? 'opacity-40 cursor-not-allowed border-gray-200 text-gray-400 bg-gray-50' : 'border-gray-200 bg-white text-brand-navy hover:bg-brand-navy hover:text-white cursor-pointer'}" ${currentPage === totalPages ? 'disabled' : ''} data-page="${currentPage + 1}">
+                    Next <i class="fa-solid fa-angle-right text-[10px]"></i>
+                </button>`;
+
+                html += '</div>';
+
+                paginationContainer.innerHTML = html;
+
+                paginationContainer.querySelectorAll('button[data-page]').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        const targetPage = parseInt(this.getAttribute('data-page'));
+                        if (targetPage >= 1 && targetPage <= totalPages && targetPage !== currentPage) {
+                            renderPage(targetPage);
+                            const section = document.getElementById('reviews-section');
+                            if (section) {
+                                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            }
+                        }
+                    });
+                });
+            }
+
+            renderPage(1);
+        });
+    </script>
 </x-layout>

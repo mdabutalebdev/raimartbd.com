@@ -98,7 +98,8 @@ class TelegramNotifier
             $lines[] = '<b>Email:</b> '.e($order->email);
         }
 
-        $lines[] = '<b>Address:</b> '.e($order->address.', '.$order->city);
+        $addressParts = array_filter([$order->address, $order->thana, $order->city]);
+        $lines[] = '<b>Address:</b> '.e(implode(', ', $addressParts));
         $lines[] = '';
         $lines[] = '<b>Items:</b>';
 

@@ -14,6 +14,7 @@ class Order extends Model
         'email',
         'address',
         'city',
+        'thana',
         'delivery_area',
         'notes',
         'subtotal',

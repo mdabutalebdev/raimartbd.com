@@ -117,15 +117,22 @@ class CheckoutController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'phone' => ['required', 'string', 'max:30'],
+            'phone' => ['required', 'string', 'regex:/^(?:\+?88)?01[3-9]\d{8}$/'],
             'email' => ['nullable', 'email', 'max:255'],
             'address' => ['required', 'string', 'max:255'],
             'city' => ['required', 'string', 'max:100'],
+            'thana' => ['nullable', 'string', 'max:100'],
             'delivery_area' => ['nullable', 'in:inside,outside'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'payment_method' => ['required', 'in:cod,piprapay'],
             'ga_client_id' => ['nullable', 'string', 'max:64'],
             'ga_session_id' => ['nullable', 'string', 'max:64'],
+        ], [
+            'name.required' => 'Please provide your full name.',
+            'phone.required' => 'Please provide your 11-digit mobile number.',
+            'phone.regex' => 'Phone number must be a valid 11-digit Bangladeshi mobile number (e.g. 01700000000).',
+            'address.required' => 'Please enter your delivery address.',
+            'city.required' => 'Please select your delivery district.',
         ]);
 
         foreach ($items as $item) {
@@ -153,6 +160,7 @@ class CheckoutController extends Controller
                 'email' => $data['email'] ?? null,
                 'address' => $data['address'],
                 'city' => $data['city'],
+                'thana' => $data['thana'] ?? null,
                 'delivery_area' => $data['delivery_area'],
                 'notes' => $data['notes'] ?? null,
                 'subtotal' => $subtotal,

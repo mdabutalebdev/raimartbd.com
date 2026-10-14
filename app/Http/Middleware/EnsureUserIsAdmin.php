@@ -20,7 +20,11 @@ class EnsureUserIsAdmin
         }
 
         if (! $request->user()->isStaff()) {
-            abort(403, 'Unauthorized access.');
+            if ($request->expectsJson() || $request->ajax()) {
+                abort(403, 'Unauthorized access.');
+            }
+
+            return redirect()->route('user.dashboard')->with('error', 'You do not have administrative access. Redirected to your dashboard.');
         }
 
         return $next($request);

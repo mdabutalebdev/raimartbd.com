@@ -50,15 +50,15 @@
                                 <p class="mt-2 text-sm text-brand-navy/50">৳{{ number_format($item->product->price) }} each</p>
                             </div>
 
-                            <form action="{{ route('cart.update', $item->id) }}" method="POST" class="flex items-center gap-2" x-data="{ qty: {{ $item->quantity }}, maxQty: {{ $item->product->stock }} }">
+                            <form action="{{ route('cart.update', $item->id) }}" method="POST" class="flex items-center gap-2" x-data="{ qty: {{ $item->quantity }}, maxQty: {{ (int)($item->stock ?? $item->product->stock) }} }">
                                 @csrf
                                 @method('PATCH')
                                 <div class="flex h-10 items-center rounded-lg border border-brand-navy/15 bg-white overflow-hidden">
-                                    <button type="button" @click="if(qty > 1) { qty--; $nextTick(() => $el.closest('form').submit()) }" class="flex h-full w-8 items-center justify-center text-brand-navy hover:bg-brand-navy/5 transition-colors">
+                                    <button type="button" @click="if(qty > 1) { qty--; $nextTick(() => $el.closest('form').submit()) }" class="flex h-full w-8 items-center justify-center text-brand-navy hover:bg-brand-navy/5 transition-colors cursor-pointer">
                                         <i class="fa-solid fa-minus text-xs"></i>
                                     </button>
                                     <input type="number" name="quantity" x-model="qty" min="1" :max="maxQty" class="w-10 text-center text-sm font-semibold text-brand-navy focus:outline-none bg-transparent appearance-none p-0 border-none [-moz-appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" readonly>
-                                    <button type="button" @click="if(qty < maxQty) { qty++; $nextTick(() => $el.closest('form').submit()) }" class="flex h-full w-8 items-center justify-center text-brand-navy hover:bg-brand-navy/5 transition-colors">
+                                    <button type="button" @click="if(qty < maxQty) { qty++; $nextTick(() => $el.closest('form').submit()) } else { if(window.showToast) window.showToast('Oops! You have already added all available items into your cart.', 'stock-error', 'center'); }" class="flex h-full w-8 items-center justify-center text-brand-navy hover:bg-brand-navy/5 transition-colors cursor-pointer">
                                         <i class="fa-solid fa-plus text-xs"></i>
                                     </button>
                                 </div>

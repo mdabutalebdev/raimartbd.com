@@ -9,19 +9,23 @@ class Cart
 {
     private const SESSION_KEY = 'cart_items';
 
-    public function add(Product $product, int $quantity = 1, array $options = []): void
+    public function add(Product $product, int $quantity = 1, array $options = [], ?int $variantId = null): void
     {
         $items = $this->raw();
         
         ksort($options);
-        $cartItemId = $product->id . '_' . md5(json_encode($options));
+        $cartItemId = $product->id . '_' . ($variantId ? 'v'.$variantId.'_' : '') . md5(json_encode($options));
         
         if (isset($items[$cartItemId])) {
             $items[$cartItemId]['quantity'] += $quantity;
+            if ($variantId && empty($items[$cartItemId]['variant_id'])) {
+                $items[$cartItemId]['variant_id'] = $variantId;
+            }
         } else {
             $items[$cartItemId] = [
                 'id' => $cartItemId,
                 'product_id' => $product->id,
+                'variant_id' => $variantId,
                 'quantity' => $quantity,
                 'options' => $options
             ];
@@ -72,18 +76,38 @@ class Cart
         }
 
         $productIds = collect($raw)->pluck('product_id')->unique()->toArray();
-        $products = Product::with('images')->whereIn('id', $productIds)->get()->keyBy('id');
+        $products = Product::with(['images', 'variants'])->whereIn('id', $productIds)->get()->keyBy('id');
 
         return collect($raw)->map(function ($item) use ($products) {
             $product = $products->get($item['product_id']);
             if (!$product) {
                 return null;
             }
+
+            $maxStock = (int) $product->stock;
+            if (!empty($item['variant_id']) && $product->variants->isNotEmpty()) {
+                $variant = $product->variants->firstWhere('id', $item['variant_id']);
+                if ($variant) {
+                    $maxStock = (int) $variant->stock;
+                }
+            } elseif (!empty($item['options']) && $product->variants->isNotEmpty()) {
+                $matched = $product->variants->first(function ($v) use ($item) {
+                    if (!is_array($v->attributes)) return false;
+                    foreach ($item['options'] as $k => $val) {
+                        if (($v->attributes[$k] ?? null) != $val) return false;
+                    }
+                    return true;
+                });
+                if ($matched) {
+                    $maxStock = (int) $matched->stock;
+                }
+            }
             
             return (object) [
                 'id' => $item['id'],
                 'product' => $product,
                 'quantity' => $item['quantity'],
+                'stock' => $maxStock,
                 'options' => $item['options'],
                 'subtotal' => $product->price * $item['quantity'],
             ];

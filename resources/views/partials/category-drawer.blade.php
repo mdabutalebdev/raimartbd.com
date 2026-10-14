@@ -1,7 +1,7 @@
 <div id="category-drawer" class="fixed inset-0 z-[60] hidden">
-    <div class="absolute inset-0 bg-brand-navy/50" data-drawer-close></div>
+    <div class="absolute inset-0 bg-brand-navy/50 opacity-0 transition-opacity duration-300" data-drawer-close></div>
 
-    <div class="absolute inset-y-0 left-0 flex w-80 max-w-[85vw] flex-col bg-white shadow-xl">
+    <div class="drawer-panel absolute inset-y-0 left-0 flex w-80 max-w-[85vw] -translate-x-full flex-col bg-white shadow-2xl transition-transform duration-300 ease-out">
         <div class="flex items-center justify-between border-b border-brand-navy/10 px-5 py-4">
             <h2 class="flex items-center gap-2 font-serif text-lg font-bold text-brand-navy">
                 <i class="fa-solid fa-bars text-brand-orange"></i>

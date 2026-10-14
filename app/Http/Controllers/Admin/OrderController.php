@@ -126,6 +126,7 @@ class OrderController extends Controller
             'email' => ['nullable', 'email', 'max:255'],
             'address' => ['required', 'string', 'max:255'],
             'city' => ['required', 'string', 'max:100'],
+            'thana' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:1000'],
             'payment_method' => ['required', 'in:cod,piprapay,manual'],
             'payment_status' => ['required', 'in:unpaid,paid'],
@@ -155,6 +156,7 @@ class OrderController extends Controller
                 'email' => $data['email'] ?? null,
                 'address' => $data['address'],
                 'city' => $data['city'],
+                'thana' => $data['thana'] ?? null,
                 'delivery_area' => Bangladesh::areaFor($data['city']),
                 'notes' => $data['notes'] ?? null,
                 'subtotal' => $subtotal,
@@ -202,6 +204,7 @@ class OrderController extends Controller
             $o->phone,
             $o->email,
             $o->address,
+            $o->thana,
             $o->city,
             $o->delivery_area,
             $o->items->map(fn ($i) => $i->product_name.' x'.$i->quantity)->implode(' | '),
@@ -219,7 +222,7 @@ class OrderController extends Controller
 
         return Csv::download(
             'orders-'.now()->format('Y-m-d'),
-            ['Order #', 'Date', 'Customer', 'Phone', 'Email', 'Address', 'District', 'Area', 'Items', 'Total Qty', 'Subtotal', 'Discount', 'Coupon', 'Shipping', 'Total', 'Payment Method', 'Payment Status', 'Status', 'Notes'],
+            ['Order #', 'Date', 'Customer', 'Phone', 'Email', 'Address', 'Thana', 'District', 'Area', 'Items', 'Total Qty', 'Subtotal', 'Discount', 'Coupon', 'Shipping', 'Total', 'Payment Method', 'Payment Status', 'Status', 'Notes'],
             $rows,
         );
     }

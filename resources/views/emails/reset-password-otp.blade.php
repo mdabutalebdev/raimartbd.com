@@ -12,9 +12,9 @@
                 <table role="presentation" width="100%" style="max-width: 520px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0;">
                     <!-- Header -->
                     <tr>
-                        <td style="background-color: #0F172A; padding: 28px 30px; text-align: center;">
-                            <h1 style="margin: 0; color: #ffffff; font-size: 26px; font-weight: 700; letter-spacing: -0.5px;">
-                                Rai<span style="color: #F97316;">mart</span>
+                        <td style="background-color: #0F172A; padding: 26px 30px; text-align: center;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 800; letter-spacing: 0.5px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+                                Raimart
                             </h1>
                         </td>
                     </tr>

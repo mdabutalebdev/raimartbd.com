@@ -84,7 +84,7 @@
                                 <strong style="color:#0f2144;display:block;margin-bottom:6px;">Delivery Address</strong>
                                 {{ $order->name }}<br>
                                 {{ $order->phone }}<br>
-                                {{ $order->address }}, {{ $order->city }}<br>
+                                {{ $order->address }}{{ $order->thana ? ', ' . $order->thana : '' }}, {{ $order->city }}<br>
                                 <span style="display:inline-block;margin-top:6px;">
                                     Payment: <strong style="color:#0f2144;text-transform:uppercase;">{{ $order->payment_method }}</strong>
                                     ({{ $order->payment_status }})

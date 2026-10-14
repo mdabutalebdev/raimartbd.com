@@ -120,7 +120,7 @@
                                 <i class="fa-solid fa-minus text-[10px]"></i>
                             </button>
                             <span class="w-8 text-center text-sm font-semibold text-brand-navy">{{ $item->quantity }}</span>
-                            <button type="button" data-cart-inc data-id="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-max="{{ $item->product->stock }}" class="flex h-full w-7 items-center justify-center text-brand-navy transition hover:bg-brand-navy/5 cursor-pointer">
+                            <button type="button" data-cart-inc data-id="{{ $item->id }}" data-qty="{{ $item->quantity }}" data-max="{{ $item->stock ?? $item->product->stock }}" class="flex h-full w-7 items-center justify-center text-brand-navy transition hover:bg-brand-navy/5 cursor-pointer">
                                 <i class="fa-solid fa-plus text-[10px]"></i>
                             </button>
                         </div>

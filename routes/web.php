@@ -19,6 +19,8 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [LoginController::class, 'login']);
     Route::get('/register', [RegisterController::class, 'show'])->name('register');
     Route::post('/register', [RegisterController::class, 'register']);
+    Route::post('/register/send-otp', [RegisterController::class, 'sendOtp'])->name('register.send_otp');
+    Route::post('/register/verify-otp', [RegisterController::class, 'verifyOtp'])->name('register.verify_otp');
 
     Route::get('/auth/google', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'redirect'])->name('auth.google');
     Route::get('/auth/google/callback', [\App\Http\Controllers\Auth\GoogleAuthController::class, 'callback'])->name('auth.google.callback');
@@ -38,6 +40,8 @@ Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->
 
 Route::middleware('auth')->prefix('user')->name('user.')->group(function () {
     Route::get('/dashboard', [\App\Http\Controllers\UserController::class, 'dashboard'])->name('dashboard');
+    Route::get('/orders/{order}', [\App\Http\Controllers\UserController::class, 'showOrder'])->name('orders.show');
+    Route::get('/orders/{order}/invoice', [\App\Http\Controllers\UserController::class, 'invoice'])->name('orders.invoice');
     Route::post('/profile', [\App\Http\Controllers\UserController::class, 'updateProfile'])->name('profile.update');
     Route::post('/password', [\App\Http\Controllers\UserController::class, 'updatePassword'])->name('password.update');
 });

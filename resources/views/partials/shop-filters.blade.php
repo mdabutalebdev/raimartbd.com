@@ -59,8 +59,8 @@
                 <div class="price-range">
                     <div class="absolute inset-x-0 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-brand-navy/10"></div>
                     <div class="absolute top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-brand-orange" :style="`left:${leftPct}%; right:${rightPct}%`"></div>
-                    <input type="range" name="min_price" :min="floor" :max="ceil" step="1" x-model.number="min" @input="onMin" @change="$el.form.submit()" aria-label="Minimum price">
-                    <input type="range" name="max_price" :min="floor" :max="ceil" step="1" x-model.number="max" @input="onMax" @change="$el.form.submit()" aria-label="Maximum price">
+                    <input type="range" name="min_price" :min="floor" :max="ceil" step="1" x-model.number="min" @input="onMin" aria-label="Minimum price">
+                    <input type="range" name="max_price" :min="floor" :max="ceil" step="1" x-model.number="max" @input="onMax" aria-label="Maximum price">
                 </div>
             </div>
         </div>
@@ -163,5 +163,13 @@
                 ])
             </div>
         </div>
+    </div>
+
+    {{-- Apply Filters Action Button --}}
+    <div class="sticky bottom-0 z-20 mt-3 pt-3 pb-1 bg-white/95 backdrop-blur-xs border-t border-brand-navy/10">
+        <button type="submit" class="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-orange py-3 px-4 text-sm font-bold text-white shadow-md shadow-brand-orange/20 transition hover:bg-brand-navy active:scale-[0.99] cursor-pointer">
+            <i class="fa-solid fa-sliders text-xs"></i>
+            <span>Apply Filters</span>
+        </button>
     </div>
 </form>

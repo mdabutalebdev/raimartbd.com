@@ -7,10 +7,17 @@
                 <p class="text-gray-500 mt-2">Manage your profile, track orders, and update your settings.</p>
             </div>
 
-            @if(session('success'))
+            @if(session('success') || session('status'))
                 <div class="mb-6 bg-green-50 border-l-4 border-green-500 p-4 rounded-r-xl shadow-sm flex items-center gap-3">
                     <i class="fa-solid fa-circle-check text-green-500 text-xl"></i>
-                    <p class="text-green-800 font-medium">{{ session('success') }}</p>
+                    <p class="text-green-800 font-medium">{{ session('success') ?: session('status') }}</p>
+                </div>
+            @endif
+
+            @if(session('error'))
+                <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-xl shadow-sm flex items-center gap-3">
+                    <i class="fa-solid fa-circle-exclamation text-red-500 text-xl shrink-0"></i>
+                    <p class="text-red-800 font-medium">{{ session('error') }}</p>
                 </div>
             @endif
 
@@ -54,10 +61,12 @@
                                 <i class="fa-solid fa-user-pen w-5 text-center"></i>
                                 Profile Settings
                             </button>
-                            <button onclick="switchTab('password')" id="tab-btn-password" class="w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 text-brand-navy hover:bg-brand-bg hover:text-brand-orange font-medium cursor-pointer">
-                                <i class="fa-solid fa-shield-halved w-5 text-center"></i>
-                                Change Password
-                            </button>
+                            @if(!$user->isGoogleUser())
+                                <button onclick="switchTab('password')" id="tab-btn-password" class="w-full flex items-center gap-3 px-4 py-3 text-left rounded-xl transition-all duration-200 text-brand-navy hover:bg-brand-bg hover:text-brand-orange font-medium cursor-pointer">
+                                    <i class="fa-solid fa-shield-halved w-5 text-center"></i>
+                                    Change Password
+                                </button>
+                            @endif
                             
                             <hr class="my-4 border-gray-100">
                             
@@ -124,14 +133,25 @@
                                             <th class="py-4 px-6 font-medium">Date</th>
                                             <th class="py-4 px-6 font-medium">Total</th>
                                             <th class="py-4 px-6 font-medium">Status</th>
+                                            <th class="py-4 px-6 font-medium text-right">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @forelse($orders->take(3) as $order)
                                             <tr class="border-b border-gray-50 hover:bg-brand-bg/50 transition">
-                                                <td class="py-4 px-6 font-semibold text-brand-navy">#{{ $order->order_number }}</td>
-                                                <td class="py-4 px-6 text-gray-600">{{ $order->created_at->format('M d, Y') }}</td>
-                                                <td class="py-4 px-6 font-medium">৳{{ number_format($order->total, 2) }}</td>
+                                                <td class="py-4 px-6 font-semibold text-brand-navy">
+                                                    <a href="{{ route('user.orders.show', $order) }}" class="hover:text-brand-orange transition">
+                                                        #{{ $order->order_number }}
+                                                    </a>
+                                                </td>
+                                                <td class="py-4 px-6">
+                                                    <div class="text-sm font-medium text-brand-navy">{{ $order->created_at->format('M d, Y') }}</div>
+                                                    <div class="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5">
+                                                        <i class="fa-regular fa-clock text-[10px] text-brand-orange"></i>
+                                                        <span>{{ $order->created_at->format('h:i A') }}</span>
+                                                    </div>
+                                                </td>
+                                                <td class="py-4 px-6 font-medium text-brand-navy">৳{{ number_format($order->total, 2) }}</td>
                                                 <td class="py-4 px-6">
                                                     @php
                                                         $statusClasses = [
@@ -147,10 +167,15 @@
                                                         {{ $order->status }}
                                                     </span>
                                                 </td>
+                                                <td class="py-4 px-6 text-right">
+                                                    <a href="{{ route('user.orders.show', $order) }}" class="inline-flex items-center gap-1 text-xs font-semibold text-brand-orange hover:text-brand-navy transition">
+                                                        View <i class="fa-solid fa-angle-right"></i>
+                                                    </a>
+                                                </td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="4" class="py-12 px-6 text-center text-gray-500">
+                                                <td colspan="5" class="py-12 px-6 text-center text-gray-500">
                                                     <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 text-gray-400 text-2xl">
                                                         <i class="fa-solid fa-box-open"></i>
                                                     </div>
@@ -187,8 +212,18 @@
                                     <tbody>
                                         @forelse($orders as $order)
                                             <tr class="border-b border-gray-50 hover:bg-brand-bg/50 transition group">
-                                                <td class="py-4 px-6 font-semibold text-brand-navy">#{{ $order->order_number }}</td>
-                                                <td class="py-4 px-6 text-gray-600">{{ $order->created_at->format('M d, Y') }}</td>
+                                                <td class="py-4 px-6 font-semibold text-brand-navy">
+                                                    <a href="{{ route('user.orders.show', $order) }}" class="hover:text-brand-orange transition">
+                                                        #{{ $order->order_number }}
+                                                    </a>
+                                                </td>
+                                                <td class="py-4 px-6">
+                                                    <div class="text-sm font-medium text-brand-navy">{{ $order->created_at->format('M d, Y') }}</div>
+                                                    <div class="text-xs text-gray-400 mt-0.5 flex items-center gap-1.5">
+                                                        <i class="fa-regular fa-clock text-[10px] text-brand-orange"></i>
+                                                        <span>{{ $order->created_at->format('h:i A') }}</span>
+                                                    </div>
+                                                </td>
                                                 <td class="py-4 px-6 font-medium text-brand-navy">৳{{ number_format($order->total, 2) }}</td>
                                                 <td class="py-4 px-6">
                                                     @php
@@ -199,9 +234,17 @@
                                                     </span>
                                                 </td>
                                                 <td class="py-4 px-6 text-right">
-                                                    <a href="{{ route('track') }}?order_number={{ $order->order_number }}" wire:navigate class="inline-flex items-center justify-center bg-white border border-brand-orange/50 text-brand-orange hover:bg-brand-orange hover:text-white px-4 py-1.5 rounded-lg text-sm font-medium transition shadow-sm group-hover:shadow">
-                                                        Track
-                                                    </a>
+                                                    <div class="inline-flex items-center gap-1.5 justify-end">
+                                                        <a href="{{ route('user.orders.show', $order) }}" class="inline-flex items-center gap-1.5 bg-brand-navy text-white hover:bg-brand-orange px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow-sm" title="View Order Details">
+                                                            <i class="fa-solid fa-eye text-xs"></i> Details
+                                                        </a>
+                                                        <a href="{{ route('user.orders.invoice', $order) }}" target="_blank" class="inline-flex items-center gap-1.5 bg-white border border-gray-200 text-brand-navy hover:text-brand-orange hover:border-brand-orange px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow-sm" title="View or Print Invoice">
+                                                            <i class="fa-solid fa-file-invoice text-brand-orange text-xs"></i> Invoice
+                                                        </a>
+                                                        <a href="{{ route('track') }}?order_number={{ $order->order_number }}" wire:navigate class="inline-flex items-center gap-1.5 bg-white border border-brand-orange/40 text-brand-orange hover:bg-brand-orange hover:text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow-sm" title="Track Shipment">
+                                                            <i class="fa-solid fa-truck-fast text-xs"></i> Track
+                                                        </a>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         @empty
@@ -292,12 +335,21 @@
                                         <div class="space-y-2">
                                             <label for="email" class="block text-sm font-semibold text-gray-700 flex items-center justify-between">
                                                 <span>Email Address</span>
-                                                <span class="text-xs text-gray-400 font-normal">Cannot be changed</span>
+                                                @if($user->isGoogleUser())
+                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                                                        <i class="fa-brands fa-google text-[10px]"></i> Google Account
+                                                    </span>
+                                                @else
+                                                    <span class="text-xs text-gray-400 font-normal">Cannot be changed</span>
+                                                @endif
                                             </label>
                                             <div class="relative">
                                                 <input type="email" id="email" value="{{ $user->email }}" class="w-full rounded-xl border-gray-200 bg-gray-100 text-gray-500 cursor-not-allowed shadow-sm py-2.5 px-4 pl-10" readonly>
                                                 <i class="fa-solid fa-envelope absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
                                             </div>
+                                            @if($user->isGoogleUser())
+                                                <p class="text-xs text-gray-400">Signed in via Google. Password change is managed through your Google account.</p>
+                                            @endif
                                         </div>
 
                                         <div class="space-y-2">
@@ -332,6 +384,7 @@
                         </div>
                     </div>
 
+                    @if(!$user->isGoogleUser())
                     <!-- PASSWORD TAB (Dedicated Security & Password Update) -->
                     <div id="tab-password" class="hidden animate-fade-in">
                         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
@@ -405,6 +458,7 @@
                             </form>
                         </div>
                     </div>
+                    @endif
                 </div>
             </div>
         </div>
@@ -474,8 +528,15 @@
             }
         }
 
+        const canChangePassword = @json(!$user->isGoogleUser());
+
         function switchTab(tabId) {
-            const tabs = ['dashboard', 'orders', 'settings', 'password'];
+            if (tabId === 'password' && !canChangePassword) {
+                tabId = 'dashboard';
+            }
+            const tabs = ['dashboard', 'orders', 'settings'];
+            if (canChangePassword) tabs.push('password');
+
             tabs.forEach(id => {
                 const el = document.getElementById('tab-' + id);
                 if (el) el.classList.add('hidden');
@@ -538,9 +599,14 @@
 
             if (window.location.hash) {
                 const hash = window.location.hash.substring(1);
-                if (['dashboard', 'orders', 'settings', 'password'].includes(hash)) {
+                const allowedTabs = ['dashboard', 'orders', 'settings'];
+                if (canChangePassword) allowedTabs.push('password');
+                if (allowedTabs.includes(hash)) {
                     tabToOpen = hash;
                 }
+            }
+            if (tabToOpen === 'password' && !canChangePassword) {
+                tabToOpen = 'dashboard';
             }
             switchTab(tabToOpen);
         })();
@@ -549,7 +615,9 @@
         window.addEventListener('livewire:navigated', () => {
             if (window.location.hash) {
                 const tab = window.location.hash.substring(1);
-                if (['dashboard', 'orders', 'settings', 'password'].includes(tab)) {
+                const allowedTabs = ['dashboard', 'orders', 'settings'];
+                if (canChangePassword) allowedTabs.push('password');
+                if (allowedTabs.includes(tab)) {
                     switchTab(tab);
                 }
             }

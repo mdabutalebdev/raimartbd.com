@@ -92,7 +92,7 @@ class AppServiceProvider extends ServiceProvider
             $view->with('cartCount', app(Cart::class)->count());
         });
 
-        View::composer('components.product-card', function ($view) {
+        View::composer(['components.product-card', 'product-details'], function ($view) {
             $view->with('wishlistIds', app(Wishlist::class)->raw());
         });
     }

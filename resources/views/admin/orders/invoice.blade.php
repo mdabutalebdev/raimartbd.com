@@ -21,9 +21,19 @@
     {{-- Toolbar (never printed) --}}
     <div class="no-print sticky top-0 z-10 border-b border-brand-navy/10 bg-white px-4 py-3">
         <div class="mx-auto flex max-w-3xl items-center justify-between gap-3">
-            <a href="{{ route('admin.orders.show', $order) }}" class="text-sm font-medium text-brand-navy/60 hover:text-brand-orange">
-                <i class="fa-solid fa-arrow-left text-xs"></i> Back to order
-            </a>
+            @if(auth()->user()?->is_admin)
+                <a href="{{ route('admin.orders.show', $order) }}" class="text-sm font-medium text-brand-navy/60 hover:text-brand-orange">
+                    <i class="fa-solid fa-arrow-left text-xs"></i> Back to order
+                </a>
+            @elseif(auth()->check() && $order->user_id === auth()->id())
+                <a href="{{ route('user.orders.show', $order) }}" class="text-sm font-medium text-brand-navy/60 hover:text-brand-orange">
+                    <i class="fa-solid fa-arrow-left text-xs"></i> Back to order details
+                </a>
+            @else
+                <a href="javascript:window.close()" class="text-sm font-medium text-brand-navy/60 hover:text-brand-orange">
+                    <i class="fa-solid fa-xmark text-xs"></i> Close
+                </a>
+            @endif
             <button type="button" onclick="window.print()"
                 class="flex items-center gap-2 rounded bg-brand-orange px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-navy">
                 <i class="fa-solid fa-print"></i> Print / Save as PDF
@@ -65,7 +75,7 @@
                     <p>{{ $order->phone }}</p>
                     @if ($order->email)<p>{{ $order->email }}</p>@endif
                     <p>{{ $order->address }}</p>
-                    <p>{{ $order->city }}</p>
+                    <p>{{ $order->thana ? $order->thana . ', ' : '' }}{{ $order->city }}</p>
                 </div>
             </div>
 

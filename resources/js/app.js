@@ -290,21 +290,53 @@ document.addEventListener('livewire:navigated', () => {
     });
 });
 
-document.addEventListener('livewire:navigated', () => {
-    document.querySelectorAll('[data-drawer-open]').forEach((button) => {
-        button.addEventListener('click', () => {
-            const targetId = button.dataset.drawerOpen || 'category-drawer';
-            const drawer = document.getElementById(targetId) || document.getElementById('category-drawer');
-            if (drawer) drawer.classList.remove('hidden');
+    const openMenuDrawer = (drawer) => {
+        if (!drawer) return;
+        const panel = drawer.querySelector('.drawer-panel') || drawer.querySelector('[data-drawer-panel]') || drawer.children[1];
+        const backdrop = drawer.querySelector('[data-drawer-close]');
+        drawer.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+        requestAnimationFrame(() => {
+            panel?.classList.remove('-translate-x-full');
+            backdrop?.classList.remove('opacity-0');
         });
+    };
+
+    const closeMenuDrawer = (drawer) => {
+        if (!drawer) return;
+        const panel = drawer.querySelector('.drawer-panel') || drawer.querySelector('[data-drawer-panel]') || drawer.children[1];
+        const backdrop = drawer.querySelector('[data-drawer-close]');
+        panel?.classList.add('-translate-x-full');
+        backdrop?.classList.add('opacity-0');
+        document.body.style.overflow = '';
+        setTimeout(() => drawer.classList.add('hidden'), 300);
+    };
+
+    document.addEventListener('click', (event) => {
+        const openBtn = event.target.closest('[data-drawer-open]');
+        if (openBtn) {
+            event.preventDefault();
+            const targetId = openBtn.dataset.drawerOpen || 'category-drawer';
+            const drawer = document.getElementById(targetId) || document.getElementById('category-drawer');
+            if (drawer) openMenuDrawer(drawer);
+            return;
+        }
+
+        const closeBtn = event.target.closest('[data-drawer-close]');
+        if (closeBtn) {
+            event.preventDefault();
+            const drawer = closeBtn.closest('.fixed');
+            if (drawer) closeMenuDrawer(drawer);
+            return;
+        }
     });
 
-    document.querySelectorAll('[data-drawer-close]').forEach((button) => {
-        button.addEventListener('click', () => {
-            button.closest('.fixed')?.classList.add('hidden');
-        });
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            const openDrawer = document.querySelector('#mobile-menu-drawer:not(.hidden), #category-drawer:not(.hidden)');
+            if (openDrawer) closeMenuDrawer(openDrawer);
+        }
     });
-});
 
 
 document.addEventListener('livewire:navigated', () => {
@@ -349,7 +381,11 @@ document.addEventListener('livewire:navigated', () => {
 (() => {
     const setButtonState = (button, inWishlist) => {
         button.classList.toggle('text-brand-orange', inWishlist);
+        button.classList.toggle('text-gray-400', !inWishlist);
         button.classList.toggle('text-brand-navy', !inWishlist);
+        button.classList.toggle('bg-orange-50', inWishlist);
+        button.classList.toggle('border-brand-orange', inWishlist);
+        button.classList.toggle('border-gray-200', !inWishlist);
         button.setAttribute('aria-pressed', inWishlist ? 'true' : 'false');
         button.setAttribute('aria-label', inWishlist ? 'Remove from wishlist' : 'Add to wishlist');
 
@@ -357,7 +393,10 @@ document.addEventListener('livewire:navigated', () => {
         const solid = button.querySelector('[data-prefix="fas"], .fa-solid');
         const regular = button.querySelector('[data-prefix="far"], .fa-regular');
         
-        if (solid) solid.style.display = inWishlist ? '' : 'none';
+        if (solid) {
+            solid.style.display = inWishlist ? '' : 'none';
+            solid.classList.add('text-brand-orange');
+        }
         if (regular) regular.style.display = inWishlist ? 'none' : '';
     };
 
@@ -564,11 +603,32 @@ document.addEventListener('livewire:navigated', () => {
         const dec = event.target.closest('[data-cart-dec]');
         const rm = event.target.closest('[data-cart-remove]');
         if (inc) {
-            const qty = parseInt(inc.dataset.qty, 10) + 1;
-            if (qty > parseInt(inc.dataset.max || '99999', 10)) return;
-            applyPayload(await send('/cart/' + inc.dataset.id, 'PATCH', { quantity: qty }));
+            const currentQty = parseInt(inc.dataset.qty, 10);
+            const maxStock = parseInt(inc.dataset.max || '0', 10);
+            const qty = currentQty + 1;
+            if (maxStock > 0 && qty > maxStock) {
+                if (window.showToast) {
+                    window.showToast('Oops! You have already added all available items into your cart.', 'stock-error', 'center');
+                }
+                return;
+            }
+            if (maxStock <= 0) {
+                if (window.showToast) {
+                    window.showToast('Oops! You have already added all available items into your cart.', 'stock-error', 'center');
+                }
+                return;
+            }
+            const res = await send('/cart/' + inc.dataset.id, 'PATCH', { quantity: qty });
+            if (res && res.error) {
+                if (window.showToast) {
+                    window.showToast(res.message || res.error || 'Oops! You have already added all available items into your cart.', 'stock-error', 'center');
+                }
+                return;
+            }
+            applyPayload(res);
         } else if (dec) {
-            applyPayload(await send('/cart/' + dec.dataset.id, 'PATCH', { quantity: parseInt(dec.dataset.qty, 10) - 1 }));
+            const qty = parseInt(dec.dataset.qty, 10) - 1;
+            applyPayload(await send('/cart/' + dec.dataset.id, 'PATCH', { quantity: qty }));
         } else if (rm) {
             const data = await send('/cart/' + rm.dataset.id, 'DELETE');
             applyPayload(data);
@@ -595,6 +655,20 @@ document.addEventListener('livewire:navigated', () => {
             return;
         }
         event.preventDefault();
+
+        // Client-side stock check if quantity input exists
+        const qtyInput = form.querySelector('input[name="quantity"]');
+        if (qtyInput) {
+            const reqQty = parseInt(qtyInput.value, 10) || 1;
+            const maxAttr = parseInt(qtyInput.getAttribute('max') || '0', 10);
+            if (maxAttr <= 0 || reqQty > maxAttr) {
+                if (window.showToast) {
+                    window.showToast('Oops! You have already added all available items into your cart.', 'stock-error', 'center');
+                }
+                return;
+            }
+        }
+
         try {
             const res = await fetch(form.action, {
                 method: 'POST',
@@ -602,6 +676,14 @@ document.addEventListener('livewire:navigated', () => {
                 body: new FormData(form),
             });
             const data = await res.json();
+
+            if (!res.ok || data.error) {
+                if (window.showToast) {
+                    window.showToast(data.message || data.error || 'Oops! You have already added all available items into your cart.', 'stock-error', 'center');
+                }
+                return;
+            }
+
             applyPayload(data);
             window.gaPush(data.ga);
 
@@ -615,7 +697,9 @@ document.addEventListener('livewire:navigated', () => {
             }
 
             showDrawer();
-        } catch (e) { form.submit(); }
+        } catch (e) {
+            console.error(e);
+        }
     });
 })();
 
