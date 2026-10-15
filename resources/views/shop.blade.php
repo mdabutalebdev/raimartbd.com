@@ -67,18 +67,25 @@
         ]" />
     @endif
 
-    <section x-data="{ filtersOpen: false }" class="mx-auto gb-container py-5 lg:py-8">
+    <section x-data="{ filtersOpen: false }" 
+             x-init="$watch('filtersOpen', val => { if (window.innerWidth < 1024) document.body.style.overflow = val ? 'hidden' : ''; })" 
+             class="mx-auto gb-container py-5 lg:py-8">
         <h1 class="font-serif text-xl font-bold sm:text-2xl">{{ $activeCategory->name ?? 'Shop All Products' }}</h1>
 
         <div class="mt-4 grid gap-8 lg:mt-6 lg:grid-cols-[290px_1fr]">
             {{-- Filter column: static on desktop, slide-over drawer on mobile --}}
-            <div :class="filtersOpen ? 'block' : 'hidden lg:block'" class="fixed inset-0 z-50 lg:static lg:z-auto">
+            <div :class="filtersOpen ? 'block' : 'hidden lg:block'" class="fixed inset-0 z-[60] lg:static lg:z-auto">
                 <div @click="filtersOpen = false" x-show="filtersOpen" x-transition.opacity class="absolute inset-0 bg-brand-navy/40 backdrop-blur-sm lg:hidden" style="display: none;"></div>
 
-                <div class="absolute inset-y-0 left-0 flex w-[86%] max-w-sm flex-col overflow-y-auto bg-brand-bg p-4 shadow-2xl lg:static lg:w-auto lg:max-w-none lg:overflow-visible lg:bg-transparent lg:p-0 lg:shadow-none">
-                    <div class="mb-4 flex items-center justify-between lg:hidden">
-                        <span class="font-serif text-lg font-bold">Filters</span>
-                        <button type="button" @click="filtersOpen = false" class="flex h-8 w-8 items-center justify-center rounded-full text-brand-navy/60 hover:bg-white">
+                <div class="absolute inset-y-0 left-0 flex w-[86%] max-w-sm flex-col overflow-y-auto bg-brand-bg p-4 pb-20 shadow-2xl lg:static lg:w-auto lg:max-w-none lg:overflow-visible lg:bg-transparent lg:p-0 lg:shadow-none">
+                    <div class="mb-4 flex items-center justify-between border-b border-brand-navy/10 pb-3 lg:hidden">
+                        <div class="flex items-center gap-2">
+                            <span class="font-serif text-lg font-bold text-brand-navy">Filters</span>
+                            @if (count($chips))
+                                <span class="flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-orange px-1.5 text-[10px] font-bold text-white">{{ count($chips) }}</span>
+                            @endif
+                        </div>
+                        <button type="button" @click="filtersOpen = false" class="flex h-8 w-8 items-center justify-center rounded-full text-brand-navy/60 hover:bg-white hover:text-brand-navy transition">
                             <i class="fa-solid fa-xmark"></i>
                         </button>
                     </div>

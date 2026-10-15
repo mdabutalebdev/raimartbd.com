@@ -21,7 +21,7 @@
     </a>
 @endif
 
-<form method="GET" action="{{ route('shop') }}" class="space-y-1.5">
+<form id="shop-filter-form" method="GET" action="{{ route('shop') }}" class="space-y-1.5">
     @if (request('search'))
         <input type="hidden" name="search" value="{{ request('search') }}">
     @endif
@@ -166,8 +166,8 @@
     </div>
 
     {{-- Apply Filters Action Button --}}
-    <div class="sticky bottom-0 z-20 mt-3 pt-3 pb-1 bg-white/95 backdrop-blur-xs border-t border-brand-navy/10">
-        <button type="submit" class="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-orange py-3 px-4 text-sm font-bold text-white shadow-md shadow-brand-orange/20 transition hover:bg-brand-navy active:scale-[0.99] cursor-pointer">
+    <div class="mt-4 pt-2 lg:mt-3 lg:pt-3 lg:pb-1 lg:sticky lg:bottom-0 lg:z-20 lg:bg-white/95 lg:backdrop-blur-xs lg:border-t lg:border-brand-navy/10">
+        <button type="submit" class="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-orange py-3.5 px-4 text-sm font-bold text-white shadow-md shadow-brand-orange/20 transition hover:bg-brand-navy active:scale-[0.99] cursor-pointer">
             <i class="fa-solid fa-sliders text-xs"></i>
             <span>Apply Filters</span>
         </button>
