@@ -46,6 +46,127 @@ class OrderController extends Controller
         return view('admin.orders.show', compact('order'));
     }
 
+    public function edit(Order $order)
+    {
+        $order->load('items.product');
+
+        return view('admin.orders.edit', [
+            'order' => $order,
+            'products' => Product::with('category')->active()->orderBy('name')->get(),
+            'districts' => Bangladesh::districts(),
+            'areas' => Shipping::areas(),
+        ]);
+    }
+
+    public function update(Request $request, Order $order)
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'phone' => ['required', 'string', 'max:30'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'address' => ['required', 'string', 'max:255'],
+            'city' => ['required', 'string', 'max:100'],
+            'thana' => ['nullable', 'string', 'max:100'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+            'admin_note' => ['nullable', 'string', 'max:2000'],
+            'payment_method' => ['required', 'in:cod,piprapay,manual'],
+            'payment_status' => ['required', 'in:unpaid,paid,refunded'],
+            'status' => ['required', 'in:'.implode(',', self::STATUSES)],
+            'discount' => ['nullable', 'numeric', 'min:0'],
+            'shipping_fee' => ['nullable', 'numeric', 'min:0'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['required', 'exists:products,id'],
+            'items.*.quantity' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $products = Product::findMany(collect($data['items'])->pluck('product_id'))->keyBy('id');
+
+        $subtotal = collect($data['items'])->sum(
+            fn ($line) => (float) $products[$line['product_id']]->price * (int) $line['quantity']
+        );
+
+        $discount = min((float) ($data['discount'] ?? 0), $subtotal);
+        $shippingFee = (float) ($data['shipping_fee'] ?? Shipping::fee(Bangladesh::areaFor($data['city']), $subtotal));
+        $total = max(0, $subtotal - $discount) + $shippingFee;
+
+        DB::transaction(function () use ($order, $data, $products, $subtotal, $discount, $shippingFee, $total) {
+            $wasCancelled = $order->status === 'cancelled';
+            $nowCancelled = $data['status'] === 'cancelled';
+
+            // Return previously reserved stock if old status wasn't cancelled
+            if (!$wasCancelled) {
+                $this->adjustStock($order, 1);
+            }
+
+            // Remove existing items
+            $order->items()->delete();
+
+            // Insert updated items
+            foreach ($data['items'] as $line) {
+                $product = $products[$line['product_id']];
+
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $product->id,
+                    'product_name' => $product->name,
+                    'price' => $product->price,
+                    'quantity' => $line['quantity'],
+                    'subtotal' => (float) $product->price * (int) $line['quantity'],
+                ]);
+
+                // Decrement stock if not currently cancelled
+                if (!$nowCancelled) {
+                    $product->decrement('stock', (int) $line['quantity']);
+                }
+            }
+
+            // Update order record
+            $order->update([
+                'name' => $data['name'],
+                'phone' => $data['phone'],
+                'email' => $data['email'] ?? null,
+                'address' => $data['address'],
+                'city' => $data['city'],
+                'thana' => $data['thana'] ?? null,
+                'delivery_area' => Bangladesh::areaFor($data['city']),
+                'notes' => $data['notes'] ?? null,
+                'admin_note' => $data['admin_note'] ?? $order->admin_note,
+                'subtotal' => $subtotal,
+                'discount' => $discount,
+                'shipping_fee' => $shippingFee,
+                'total' => $total,
+                'payment_method' => $data['payment_method'],
+                'payment_status' => $data['payment_status'],
+                'status' => $data['status'],
+            ]);
+        });
+
+        return redirect()->route('admin.orders.show', $order)->with('status', 'Order updated successfully.');
+    }
+
+    public function destroy(Order $order)
+    {
+        $orderNumber = $order->order_number;
+
+        DB::transaction(function () use ($order) {
+            // Restore inventory stock if order was not cancelled
+            if ($order->status !== 'cancelled') {
+                $this->adjustStock($order, 1);
+            }
+
+            // Remove order items
+            $order->items()->delete();
+
+            // Remove payments
+            $order->payments()->delete();
+
+            // Delete the order
+            $order->delete();
+        });
+
+        return redirect()->route('admin.orders.index')->with('status', "Order #{$orderNumber} deleted successfully.");
+    }
+
     /** Printable invoice (browser print → PDF), with the shop logo and full details. */
     public function invoice(Order $order)
     {

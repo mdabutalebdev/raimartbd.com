@@ -92,3 +92,6 @@ Route::prefix('checkout')->name('checkout.')->group(function () {
     Route::get('/{order}/callback', [CheckoutController::class, 'callback'])->name('callback');
     Route::get('/{order}/cancel', [CheckoutController::class, 'cancel'])->name('cancel');
 });
+
+// Steadfast Webhook
+Route::post('/api/steadfast/webhook', [\App\Http\Controllers\Admin\SteadfastController::class, 'webhook'])->name('steadfast.webhook');

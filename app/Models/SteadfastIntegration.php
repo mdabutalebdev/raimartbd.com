@@ -6,5 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class SteadfastIntegration extends Model
 {
-    protected $fillable = ['api_key', 'secret_key', 'is_active'];
+    protected $fillable = ['api_key', 'secret_key', 'base_url', 'webhook_token', 'is_active'];
 }

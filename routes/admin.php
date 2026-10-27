@@ -130,6 +130,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('orders/create', [OrderController::class, 'create'])->name('orders.create');
         Route::post('orders', [OrderController::class, 'store'])->name('orders.store');
         Route::get('orders/{order}', [OrderController::class, 'show'])->name('orders.show');
+        Route::get('orders/{order}/edit', [OrderController::class, 'edit'])->name('orders.edit');
+        Route::put('orders/{order}', [OrderController::class, 'update'])->name('orders.update');
+        Route::delete('orders/{order}', [OrderController::class, 'destroy'])->name('orders.destroy');
         Route::get('orders/{order}/invoice', [OrderController::class, 'invoice'])->name('orders.invoice');
         Route::patch('orders/{order}/status', [OrderController::class, 'updateStatus'])->name('orders.status');
         Route::patch('orders/{order}/payment', [OrderController::class, 'updatePayment'])->name('orders.payment');
@@ -137,5 +140,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('steadfast', [\App\Http\Controllers\Admin\SteadfastController::class, 'index'])->name('steadfast.index');
         Route::put('steadfast', [\App\Http\Controllers\Admin\SteadfastController::class, 'update'])->name('steadfast.update');
         Route::get('steadfast/track', [\App\Http\Controllers\Admin\SteadfastController::class, 'track'])->name('steadfast.track');
+        Route::post('steadfast/ping', [\App\Http\Controllers\Admin\SteadfastController::class, 'ping'])->name('steadfast.ping');
+        Route::post('steadfast/balance', [\App\Http\Controllers\Admin\SteadfastController::class, 'getBalance'])->name('steadfast.balance');
+        Route::post('orders/{order}/steadfast/book', [\App\Http\Controllers\Admin\SteadfastController::class, 'bookOrder'])->name('orders.steadfast.book');
+        Route::get('orders/{order}/steadfast/status', [\App\Http\Controllers\Admin\SteadfastController::class, 'orderStatus'])->name('orders.steadfast.status');
+        Route::get('orders/{order}/steadfast/customer-record', [\App\Http\Controllers\Admin\SteadfastController::class, 'customerRecord'])->name('orders.steadfast.customerRecord');
     });
 });

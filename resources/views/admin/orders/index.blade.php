@@ -159,10 +159,17 @@
                             </span>
                         </td>
                         <td class="whitespace-nowrap px-4 py-2.5 text-right">
-                            <a href="{{ route('admin.orders.invoice', $order) }}" target="_blank" class="text-brand-navy/50 hover:text-brand-orange" title="Invoice">
-                                <i class="fa-solid fa-file-invoice text-xs"></i>
-                            </a>
-                            <a href="{{ route('admin.orders.show', $order) }}" class="ml-3 font-medium text-brand-orange hover:underline">View</a>
+                            <div class="inline-flex items-center gap-3">
+                                <a href="{{ route('admin.orders.show', $order) }}" class="text-xs font-semibold text-brand-navy hover:text-brand-orange" title="View Order">
+                                    <i class="fa-solid fa-eye"></i>
+                                </a>
+                                <a href="{{ route('admin.orders.edit', $order) }}" class="text-xs font-semibold text-blue-600 hover:text-blue-800" title="Edit Order">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </a>
+                                <a href="{{ route('admin.orders.invoice', $order) }}" target="_blank" class="text-xs text-brand-navy/60 hover:text-brand-orange" title="Invoice">
+                                    <i class="fa-solid fa-file-invoice"></i>
+                                </a>
+                            </div>
                         </td>
                     </tr>
                 @empty
