@@ -32,7 +32,7 @@
                 </p>
                 <div class="flex flex-wrap gap-1.5">
                     @foreach($matchedCategories as $cat)
-                        <a href="{{ route('shop', ['category' => $cat->slug]) }}"
+                        <a href="{{ route('categories.show', $cat->slug) }}"
                            class="group inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-brand-navy border border-gray-200 transition hover:border-brand-orange hover:bg-brand-orange hover:text-white shadow-2xs">
                             <i class="fa-solid fa-folder text-[10px] text-brand-orange transition-colors group-hover:text-white"></i>
                             <span>{{ $cat->name }}</span>

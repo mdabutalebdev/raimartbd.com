@@ -15,7 +15,7 @@
 
 {{-- Clear all — only visible when at least one filter is active --}}
 @if ($hasActiveFilters)
-    <a href="{{ route('shop') }}"
+    <a href="{{ request()->routeIs('categories.show') && isset($activeCategory) ? route('categories.show', $activeCategory->slug) : route('shop') }}"
         class="mb-1.5 flex w-full items-center justify-center gap-2 rounded bg-gradient-to-r from-red-500 to-red-600 px-4 py-3 text-sm font-semibold text-white transition hover:from-red-600 hover:to-red-700">
         <i class="fa-solid fa-xmark"></i> Clear All Filters
     </a>

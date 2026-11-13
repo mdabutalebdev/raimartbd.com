@@ -51,6 +51,7 @@ Route::get('/shop', [ShopController::class, 'index'])->name('shop');
 Route::get('/offers', [OfferController::class, 'index'])->name('offers');
 Route::get('/track', [OrderTrackingController::class, 'index'])->name('track');
 Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
+Route::get('/category/{category:slug}', [CategoryController::class, 'show'])->name('categories.show');
 Route::get('/brands', [BrandController::class, 'index'])->name('brands.index');
 Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name('products.show');
 Route::get('/page/{page:slug}', [\App\Http\Controllers\PageController::class, 'show'])->name('pages.show');

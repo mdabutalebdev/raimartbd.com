@@ -58,6 +58,11 @@ class Category extends Model
         return $query->where('is_active', true);
     }
 
+    public function getUrlAttribute(): string
+    {
+        return route('categories.show', $this->slug);
+    }
+
     protected static function booted(): void
     {
         static::saved(fn () => \App\Http\Controllers\SitemapController::clearCache());

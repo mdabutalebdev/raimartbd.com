@@ -223,6 +223,7 @@ document.addEventListener('livewire:navigated', () => {
     const subPanel = document.getElementById('subcategories-panel');
     const items = menu.querySelectorAll('.category-item');
     const shopUrl = menu.dataset.shopUrl;
+    const categoryUrl = menu.dataset.categoryUrl || '/category';
 
     const highlight = (item) => {
         items.forEach((i) => i.classList.remove('bg-brand-bg', 'text-brand-orange'));
@@ -263,7 +264,7 @@ document.addEventListener('livewire:navigated', () => {
             highlight(item);
             const subcategories = JSON.parse(item.dataset.subcategories || '[]');
             subPanel.innerHTML = subcategories
-                .map((sub) => `<a href="${shopUrl}?category=${encodeURIComponent(sub.slug)}" class="block rounded-md px-3 py-2 text-gray-600 hover:bg-brand-bg hover:text-brand-orange">${sub.name}</a>`)
+                .map((sub) => `<a href="${categoryUrl}/${encodeURIComponent(sub.slug)}" class="block rounded-md px-3 py-2 text-gray-600 hover:bg-brand-bg hover:text-brand-orange">${sub.name}</a>`)
                 .join('');
         });
     });

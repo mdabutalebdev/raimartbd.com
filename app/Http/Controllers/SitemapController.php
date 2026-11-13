@@ -180,7 +180,7 @@ class SitemapController extends Controller
 
             foreach ($categories as $cat) {
                 $w->startElement('url');
-                $w->writeElement('loc', $baseUrl . '/shop?category=' . $cat->slug);
+                $w->writeElement('loc', $baseUrl . '/category/' . $cat->slug);
                 if ($cat->updated_at) {
                     $w->writeElement('lastmod', date('c', strtotime($cat->updated_at)));
                 }
@@ -341,7 +341,7 @@ class SitemapController extends Controller
 
             foreach (DB::table('categories')->where('is_active', 1)->select(['slug', 'name', 'image', 'updated_at'])->cursor() as $cat) {
                 $w->startElement('url');
-                $w->writeElement('loc', $baseUrl . '/shop?category=' . $cat->slug);
+                $w->writeElement('loc', $baseUrl . '/category/' . $cat->slug);
                 if ($cat->updated_at) {
                     $w->writeElement('lastmod', date('c', strtotime($cat->updated_at)));
                 }

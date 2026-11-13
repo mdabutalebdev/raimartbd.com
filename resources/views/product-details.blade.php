@@ -108,7 +108,7 @@
                     '@type' => 'ListItem',
                     'position' => 2,
                     'name' => $product->category->name,
-                    'item' => route('shop', ['category' => $product->category->slug])
+                    'item' => route('categories.show', $product->category->slug)
                 ],
                 [
                     '@type' => 'ListItem',
@@ -284,7 +284,7 @@
             <nav class="mb-3 flex items-center text-xs sm:text-sm text-gray-500 overflow-x-auto whitespace-nowrap scrollbar-hide py-0.5">
                 <a href="{{ route('home') }}" wire:navigate class="hover:text-brand-orange transition-colors cursor-pointer">Home</a>
                 <span class="mx-2 text-gray-300">/</span>
-                <a href="{{ route('shop', ['category' => $product->category->slug]) }}" wire:navigate class="hover:text-brand-orange transition-colors cursor-pointer">{{ $product->category->name }}</a>
+                <a href="{{ route('categories.show', $product->category->slug) }}" wire:navigate class="hover:text-brand-orange transition-colors cursor-pointer">{{ $product->category->name }}</a>
                 <span class="mx-2 text-gray-300">/</span>
                 <span class="text-gray-800 font-medium truncate max-w-xs sm:max-w-md">{{ $product->name }}</span>
             </nav>
@@ -408,7 +408,7 @@
                             <div class="hidden lg:block">
                                 <div class="mt-2.5 flex items-center gap-2 text-xs sm:text-sm text-gray-600 flex-wrap">
                                     <span>Category:</span>
-                                    <a href="{{ route('shop', ['category' => $product->category->slug]) }}" wire:navigate class="font-semibold text-brand-orange hover:underline cursor-pointer">
+                                    <a href="{{ route('categories.show', $product->category->slug) }}" wire:navigate class="font-semibold text-brand-orange hover:underline cursor-pointer">
                                         {{ $product->category->name }}
                                     </a>
                                     @if($product->brand)
@@ -588,7 +588,7 @@
                         <div class="block lg:hidden mt-5 pt-3.5 border-t border-gray-100 space-y-2.5">
                             <div class="flex items-center gap-2 text-xs sm:text-sm text-gray-600 flex-wrap">
                                 <span>Category:</span>
-                                <a href="{{ route('shop', ['category' => $product->category->slug]) }}" wire:navigate class="font-semibold text-brand-orange hover:underline cursor-pointer">
+                                <a href="{{ route('categories.show', $product->category->slug) }}" wire:navigate class="font-semibold text-brand-orange hover:underline cursor-pointer">
                                     {{ $product->category->name }}
                                 </a>
                                 @if($product->brand)

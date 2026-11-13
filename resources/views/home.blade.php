@@ -81,7 +81,8 @@
                 <div class="swiper-wrapper">
                     @foreach ($categories as $category)
                         <div class="swiper-slide">
-                            <a href="{{ route('shop', ['category' => $category->slug]) }}"
+                            <a href="{{ route('categories.show', $category->slug) }}"
+                                wire:navigate
                                 class="group block text-center">
                                 {{-- Plain circle: the image fills it edge to edge, no tint, no padding --}}
                                 <div class="mx-auto aspect-square w-full overflow-hidden rounded-full">

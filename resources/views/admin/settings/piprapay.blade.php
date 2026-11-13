@@ -214,6 +214,7 @@
                             <span>Important Notes</span>
                         </p>
                         <ul class="list-disc list-inside space-y-1 text-blue-800 text-[11px]">
+                            <li>In PipraPay Domains whitelist, add both <b>www.raimartbd.com</b> and <b>raimartbd.com</b> to prevent "Return URL not whitelisted" errors.</li>
                             <li>If your Base URL returns <b>404</b>, the gateway cannot initiate checkouts. Ensure the domain is correct.</li>
                             <li>When PipraPay is disabled, customers will only see <b>Cash On Delivery</b> at checkout.</li>
                         </ul>

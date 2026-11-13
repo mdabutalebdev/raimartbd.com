@@ -1,8 +1,57 @@
 @php
-    $shopTitle = ($activeCategory?->meta_title ?: ($activeCategory?->name ?? 'Shop')).' - Raimart';
-    $shopDesc = $activeCategory?->meta_description ?: ($activeCategory?->description ?: 'Shop the latest trending products at Raimart Bangladesh. Best prices, fast home delivery & Cash on Delivery.');
+    $shopTitle = $activeCategory
+        ? ($activeCategory->meta_title ?: ($activeCategory->name . ' - Buy ' . $activeCategory->name . ' Online in Bangladesh | Raimart'))
+        : 'Shop All Products - Raimart | বাংলাদেশের বিশ্বস্ত অনলাইন শপিং';
+
+    $shopDesc = $activeCategory
+        ? ($activeCategory->meta_description ?: ('Buy authentic ' . $activeCategory->name . ' online at best price in Bangladesh from Raimart. 100% genuine products, fast home delivery & Cash on Delivery.'))
+        : 'Shop the latest trending products at Raimart Bangladesh. Best prices, fast home delivery & Cash on Delivery.';
+
+    $shopImage = $activeCategory?->image ? image_url($activeCategory->image) : null;
 @endphp
-<x-layout :title="$shopTitle" :description="$shopDesc">
+<x-layout :title="$shopTitle" :description="$shopDesc" :image="$shopImage">
+    @if ($activeCategory)
+        @php
+            $breadcrumbItems = [
+                ['@type' => 'ListItem', 'position' => 1, 'name' => 'Home', 'item' => route('home')],
+                ['@type' => 'ListItem', 'position' => 2, 'name' => 'Categories', 'item' => route('categories.index')],
+            ];
+            $pos = 3;
+            if ($activeCategory->parent) {
+                $breadcrumbItems[] = [
+                    '@type' => 'ListItem',
+                    'position' => $pos++,
+                    'name' => $activeCategory->parent->name,
+                    'item' => route('categories.show', $activeCategory->parent->slug),
+                ];
+            }
+            $breadcrumbItems[] = [
+                '@type' => 'ListItem',
+                'position' => $pos,
+                'name' => $activeCategory->name,
+                'item' => route('categories.show', $activeCategory->slug),
+            ];
+            $catBreadcrumbSchema = [
+                '@context' => 'https://schema.org',
+                '@type' => 'BreadcrumbList',
+                'itemListElement' => $breadcrumbItems,
+            ];
+            $collectionSchema = [
+                '@context' => 'https://schema.org',
+                '@type' => 'CollectionPage',
+                'name' => $shopTitle,
+                'description' => $shopDesc,
+                'url' => route('categories.show', $activeCategory->slug),
+            ];
+        @endphp
+        <script type="application/ld+json">
+            {!! json_encode($catBreadcrumbSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+        </script>
+        <script type="application/ld+json">
+            {!! json_encode($collectionSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+        </script>
+    @endif
+
     @php
         // Normalise the query into array form so each chip can drop just its own value.
         $base = collect(request()->except(['page', 'category', 'brand']))
@@ -12,10 +61,20 @@
                 'flags' => $selectedFlags->values()->all(),
             ]);
 
-        $cleanUrl = fn ($arr) => route('shop', collect($arr)
-            ->map(fn ($v) => is_array($v) ? array_values($v) : $v)
-            ->filter(fn ($v) => is_array($v) ? count($v) : ($v !== null && $v !== '' && $v !== '0'))
-            ->all());
+        $cleanUrl = function ($arr) use ($activeCategory) {
+            $filtered = collect($arr)
+                ->map(fn ($v) => is_array($v) ? array_values($v) : $v)
+                ->filter(fn ($v) => is_array($v) ? count($v) : ($v !== null && $v !== '' && $v !== '0'));
+
+            $cats = collect($filtered->get('categories', []));
+            if ($cats->count() === 1) {
+                $catSlug = $cats->first();
+                $params = $filtered->except(['categories', 'category'])->all();
+                return route('categories.show', array_merge(['category' => $catSlug], $params));
+            }
+
+            return route('shop', $filtered->all());
+        };
 
         $priceActive = (request()->filled('min_price') || request()->filled('max_price'))
             && ($minPrice > $priceFloor || $maxPrice < $priceCeil);
@@ -70,6 +129,19 @@
     <section x-data="{ filtersOpen: false }" 
              x-init="$watch('filtersOpen', val => { if (window.innerWidth < 1024) document.body.style.overflow = val ? 'hidden' : ''; })" 
              class="mx-auto gb-container py-5 lg:py-8">
+        @if ($activeCategory)
+            <nav class="mb-2 flex items-center gap-1.5 text-xs text-brand-navy/60 overflow-x-auto whitespace-nowrap scrollbar-hide" aria-label="Breadcrumb">
+                <a href="{{ route('home') }}" wire:navigate class="hover:text-brand-orange transition">Home</a>
+                <i class="fa-solid fa-chevron-right text-[9px] text-brand-navy/30"></i>
+                <a href="{{ route('categories.index') }}" wire:navigate class="hover:text-brand-orange transition">Categories</a>
+                @if ($activeCategory->parent)
+                    <i class="fa-solid fa-chevron-right text-[9px] text-brand-navy/30"></i>
+                    <a href="{{ route('categories.show', $activeCategory->parent->slug) }}" wire:navigate class="hover:text-brand-orange transition">{{ $activeCategory->parent->name }}</a>
+                @endif
+                <i class="fa-solid fa-chevron-right text-[9px] text-brand-navy/30"></i>
+                <span class="font-semibold text-brand-navy">{{ $activeCategory->name }}</span>
+            </nav>
+        @endif
         <h1 class="font-serif text-xl font-bold sm:text-2xl">{{ $activeCategory->name ?? 'Shop All Products' }}</h1>
 
         <div class="mt-4 grid gap-8 lg:mt-6 lg:grid-cols-[290px_1fr]">
@@ -110,8 +182,15 @@
                         <p class="hidden truncate text-sm text-brand-navy/50 sm:block">{{ $products->total() }} {{ Str::plural('product', $products->total()) }} found</p>
                     </div>
 
-                    <form action="{{ route('shop') }}" method="GET" class="flex shrink-0 items-center gap-2">
-                        @foreach (request()->except(['sort', 'page']) as $key => $value)
+                    <form action="{{ $activeCategory && $selectedCategories->count() === 1 ? route('categories.show', $activeCategory->slug) : route('shop') }}" method="GET" class="flex shrink-0 items-center gap-2">
+                        @php
+                            $exceptFields = ['sort', 'page'];
+                            if ($activeCategory && $selectedCategories->count() === 1) {
+                                $exceptFields[] = 'category';
+                                $exceptFields[] = 'categories';
+                            }
+                        @endphp
+                        @foreach (request()->except($exceptFields) as $key => $value)
                             @if (is_array($value))
                                 @foreach ($value as $item)
                                     <input type="hidden" name="{{ $key }}[]" value="{{ $item }}">

@@ -71,7 +71,7 @@
     <div class="hidden border-t border-white/10 bg-brand-navy text-white md:block">
         <div class="mx-auto flex gb-container items-center justify-between py-3 text-sm">
             <nav class="flex items-center gap-8">
-                <div class="relative" id="categories-menu" data-shop-url="{{ route('shop') }}">
+                <div class="relative" id="categories-menu" data-shop-url="{{ route('shop') }}" data-category-url="{{ url('/category') }}">
                     <button type="button" id="categories-toggle" class="flex items-center gap-2 font-medium transition hover:text-brand-orange cursor-pointer" aria-expanded="false" aria-controls="categories-panel">
                         <i class="fa-solid fa-bars"></i>
                         Categories
@@ -81,7 +81,7 @@
                         <div class="max-h-[22rem] w-56 shrink-0 divide-y divide-brand-navy/5 overflow-y-auto border-r border-brand-navy/10 py-2">
                             @foreach ($navCategories as $navCategory)
                                 <a
-                                    href="{{ route('shop', ['category' => $navCategory['slug']]) }}"
+                                    href="{{ route('categories.show', $navCategory['slug']) }}"
                                     wire:navigate
                                     class="category-item flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition hover:bg-brand-bg hover:text-brand-orange cursor-pointer"
                                     data-name="{{ $navCategory['name'] }}"

@@ -14,7 +14,7 @@
 
         <div class="flex-1 overflow-y-auto">
             @foreach ($navCategories as $navCategory)
-                <a href="{{ route('shop', ['category' => $navCategory['slug']]) }}" wire:navigate class="flex items-center gap-3 border-b border-brand-navy/5 px-4 py-2.5 hover:bg-brand-bg transition-colors">
+                <a href="{{ route('categories.show', $navCategory['slug']) }}" wire:navigate class="flex items-center gap-3 border-b border-brand-navy/5 px-4 py-2.5 hover:bg-brand-bg transition-colors">
                     <img src="{{ image_url($navCategory['image'], urlencode($navCategory['name'])) }}" alt="{{ $navCategory['name'] }}" class="h-9 w-9 shrink-0 rounded-md object-cover shadow-[0_2px_8px_rgba(0,0,0,0.04)]">
                     <div class="min-w-0 flex-1">
                         <p class="text-[13px] font-semibold text-brand-navy leading-tight mb-0.5">{{ $navCategory['name'] }}</p>

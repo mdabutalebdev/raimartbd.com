@@ -26,6 +26,15 @@ class ShopController extends Controller
             ->merge($request->filled('category') ? [(string) $request->input('category')] : [])
             ->filter()->unique()->values();
 
+        // 301 Permanent Redirect for SEO: single-category shop queries redirect to /category/{slug}
+        if ($selectedCategories->count() === 1 && ! $request->routeIs('categories.show')) {
+            $singleSlug = $selectedCategories->first();
+            if (Category::active()->where('slug', $singleSlug)->exists()) {
+                $queryParams = $request->except(['category', 'categories']);
+                return redirect()->route('categories.show', array_merge(['category' => $singleSlug], $queryParams), 301);
+            }
+        }
+
         $selectedBrands = collect((array) $request->input('brands', []))
             ->merge($request->filled('brand') ? [(string) $request->input('brand')] : [])
             ->filter()->unique()->values();

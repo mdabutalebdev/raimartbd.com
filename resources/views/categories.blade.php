@@ -9,7 +9,7 @@
 
         <div class="mt-10 grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
             @foreach ($categories as $category)
-                <a href="{{ route('shop', ['category' => $category->slug]) }}" class="group block overflow-hidden rounded-xl border border-brand-navy/10 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
+                <a href="{{ route('categories.show', $category->slug) }}" wire:navigate class="group block overflow-hidden rounded-xl border border-brand-navy/10 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-md">
                     <div class="relative aspect-square overflow-hidden bg-brand-bg">
                         <img src="{{ image_url($category->image, urlencode($category->name)) }}" alt="{{ $category->name }}" class="h-full w-full object-cover transition duration-300 group-hover:scale-105">
                         <span class="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white text-xs font-semibold text-brand-navy shadow-sm">
