@@ -55,16 +55,18 @@
         {{ $areas['outside']['fee'] }},
         '{{ addslashes($order->city) }}',
         {{ (float) $order->discount }},
-        {{ (float) $order->shipping_fee }}
+        {{ (float) $order->shipping_fee }},
+        @js($thanaMap ?? []),
+        '{{ addslashes($order->thana ?? '') }}'
     )">
         <form id="edit-order-form" action="{{ route('admin.orders.update', $order) }}" method="POST"
-            class="mt-6 grid items-start gap-6 lg:grid-cols-[1fr_360px]">
+            class="mt-6 grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px] min-w-0">
             @csrf
             @method('PUT')
 
-            <div class="space-y-6">
+            <div class="space-y-6 min-w-0">
                 {{-- Order Items --}}
-                <div class="rounded-xl border border-brand-navy/10 bg-white p-5 shadow-xs">
+                <div class="rounded-xl border border-brand-navy/10 bg-white p-5 shadow-xs min-w-0">
                     <div class="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
                         <div class="flex items-center gap-2">
                             <i class="fa-solid fa-boxes-stacked text-brand-orange text-sm"></i>
@@ -73,13 +75,13 @@
                         <span class="text-xs text-gray-500" x-text="lines.length + ' item(s)'"></span>
                     </div>
 
-                    <div class="space-y-3">
+                    <div class="space-y-3 min-w-0">
                         <template x-for="(line, index) in lines" :key="index">
-                            <div class="p-3 rounded-lg border border-gray-100 bg-gray-50/60 grid gap-2.5 sm:grid-cols-[1fr_110px_110px_42px] items-center">
-                                <div>
+                            <div class="p-3 rounded-lg border border-gray-100 bg-gray-50/60 grid gap-2.5 grid-cols-[minmax(0,1fr)_75px_85px_36px] sm:grid-cols-[minmax(0,1fr)_90px_100px_38px] items-center min-w-0">
+                                <div class="min-w-0">
                                     <label class="block text-[11px] font-semibold text-gray-500 mb-1">Select Product *</label>
                                     <select :name="`items[${index}][product_id]`" x-model="line.product_id" required
-                                        class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs focus:border-brand-orange focus:ring-1 focus:ring-brand-orange focus:outline-none">
+                                        class="w-full min-w-0 truncate rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs focus:border-brand-orange focus:ring-1 focus:ring-brand-orange focus:outline-none">
                                         <option value="">Select a product</option>
                                         @foreach ($products as $product)
                                             <option value="{{ $product->id }}">
@@ -151,7 +153,7 @@
 
                         <div>
                             <label class="block text-xs font-semibold text-gray-700 mb-1">District / City *</label>
-                            <select name="city" x-model="district" required
+                            <select name="city" x-model="district" @change="onDistrictChange()" required
                                 class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs focus:border-brand-orange focus:ring-1 focus:ring-brand-orange focus:outline-none">
                                 <option value="">Select District</option>
                                 @foreach ($districts as $district)
@@ -161,9 +163,17 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-semibold text-gray-700 mb-1">Thana / Area (Optional)</label>
-                            <input type="text" name="thana" value="{{ old('thana', $order->thana) }}" placeholder="Thana"
-                                class="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs focus:border-brand-orange focus:ring-1 focus:ring-brand-orange focus:outline-none">
+                            <label class="block text-xs font-semibold text-gray-700 mb-1">Thana / Upazila (Optional)</label>
+                            <select name="thana" x-model="thana"
+                                class="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs focus:border-brand-orange focus:ring-1 focus:ring-brand-orange focus:outline-none">
+                                <option value="">Select Thana (Optional)</option>
+                                <template x-if="thana && !availableThanas.includes(thana)">
+                                    <option :value="thana" x-text="thana" selected></option>
+                                </template>
+                                <template x-for="t in availableThanas" :key="t">
+                                    <option :value="t" x-text="t" :selected="t === thana"></option>
+                                </template>
+                            </select>
                         </div>
 
                         <div class="sm:col-span-2">
@@ -302,11 +312,13 @@
     </div>
 
     <script>
-        function editOrder(products, initialLines, insideFee, outsideFee, initialDistrict, initialDiscount, initialShipping) {
+        function editOrder(products, initialLines, insideFee, outsideFee, initialDistrict, initialDiscount, initialShipping, thanaMap, initialThana) {
             return {
                 products,
                 lines: initialLines && initialLines.length > 0 ? initialLines : [{ product_id: '', quantity: 1 }],
                 district: initialDistrict || '',
+                thana: initialThana || '',
+                thanaMap: thanaMap || {},
                 discount: Number(initialDiscount) || 0,
                 shipping: Number(initialShipping) || insideFee,
                 showConfirmModal: false,
@@ -328,6 +340,17 @@
                 },
                 get total() {
                     return Math.max(0, this.subtotal - (this.discount || 0)) + (this.shipping || 0);
+                },
+                get availableThanas() {
+                    return this.thanaMap[this.district] || [];
+                },
+                onDistrictChange() {
+                    if (this.district === 'Dhaka') {
+                        this.shipping = insideFee;
+                    } else if (this.district) {
+                        this.shipping = outsideFee;
+                    }
+                    this.thana = '';
                 },
                 init() {
                     this.$watch('district', (value) => {

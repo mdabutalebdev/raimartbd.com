@@ -51,6 +51,13 @@
                         'color' => 'bg-green-50 text-green-600',
                     ],
                     [
+                        'title' => 'PipraPay Gateway',
+                        'desc' => 'Online payment keys, base URL & test',
+                        'icon' => 'fa-solid fa-credit-card',
+                        'route' => 'admin.piprapay.edit',
+                        'color' => 'bg-pink-50 text-pink-600',
+                    ],
+                    [
                         'title' => 'Telegram Bot',
                         'desc' => 'Alerts & order notification bot',
                         'icon' => 'fa-solid fa-paper-plane',

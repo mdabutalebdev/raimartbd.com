@@ -272,15 +272,34 @@
                             <i class="fa-solid fa-circle-check absolute right-3 text-brand-orange" x-show="payMethod === 'cod'" x-cloak></i>
                         </label>
 
-                        <label @click="payMethod = 'piprapay'" class="relative flex cursor-pointer items-center gap-2.5 rounded border p-2.5 transition" :class="payMethod === 'piprapay' ? 'border-brand-orange bg-brand-orange/5' : 'border-brand-navy/15'">
-                            <input type="radio" name="payment_method" value="piprapay" x-model="payMethod" class="sr-only">
-                            <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-pink-100 text-pink-600">
-                                <i class="fa-solid fa-mobile-screen-button text-sm"></i>
-                            </span>
-                            <span class="text-sm font-medium text-brand-navy">Online Payment</span>
-                            <i class="fa-solid fa-circle-check absolute right-3 text-brand-orange" x-show="payMethod === 'piprapay'" x-cloak></i>
-                        </label>
+                        @if ($piprapayReady ?? app(\App\Services\PipraPayService::class)->isReady())
+                            <label @click="payMethod = 'piprapay'" class="relative flex cursor-pointer items-center gap-2.5 rounded border p-2.5 transition" :class="payMethod === 'piprapay' ? 'border-brand-orange bg-brand-orange/5' : 'border-brand-navy/15'">
+                                <input type="radio" name="payment_method" value="piprapay" x-model="payMethod" class="sr-only">
+                                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-pink-100 text-pink-600">
+                                    <i class="fa-solid fa-mobile-screen-button text-sm"></i>
+                                </span>
+                                <span class="text-sm font-medium text-brand-navy">Online Payment</span>
+                                <i class="fa-solid fa-circle-check absolute right-3 text-brand-orange" x-show="payMethod === 'piprapay'" x-cloak></i>
+                            </label>
+                        @else
+                            <div class="relative flex items-center gap-2.5 rounded border border-gray-200 bg-gray-50/70 p-2.5 opacity-60 cursor-not-allowed" title="Online payment is currently unavailable">
+                                <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-gray-200 text-gray-500">
+                                    <i class="fa-solid fa-mobile-screen-button text-sm"></i>
+                                </span>
+                                <div>
+                                    <span class="text-sm font-medium text-gray-600">Online Payment</span>
+                                    <span class="block text-[10px] text-amber-600 font-medium">Temporarily unavailable</span>
+                                </div>
+                            </div>
+                        @endif
                     </div>
+
+                    @error('payment_method')
+                        <div class="mt-3 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-600 font-medium">
+                            <i class="fa-solid fa-triangle-exclamation mt-0.5 shrink-0 text-sm"></i>
+                            <span>{{ $message }}</span>
+                        </div>
+                    @enderror
 
                     <p class="mt-3 text-xs text-brand-navy/50">Online payment supports bKash, Nagad, Rocket &amp; cards via PipraPay.</p>
                 </div>

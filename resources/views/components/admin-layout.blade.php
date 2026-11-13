@@ -254,7 +254,7 @@
             </form>
         </aside>
 
-        <div class="flex-1 flex flex-col min-h-screen lg:ml-64">
+        <div class="flex-1 flex flex-col min-h-screen lg:ml-64 min-w-0 overflow-x-hidden">
             <header class="sticky top-0 z-40 flex items-center justify-between border-b border-gray-200 bg-white/90 backdrop-blur-sm px-6 py-4 shadow-sm">
                 <div class="flex items-center gap-3">
                     <button type="button" @click="mobileMenuOpen = true" class="lg:hidden flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 text-gray-700 hover:text-brand-orange cursor-pointer" aria-label="Open sidebar">
@@ -278,7 +278,7 @@
                 </div>
             </header>
 
-            <main class="p-6 lg:p-10">
+            <main class="p-4 sm:p-6 lg:p-8 min-w-0">
                 @if (session('status'))
                     <div class="mb-6 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
                         {{ session('status') }}

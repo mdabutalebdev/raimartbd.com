@@ -54,6 +54,7 @@ class OrderController extends Controller
             'order' => $order,
             'products' => Product::with('category')->active()->orderBy('name')->get(),
             'districts' => Bangladesh::districts(),
+            'thanaMap' => Bangladesh::DISTRICTS,
             'areas' => Shipping::areas(),
         ]);
     }
@@ -114,9 +115,11 @@ class OrderController extends Controller
                     'subtotal' => (float) $product->price * (int) $line['quantity'],
                 ]);
 
-                // Decrement stock if not currently cancelled
+                // Decrement stock safely (ensuring it never drops below 0 to avoid MySQL unsigned error)
                 if (!$nowCancelled) {
-                    $product->decrement('stock', (int) $line['quantity']);
+                    $product->update([
+                        'stock' => max(0, (int) $product->stock - (int) $line['quantity']),
+                    ]);
                 }
             }
 
@@ -235,6 +238,7 @@ class OrderController extends Controller
         return view('admin.orders.create', [
             'products' => Product::with('category')->active()->orderBy('name')->get(),
             'districts' => Bangladesh::districts(),
+            'thanaMap' => Bangladesh::DISTRICTS,
             'areas' => Shipping::areas(),
         ]);
     }
@@ -301,7 +305,9 @@ class OrderController extends Controller
                     'subtotal' => (float) $product->price * (int) $line['quantity'],
                 ]);
 
-                $product->decrement('stock', (int) $line['quantity']);
+                $product->update([
+                    'stock' => max(0, (int) $product->stock - (int) $line['quantity']),
+                ]);
             }
 
             return $order;

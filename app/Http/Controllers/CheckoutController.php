@@ -53,6 +53,7 @@ class CheckoutController extends Controller
             'area' => $area,
             'areas' => Shipping::areas(),
             'freeThreshold' => Shipping::threshold(),
+            'piprapayReady' => app(PipraPayService::class)->isReady(),
         ]);
     }
 
@@ -151,7 +152,18 @@ class CheckoutController extends Controller
         $shippingFee = Shipping::fee($data['delivery_area'], $subtotal, $this->coupons->givesFreeShipping($subtotal));
         $total = max(0, $subtotal - $discount) + $shippingFee;
 
-        $order = DB::transaction(function () use ($data, $items, $subtotal, $discount, $coupon, $shippingFee, $total) {
+        // If online payment is selected, check upfront whether the gateway is ready
+        if ($data['payment_method'] === 'piprapay') {
+            $pipraPay = app(PipraPayService::class);
+            if (! $pipraPay->isReady()) {
+                return back()->withInput()->withErrors([
+                    'payment_method' => 'অনলাইন পেমেন্ট বর্তমানে সাময়িকভাবে বন্ধ আছে। অনুগ্রহ করে ক্যাশ অন ডেলিভারি (Cash on Delivery) সিলেক্ট করুন।',
+                ]);
+            }
+        }
+
+        DB::beginTransaction();
+        try {
             $order = Order::create([
                 'order_number' => $this->generateOrderNumber(),
                 'user_id' => auth()->id(),
@@ -186,31 +198,76 @@ class CheckoutController extends Controller
                     'subtotal' => $item->subtotal,
                 ]);
 
-                $item->product->decrement('stock', $item->quantity);
+                $item->product->update([
+                    'stock' => max(0, (int) $item->product->stock - (int) $item->quantity),
+                ]);
             }
 
-            // Count the coupon use once the order is actually written.
             $coupon?->increment('used_count');
 
-            return $order;
-        });
+            if ($order->payment_method === 'piprapay') {
+                $response = $pipraPay->createCharge([
+                    'full_name' => $order->name,
+                    'email_address' => $order->email ?: 'no-email@example.com',
+                    'mobile_number' => $order->phone,
+                    'amount' => $order->total,
+                    'metadata' => ['order_number' => $order->order_number],
+                    'return_url' => route('checkout.callback', $order),
+                    'webhook_url' => route('checkout.webhook'),
+                ]);
 
-        $cart->clear();
-        $this->coupons->clear();
-        session()->forget('delivery_area');
+                if (empty($response['pp_url'])) {
+                    // Gateway failed to generate payment link: Rollback so order is NOT saved as success/pending!
+                    DB::rollBack();
+                    $errorMsg = $response['message'] ?? 'Unable to connect to payment gateway.';
+                    Log::warning('PipraPay checkout initiation failed - order rolled back', [
+                        'order' => $order->order_number,
+                        'response' => $response,
+                    ]);
 
-        // Ping the shop owner's Telegram as soon as the order lands.
-        $this->telegram->orderPlaced($order);
+                    return back()->withInput()->withErrors([
+                        'payment_method' => 'পেমেন্ট গেটওয়েতে সংযোগ করতে সমস্যা হচ্ছে: ' . $errorMsg . '। অনুগ্রহ করে ক্যাশ অন ডেলিভারি (Cash on Delivery) সিলেক্ট করুন অথবা পুনরায় চেষ্টা করুন।',
+                    ]);
+                }
 
-        if ($order->payment_method === 'piprapay') {
-            return $this->initiatePipraPayPayment($order);
+                Payment::create([
+                    'order_id' => $order->id,
+                    'gateway' => 'piprapay',
+                    'pp_id' => $response['pp_id'],
+                    'amount' => $order->total,
+                    'status' => 'pending',
+                    'raw_response' => $response,
+                ]);
+            }
+
+            DB::commit();
+
+            $cart->clear();
+            $this->coupons->clear();
+            session()->forget('delivery_area');
+
+            if ($order->payment_method === 'piprapay') {
+                return redirect()->away($response['pp_url']);
+            }
+
+            // COD: the order is confirmed the moment it's placed → track purchase server-side.
+            $this->telegram->orderPlaced($order);
+            $this->ga4->purchase($order);
+            $this->capi->sendPurchase($order);
+
+            return redirect()->route('checkout.confirmation', $order);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            Log::error('Checkout store failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return back()->withInput()->withErrors([
+                'payment_method' => 'অর্ডার প্রসেস করতে ত্রুটি দেখা দিয়েছে: ' . $e->getMessage(),
+            ]);
         }
-
-        // COD: the order is confirmed the moment it's placed → track purchase server-side.
-        $this->ga4->purchase($order);
-        $this->capi->sendPurchase($order);
-
-        return redirect()->route('checkout.confirmation', $order);
     }
 
     public function pay(Order $order)
@@ -228,12 +285,16 @@ class CheckoutController extends Controller
             $this->verifyAndUpdate($order, $ppId, $pipraPay);
         }
 
-        return redirect()->route('checkout.confirmation', $order);
+        if ($order->fresh()->payment_status === 'paid') {
+            return redirect()->route('checkout.confirmation', $order)->with('status', 'Payment completed successfully.');
+        }
+
+        return redirect()->route('checkout.confirmation', $order)->with('error', 'Payment was not completed or verification failed. You can retry payment below.');
     }
 
     public function cancel(Order $order)
     {
-        return redirect()->route('checkout.confirmation', $order)->with('status', 'Payment was cancelled. You can retry payment below.');
+        return redirect()->route('checkout.confirmation', $order)->with('error', 'Payment was cancelled. You can retry payment below.');
     }
 
     public function webhook(Request $request, PipraPayService $pipraPay)
@@ -264,9 +325,9 @@ class CheckoutController extends Controller
     {
         $pipraPay = app(PipraPayService::class);
 
-        if (! $pipraPay->isConfigured()) {
+        if (! $pipraPay->isReady()) {
             return redirect()->route('checkout.confirmation', $order)
-                ->with('status', 'Online payment is not available right now. Please contact support or choose Cash on Delivery for a new order.');
+                ->with('error', 'Online payment is not available right now. Please contact support or choose Cash on Delivery.');
         }
 
         $response = $pipraPay->createCharge([
@@ -280,10 +341,10 @@ class CheckoutController extends Controller
         ]);
 
         if (empty($response['pp_url'])) {
-            Log::warning('PipraPay createCharge failed', ['order' => $order->order_number, 'response' => $response]);
+            Log::warning('PipraPay createCharge failed on retry', ['order' => $order->order_number, 'response' => $response]);
 
             return redirect()->route('checkout.confirmation', $order)
-                ->with('status', 'Could not start online payment: '.($response['message'] ?? 'unknown error').'. Please retry or contact support.');
+                ->with('error', 'Could not start online payment: '.($response['message'] ?? 'unknown error').'. Please retry or contact support.');
         }
 
         Payment::create([
@@ -314,12 +375,15 @@ class CheckoutController extends Controller
         }
 
         if ($isCompleted) {
+            $wasAlreadyPaid = $order->payment_status === 'paid';
             $order->update(['payment_status' => 'paid', 'status' => 'processing']);
 
-            // Online payment confirmed → track purchase (guarded against double-send
-            // when both the callback and the webhook fire for the same order).
-            $this->ga4->purchase($order->fresh());
-            $this->capi->sendPurchase($order->fresh());
+            if (! $wasAlreadyPaid) {
+                // Online payment confirmed → notify telegram & track purchase
+                $this->telegram->orderPlaced($order->fresh());
+                $this->ga4->purchase($order->fresh());
+                $this->capi->sendPurchase($order->fresh());
+            }
         }
     }
 

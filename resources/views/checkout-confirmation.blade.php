@@ -1,21 +1,32 @@
 <x-layout title="Order Confirmation - Raimart">
     <section class="mx-auto max-w-3xl px-4 py-14 sm:px-6 lg:px-8">
         @if (session('status'))
-            <div class="mb-6 rounded-lg border border-brand-orange/30 bg-brand-bg px-4 py-3 text-sm text-brand-navy">
+            <div class="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                <i class="fa-solid fa-circle-check mr-1 text-emerald-600"></i>
                 {{ session('status') }}
+            </div>
+        @endif
+        @if (session('error'))
+            <div class="mb-6 rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">
+                <i class="fa-solid fa-circle-exclamation mr-1 text-rose-600"></i>
+                {{ session('error') }}
             </div>
         @endif
 
         <div class="rounded-xl bg-white p-8 text-center shadow-sm ring-1 ring-brand-navy/5">
             @if ($order->payment_status === 'paid')
                 <i class="fa-solid fa-circle-check text-4xl text-green-500"></i>
-                <h1 class="mt-4 font-serif text-2xl font-bold">Payment Successful!</h1>
+                <h1 class="mt-4 font-serif text-2xl font-bold text-gray-900">Payment Successful!</h1>
+                <p class="mt-2 text-brand-navy/60">Thank you, {{ $order->name }}. Your order is confirmed.</p>
+            @elseif ($order->payment_method === 'piprapay')
+                <i class="fa-solid fa-clock-rotate-left text-4xl text-amber-500"></i>
+                <h1 class="mt-4 font-serif text-2xl font-bold text-gray-900">Online Payment Pending</h1>
+                <p class="mt-2 text-amber-700 font-medium text-sm">Your order #{{ $order->order_number }} has been recorded, but online payment is incomplete.</p>
             @else
                 <i class="fa-solid fa-circle-check text-4xl text-brand-orange"></i>
                 <h1 class="mt-4 font-serif text-2xl font-bold">Order Placed Successfully!</h1>
+                <p class="mt-2 text-brand-navy/60">Thank you, {{ $order->name }}. We will process your order soon.</p>
             @endif
-
-            <p class="mt-2 text-brand-navy/60">Thank you, {{ $order->name }}.</p>
 
             <div class="mt-3 inline-flex flex-wrap items-center justify-center gap-2 rounded-xl bg-gray-50 border border-gray-200/80 px-4 py-2 shadow-xs transition hover:border-brand-orange/40">
                 <span class="text-xs font-medium text-brand-navy/60">Order Number:</span>
@@ -31,10 +42,11 @@
             </div>
 
             @if ($order->payment_method === 'piprapay' && $order->payment_status !== 'paid')
-                <div class="mt-6">
-                    <a href="{{ route('checkout.pay', $order) }}" class="inline-block rounded-md bg-brand-orange px-6 py-2.5 text-sm font-semibold text-white hover:bg-brand-navy">
-                        Pay Now
+                <div class="mt-6 flex flex-col items-center justify-center gap-2">
+                    <a href="{{ route('checkout.pay', $order) }}" class="inline-flex items-center gap-2 rounded-xl bg-brand-orange px-6 py-2.5 text-sm font-semibold text-white hover:bg-brand-navy transition shadow-sm">
+                        <i class="fa-solid fa-credit-card"></i> Complete Payment Now (৳{{ number_format($order->total, 2) }})
                     </a>
+                    <span class="text-xs text-brand-navy/50">Click above to retry payment via bKash, Nagad, or Cards.</span>
                 </div>
             @endif
         </div>
@@ -79,7 +91,8 @@
     </section>
 
     @php
-        $trackPurchase = (\App\Models\SiteSetting::get('pixel_track_purchase', '1')) === '1';
+        $trackPurchase = (\App\Models\SiteSetting::get('pixel_track_purchase', '1')) === '1'
+            && ($order->payment_method === 'cod' || $order->payment_status === 'paid');
     @endphp
     @if ($trackPurchase)
         <script>

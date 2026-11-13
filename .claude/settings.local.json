@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:forpink.com)",
+      "mcp__claude-in-chrome__navigate",
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "Bash(php -v)",
+      "Bash(composer -V)",
+      "Bash(npm -v)",
+      "PowerShell(composer -V 2>&1)",
+      "Bash(php C:/Users/User/AppData/Local/Temp/claude/F--raimart-e-commarce/7b951c8b-9b9e-4afa-813c-67b89acf940a/scratchpad/composer.phar create-project laravel/laravel . --no-interaction)",
+      "Bash(php C:/Users/User/AppData/Local/Temp/claude/F--raimart-e-commarce/7b951c8b-9b9e-4afa-813c-67b89acf940a/scratchpad/composer.phar create-project laravel/laravel _laravel_tmp --no-interaction)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(mkdir -p resources/views/components)",
+      "Bash(mv resources/views/layouts/app.blade.php resources/views/components/layout.blade.php)",
+      "Bash(rmdir resources/views/layouts)",
+      "Bash(curl -s http://localhost:8000/)",
+      "Bash(php -m)",
+      "Bash(mysql --version)",
+      "Bash(where.exe mysqld *)",
+      "Bash(net start *)"
+    ]
+  }
+}

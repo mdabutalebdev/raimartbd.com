@@ -23,6 +23,7 @@ use App\Http\Controllers\Admin\PromoBannerController;
 use App\Http\Controllers\Admin\CustomScriptController;
 use App\Http\Controllers\Admin\LogViewerController;
 use App\Http\Controllers\Admin\PixelSettingController;
+use App\Http\Controllers\Admin\PipraPaySettingController;
 use App\Http\Controllers\Admin\SiteSettingController;
 use App\Http\Controllers\Admin\SocialLinkController;
 use App\Http\Controllers\Admin\TestimonialController;
@@ -124,6 +125,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('smtp', [SmtpSettingController::class, 'edit'])->name('smtp.edit');
         Route::put('smtp', [SmtpSettingController::class, 'update'])->name('smtp.update');
         Route::post('smtp/test', [SmtpSettingController::class, 'test'])->name('smtp.test');
+
+        Route::get('piprapay', [PipraPaySettingController::class, 'edit'])->name('piprapay.edit');
+        Route::put('piprapay', [PipraPaySettingController::class, 'update'])->name('piprapay.update');
+        Route::post('piprapay/test', [PipraPaySettingController::class, 'test'])->name('piprapay.test');
 
         Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
         Route::get('orders/export', [OrderController::class, 'export'])->name('orders.export');

@@ -18,7 +18,7 @@
         $metaDescription = $description
             ?: (\App\Models\SiteSetting::get('site_description')
                 ?: 'Raimart — বাংলাদেশের বিশ্বস্ত অনলাইন শপিং প্ল্যাটফর্ম। কসমেটিকস ও স্কিনকেয়ার, স্মার্ট গ্যাজেট, চায়না ট্রেন্ডিং পণ্য ও লাইফস্টাইল প্রয়োজনীয় সবকিছু এক জায়গায়। Everything You Need in One Place.');
-        $metaImage = $image ? image_url($image) : asset('images/logo.png');
+        $metaImage = $image ? image_url($image) : asset('images/og-image.png');
         
         $orgSchema = [
             '@context' => 'https://schema.org',
@@ -27,6 +27,7 @@
             'alternateName' => 'রাইমার্ট',
             'url' => url('/'),
             'logo' => asset('images/logo.png'),
+            'image' => asset('images/og-image.png'),
             'slogan' => 'Everything You Need in One Place',
             'description' => 'Raimart বাংলাদেশের বিশ্বস্ত অনলাইন শপিং প্ল্যাটফর্ম। আপনার প্রয়োজন, আপনার পছন্দ, সবকিছু এক জায়গায়।',
             'contactPoint' => [
@@ -81,6 +82,10 @@
     <meta property="og:description" content="{{ \Illuminate\Support\Str::limit(strip_tags($metaDescription), 200) }}">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:image" content="{{ $metaImage }}">
+    <meta property="og:image:secure_url" content="{{ $metaImage }}">
+    <meta property="og:image:width" content="{{ ($type ?? 'website') === 'product' && $product ? '800' : '1200' }}">
+    <meta property="og:image:height" content="{{ ($type ?? 'website') === 'product' && $product ? '800' : '630' }}">
+    <meta property="og:image:alt" content="{{ $title }}">
 
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ $title }}">
