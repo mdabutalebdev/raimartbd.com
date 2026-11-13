@@ -1,185 +1,269 @@
 <x-admin-layout title="Orders - Raimart Admin">
-    <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-            <h1 class="font-serif text-2xl font-bold">Orders</h1>
-            <p class="mt-0.5 text-sm text-brand-navy/60">
-                {{ number_format($orders->total()) }} orders &middot;
-                <span class="font-semibold text-brand-orange">৳{{ number_format($filteredTotal) }}</span> value
-            </p>
+    <div x-data="bulkOrderManager({{ Illuminate\Support\Js::from($orders->pluck('id')) }})">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+                <h1 class="font-serif text-2xl font-bold">Orders</h1>
+                <p class="mt-0.5 text-sm text-brand-navy/60">
+                    {{ number_format($orders->total()) }} orders &middot;
+                    <span class="font-semibold text-brand-orange">৳{{ number_format($filteredTotal) }}</span> value
+                </p>
+            </div>
+            <div class="flex shrink-0 gap-2">
+                <a href="{{ route('admin.orders.export', request()->query()) }}"
+                    class="flex items-center gap-2 rounded border border-brand-navy/15 px-4 py-2 text-sm font-semibold text-brand-navy transition hover:border-brand-orange hover:text-brand-orange">
+                    <i class="fa-solid fa-file-csv"></i> Export CSV
+                </a>
+                <a href="{{ route('admin.orders.create') }}" class="flex items-center gap-2 rounded bg-brand-orange px-4 py-2 text-sm font-semibold text-white hover:bg-brand-navy">
+                    <i class="fa-solid fa-plus"></i> Create Order
+                </a>
+            </div>
         </div>
-        <div class="flex shrink-0 gap-2">
-            <a href="{{ route('admin.orders.export', request()->query()) }}"
-                class="flex items-center gap-2 rounded border border-brand-navy/15 px-4 py-2 text-sm font-semibold text-brand-navy transition hover:border-brand-orange hover:text-brand-orange">
-                <i class="fa-solid fa-file-csv"></i> Export CSV
-            </a>
-            <a href="{{ route('admin.orders.create') }}" class="flex items-center gap-2 rounded bg-brand-orange px-4 py-2 text-sm font-semibold text-white hover:bg-brand-navy">
-                <i class="fa-solid fa-plus"></i> Create Order
-            </a>
+
+        @if (session('status'))
+            <div class="mt-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+                <i class="fa-solid fa-circle-check mr-1.5"></i> {{ session('status') }}
+            </div>
+        @endif
+        @if (session('error'))
+            <div class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <i class="fa-solid fa-triangle-exclamation mr-1.5"></i> {{ session('error') }}
+            </div>
+        @endif
+
+        {{-- Quick chips --}}
+        @php
+            $chips = [
+                ['label' => 'All', 'count' => $counts['all'], 'params' => []],
+                ['label' => 'Pending', 'count' => $counts['pending'], 'params' => ['status' => 'pending']],
+                ['label' => 'Processing', 'count' => $counts['processing'], 'params' => ['status' => 'processing']],
+                ['label' => 'Unpaid', 'count' => $counts['unpaid'], 'params' => ['payment_status' => 'unpaid']],
+            ];
+        @endphp
+        <div class="mt-4 flex flex-wrap gap-2">
+            @foreach ($chips as $chip)
+                @php
+                    $active = count($chip['params'])
+                        ? collect($chip['params'])->every(fn ($v, $k) => request($k) === $v)
+                        : (! request('status') && ! request('payment_status'));
+                @endphp
+                <a href="{{ route('admin.orders.index', $chip['params']) }}"
+                    class="flex items-center gap-2 rounded border px-3 py-1.5 text-xs font-semibold transition
+                        {{ $active ? 'border-brand-orange bg-brand-orange text-white' : 'border-brand-navy/15 text-brand-navy hover:border-brand-orange hover:text-brand-orange' }}">
+                    {{ $chip['label'] }}
+                    <span class="rounded px-1.5 py-0.5 text-[10px] {{ $active ? 'bg-white/20' : 'bg-brand-navy/5' }}">{{ $chip['count'] }}</span>
+                </a>
+            @endforeach
         </div>
-    </div>
 
-    {{-- Quick chips --}}
-    @php
-        $chips = [
-            ['label' => 'All', 'count' => $counts['all'], 'params' => []],
-            ['label' => 'Pending', 'count' => $counts['pending'], 'params' => ['status' => 'pending']],
-            ['label' => 'Processing', 'count' => $counts['processing'], 'params' => ['status' => 'processing']],
-            ['label' => 'Unpaid', 'count' => $counts['unpaid'], 'params' => ['payment_status' => 'unpaid']],
-        ];
-    @endphp
-    <div class="mt-4 flex flex-wrap gap-2">
-        @foreach ($chips as $chip)
-            @php
-                $active = count($chip['params'])
-                    ? collect($chip['params'])->every(fn ($v, $k) => request($k) === $v)
-                    : (! request('status') && ! request('payment_status'));
-            @endphp
-            <a href="{{ route('admin.orders.index', $chip['params']) }}"
-                class="flex items-center gap-2 rounded border px-3 py-1.5 text-xs font-semibold transition
-                    {{ $active ? 'border-brand-orange bg-brand-orange text-white' : 'border-brand-navy/15 text-brand-navy hover:border-brand-orange hover:text-brand-orange' }}">
-                {{ $chip['label'] }}
-                <span class="rounded px-1.5 py-0.5 text-[10px] {{ $active ? 'bg-white/20' : 'bg-brand-navy/5' }}">{{ $chip['count'] }}</span>
-            </a>
-        @endforeach
-    </div>
+        {{-- Filters --}}
+        <form action="{{ route('admin.orders.index') }}" class="mt-4 rounded border border-brand-navy/10 bg-white p-3">
+            <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                <input type="text" name="search" value="{{ request('search') }}" placeholder="Order #, name, phone, email..."
+                    class="rounded border border-brand-navy/15 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none lg:col-span-2">
 
-    {{-- Filters --}}
-    <form action="{{ route('admin.orders.index') }}" class="mt-4 rounded border border-brand-navy/10 bg-white p-3">
-        <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            <input type="text" name="search" value="{{ request('search') }}" placeholder="Order #, name, phone, email..."
-                class="rounded border border-brand-navy/15 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none lg:col-span-2">
+                <select name="status" class="rounded border border-brand-navy/15 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none">
+                    <option value="">All statuses</option>
+                    @foreach (\App\Http\Controllers\Admin\OrderController::STATUSES as $status)
+                        <option value="{{ $status }}" @selected(request('status') === $status)>{{ ucfirst($status) }}</option>
+                    @endforeach
+                </select>
 
-            <select name="status" class="rounded border border-brand-navy/15 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none">
-                <option value="">All statuses</option>
-                @foreach (\App\Http\Controllers\Admin\OrderController::STATUSES as $status)
-                    <option value="{{ $status }}" @selected(request('status') === $status)>{{ ucfirst($status) }}</option>
-                @endforeach
-            </select>
+                <select name="payment_status" class="rounded border border-brand-navy/15 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none">
+                    <option value="">Any payment status</option>
+                    @foreach (['unpaid', 'paid', 'refunded'] as $ps)
+                        <option value="{{ $ps }}" @selected(request('payment_status') === $ps)>{{ ucfirst($ps) }}</option>
+                    @endforeach
+                </select>
 
-            <select name="payment_status" class="rounded border border-brand-navy/15 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none">
-                <option value="">Any payment status</option>
-                @foreach (['unpaid', 'paid', 'refunded'] as $ps)
-                    <option value="{{ $ps }}" @selected(request('payment_status') === $ps)>{{ ucfirst($ps) }}</option>
-                @endforeach
-            </select>
+                <select name="payment_method" class="rounded border border-brand-navy/15 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none">
+                    <option value="">Any payment method</option>
+                    <option value="cod" @selected(request('payment_method') === 'cod')>Cash on Delivery</option>
+                    <option value="piprapay" @selected(request('payment_method') === 'piprapay')>PipraPay</option>
+                    <option value="manual" @selected(request('payment_method') === 'manual')>Manual</option>
+                </select>
 
-            <select name="payment_method" class="rounded border border-brand-navy/15 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none">
-                <option value="">Any payment method</option>
-                <option value="cod" @selected(request('payment_method') === 'cod')>Cash on Delivery</option>
-                <option value="piprapay" @selected(request('payment_method') === 'piprapay')>PipraPay</option>
-                <option value="manual" @selected(request('payment_method') === 'manual')>Manual</option>
-            </select>
+                <select name="area" class="rounded border border-brand-navy/15 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none">
+                    <option value="">Any area</option>
+                    <option value="inside" @selected(request('area') === 'inside')>Inside Dhaka</option>
+                    <option value="outside" @selected(request('area') === 'outside')>Outside Dhaka</option>
+                </select>
 
-            <select name="area" class="rounded border border-brand-navy/15 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none">
-                <option value="">Any area</option>
-                <option value="inside" @selected(request('area') === 'inside')>Inside Dhaka</option>
-                <option value="outside" @selected(request('area') === 'outside')>Outside Dhaka</option>
-            </select>
+                <div class="flex gap-2">
+                    <input type="date" name="from" value="{{ request('from') }}" title="From date"
+                        class="w-full rounded border border-brand-navy/15 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none">
+                    <input type="date" name="to" value="{{ request('to') }}" title="To date"
+                        class="w-full rounded border border-brand-navy/15 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none">
+                </div>
 
-            <div class="flex gap-2">
-                <input type="date" name="from" value="{{ request('from') }}" title="From date"
-                    class="w-full rounded border border-brand-navy/15 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none">
-                <input type="date" name="to" value="{{ request('to') }}" title="To date"
-                    class="w-full rounded border border-brand-navy/15 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none">
+                <div class="flex gap-2">
+                    <input type="number" name="min_total" value="{{ request('min_total') }}" placeholder="Min ৳" min="0"
+                        class="w-full rounded border border-brand-navy/15 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none">
+                    <input type="number" name="max_total" value="{{ request('max_total') }}" placeholder="Max ৳" min="0"
+                        class="w-full rounded border border-brand-navy/15 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none">
+                </div>
+
+                <select name="sort" class="rounded border border-brand-navy/15 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none">
+                    <option value="">Newest first</option>
+                    <option value="oldest" @selected(request('sort') === 'oldest')>Oldest first</option>
+                    <option value="total_high" @selected(request('sort') === 'total_high')>Total: high → low</option>
+                    <option value="total_low" @selected(request('sort') === 'total_low')>Total: low → high</option>
+                </select>
             </div>
 
-            <div class="flex gap-2">
-                <input type="number" name="min_total" value="{{ request('min_total') }}" placeholder="Min ৳" min="0"
-                    class="w-full rounded border border-brand-navy/15 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none">
-                <input type="number" name="max_total" value="{{ request('max_total') }}" placeholder="Max ৳" min="0"
-                    class="w-full rounded border border-brand-navy/15 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none">
+            <div class="mt-2 flex items-center gap-2">
+                <button type="submit" class="rounded bg-brand-navy px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-orange">Apply filters</button>
+                <a href="{{ route('admin.orders.index') }}" class="text-sm font-medium text-brand-navy/50 hover:text-brand-orange">Reset</a>
+
+                <select name="per_page" onchange="this.form.submit()" class="ml-auto rounded border border-brand-navy/15 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none">
+                    @foreach ([20, 50, 100] as $size)
+                        <option value="{{ $size }}" @selected((int) request('per_page', 20) === $size)>{{ $size }} / page</option>
+                    @endforeach
+                </select>
             </div>
+        </form>
 
-            <select name="sort" class="rounded border border-brand-navy/15 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none">
-                <option value="">Newest first</option>
-                <option value="oldest" @selected(request('sort') === 'oldest')>Oldest first</option>
-                <option value="total_high" @selected(request('sort') === 'total_high')>Total: high → low</option>
-                <option value="total_low" @selected(request('sort') === 'total_low')>Total: low → high</option>
-            </select>
+        {{-- Bulk Actions Bar --}}
+        <div x-show="selected.length > 0" x-cloak
+            class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50/70 px-4 py-3 shadow-sm transition">
+            <div class="flex items-center gap-2">
+                <span class="flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white" x-text="selected.length"></span>
+                <span class="text-sm font-bold text-red-900">
+                    <span x-text="selected.length"></span> order(s) selected
+                </span>
+            </div>
+            <div class="flex items-center gap-2">
+                <button type="button" @click="confirmBulkDelete()"
+                    class="flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-red-700 transition cursor-pointer">
+                    <i class="fa-solid fa-trash-can"></i> Delete Selected (<span x-text="selected.length"></span>)
+                </button>
+                <button type="button" @click="selected = []"
+                    class="rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50 transition cursor-pointer">
+                    Deselect All
+                </button>
+            </div>
         </div>
 
-        <div class="mt-2 flex items-center gap-2">
-            <button type="submit" class="rounded bg-brand-navy px-5 py-2 text-sm font-semibold text-white transition hover:bg-brand-orange">Apply filters</button>
-            <a href="{{ route('admin.orders.index') }}" class="text-sm font-medium text-brand-navy/50 hover:text-brand-orange">Reset</a>
+        {{-- Hidden Form for Bulk Delete --}}
+        <form id="bulk-delete-orders-form" action="{{ route('admin.orders.bulk-delete') }}" method="POST" class="hidden">
+            @csrf
+            @method('DELETE')
+            <template x-for="id in selected" :key="id">
+                <input type="hidden" name="order_ids[]" :value="id">
+            </template>
+        </form>
 
-            <select name="per_page" onchange="this.form.submit()" class="ml-auto rounded border border-brand-navy/15 px-3 py-2 text-sm focus:border-brand-orange focus:outline-none">
-                @foreach ([20, 50, 100] as $size)
-                    <option value="{{ $size }}" @selected((int) request('per_page', 20) === $size)>{{ $size }} / page</option>
-                @endforeach
-            </select>
-        </div>
-    </form>
-
-    {{-- Table --}}
-    <div class="mt-4 overflow-x-auto rounded border border-brand-navy/10 bg-white">
-        <table class="w-full text-left text-sm">
-            <thead class="bg-brand-navy/[0.03] text-xs uppercase tracking-wide text-brand-navy/60">
-                <tr>
-                    <th class="px-4 py-2.5 font-semibold">Order #</th>
-                    <th class="px-4 py-2.5 font-semibold">Date</th>
-                    <th class="px-4 py-2.5 font-semibold">Customer</th>
-                    <th class="px-4 py-2.5 font-semibold">Items</th>
-                    <th class="px-4 py-2.5 font-semibold">Total</th>
-                    <th class="px-4 py-2.5 font-semibold">Payment</th>
-                    <th class="px-4 py-2.5 font-semibold">Status</th>
-                    <th class="px-4 py-2.5 text-right font-semibold">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-brand-navy/5">
-                @forelse ($orders as $order)
-                    @php
-                        $statusColors = [
-                            'pending' => 'bg-amber-100 text-amber-700',
-                            'processing' => 'bg-blue-100 text-blue-700',
-                            'shipped' => 'bg-indigo-100 text-indigo-700',
-                            'delivered' => 'bg-green-100 text-green-700',
-                            'cancelled' => 'bg-red-100 text-red-700',
-                        ];
-                    @endphp
-                    <tr class="transition hover:bg-brand-navy/[0.02]">
-                        <td class="px-4 py-2.5">
-                            <a href="{{ route('admin.orders.show', $order) }}" class="font-mono text-xs font-bold text-brand-orange hover:underline">{{ $order->order_number }}</a>
-                        </td>
-                        <td class="whitespace-nowrap px-4 py-2.5 text-xs text-brand-navy/60">{{ $order->created_at?->format('d M Y') }}<br>{{ $order->created_at?->format('h:i A') }}</td>
-                        <td class="px-4 py-2.5">
-                            <p class="font-medium text-brand-navy">{{ $order->name }}</p>
-                            <p class="text-xs text-brand-navy/50">{{ $order->phone }}</p>
-                        </td>
-                        <td class="px-4 py-2.5 text-brand-navy/70">{{ $order->items->sum('quantity') }}</td>
-                        <td class="whitespace-nowrap px-4 py-2.5 font-semibold">৳{{ number_format($order->total) }}</td>
-                        <td class="px-4 py-2.5">
-                            <p class="text-xs uppercase text-brand-navy/60">{{ $order->payment_method_name }}</p>
-                            <span class="rounded px-1.5 py-0.5 text-[10px] font-semibold {{ $order->payment_status === 'paid' ? 'bg-green-100 text-green-700' : ($order->payment_status === 'refunded' ? 'bg-gray-100 text-gray-500' : 'bg-red-100 text-red-700') }}">
-                                {{ ucfirst($order->payment_status) }}
-                            </span>
-                        </td>
-                        <td class="px-4 py-2.5">
-                            <span class="rounded px-2 py-0.5 text-xs font-semibold {{ $statusColors[$order->status] ?? 'bg-gray-100 text-gray-600' }}">
-                                {{ ucfirst($order->status) }}
-                            </span>
-                        </td>
-                        <td class="whitespace-nowrap px-4 py-2.5 text-right">
-                            <div class="inline-flex items-center gap-3">
-                                <a href="{{ route('admin.orders.show', $order) }}" class="text-xs font-semibold text-brand-navy hover:text-brand-orange" title="View Order">
-                                    <i class="fa-solid fa-eye"></i>
-                                </a>
-                                <a href="{{ route('admin.orders.edit', $order) }}" class="text-xs font-semibold text-blue-600 hover:text-blue-800" title="Edit Order">
-                                    <i class="fa-solid fa-pen-to-square"></i>
-                                </a>
-                                <a href="{{ route('admin.orders.invoice', $order) }}" target="_blank" class="text-xs text-brand-navy/60 hover:text-brand-orange" title="Invoice">
-                                    <i class="fa-solid fa-file-invoice"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                @empty
+        {{-- Table --}}
+        <div class="mt-4 overflow-x-auto rounded border border-brand-navy/10 bg-white">
+            <table class="w-full text-left text-sm">
+                <thead class="bg-brand-navy/[0.03] text-xs uppercase tracking-wide text-brand-navy/60">
                     <tr>
-                        <td colspan="8" class="px-4 py-10 text-center text-brand-navy/40">No orders match these filters.</td>
+                        <th class="w-10 px-4 py-2.5 text-center">
+                            <input type="checkbox" @change="toggleAll($event)" :checked="allSelected"
+                                class="h-4 w-4 rounded border-gray-300 text-brand-orange focus:ring-brand-orange cursor-pointer"
+                                title="Select all on this page">
+                        </th>
+                        <th class="px-4 py-2.5 font-semibold">Order #</th>
+                        <th class="px-4 py-2.5 font-semibold">Date</th>
+                        <th class="px-4 py-2.5 font-semibold">Customer</th>
+                        <th class="px-4 py-2.5 font-semibold">Items</th>
+                        <th class="px-4 py-2.5 font-semibold">Total</th>
+                        <th class="px-4 py-2.5 font-semibold">Payment</th>
+                        <th class="px-4 py-2.5 font-semibold">Status</th>
+                        <th class="px-4 py-2.5 text-right font-semibold">Actions</th>
                     </tr>
-                @endforelse
-            </tbody>
-        </table>
+                </thead>
+                <tbody class="divide-y divide-brand-navy/5">
+                    @forelse ($orders as $order)
+                        @php
+                            $statusColors = [
+                                'pending' => 'bg-amber-100 text-amber-700',
+                                'processing' => 'bg-blue-100 text-blue-700',
+                                'shipped' => 'bg-indigo-100 text-indigo-700',
+                                'delivered' => 'bg-green-100 text-green-700',
+                                'cancelled' => 'bg-red-100 text-red-700',
+                            ];
+                        @endphp
+                        <tr class="transition hover:bg-brand-navy/[0.02]" :class="selected.includes({{ $order->id }}) ? 'bg-orange-50/30' : ''">
+                            <td class="w-10 px-4 py-2.5 text-center">
+                                <input type="checkbox" :value="{{ $order->id }}" x-model.number="selected"
+                                    class="h-4 w-4 rounded border-gray-300 text-brand-orange focus:ring-brand-orange cursor-pointer">
+                            </td>
+                            <td class="px-4 py-2.5">
+                                <a href="{{ route('admin.orders.show', $order) }}" class="font-mono text-xs font-bold text-brand-orange hover:underline">{{ $order->order_number }}</a>
+                            </td>
+                            <td class="whitespace-nowrap px-4 py-2.5 text-xs text-brand-navy/60">{{ $order->created_at?->format('d M Y') }}<br>{{ $order->created_at?->format('h:i A') }}</td>
+                            <td class="px-4 py-2.5">
+                                <p class="font-medium text-brand-navy">{{ $order->name }}</p>
+                                <p class="text-xs text-brand-navy/50">{{ $order->phone }}</p>
+                            </td>
+                            <td class="px-4 py-2.5 text-brand-navy/70">{{ $order->items->sum('quantity') }}</td>
+                            <td class="whitespace-nowrap px-4 py-2.5 font-semibold">৳{{ number_format($order->total) }}</td>
+                            <td class="px-4 py-2.5">
+                                <p class="text-xs uppercase text-brand-navy/60">{{ $order->payment_method_name }}</p>
+                                <span class="rounded px-1.5 py-0.5 text-[10px] font-semibold {{ $order->payment_status === 'paid' ? 'bg-green-100 text-green-700' : ($order->payment_status === 'refunded' ? 'bg-gray-100 text-gray-500' : 'bg-red-100 text-red-700') }}">
+                                    {{ ucfirst($order->payment_status) }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-2.5">
+                                <span class="rounded px-2 py-0.5 text-xs font-semibold {{ $statusColors[$order->status] ?? 'bg-gray-100 text-gray-600' }}">
+                                    {{ ucfirst($order->status) }}
+                                </span>
+                            </td>
+                            <td class="whitespace-nowrap px-4 py-2.5 text-right">
+                                <div class="inline-flex items-center gap-3">
+                                    <a href="{{ route('admin.orders.show', $order) }}" class="text-xs font-semibold text-brand-navy hover:text-brand-orange" title="View Order">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                    <a href="{{ route('admin.orders.edit', $order) }}" class="text-xs font-semibold text-blue-600 hover:text-blue-800" title="Edit Order">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </a>
+                                    <a href="{{ route('admin.orders.invoice', $order) }}" target="_blank" class="text-xs text-brand-navy/60 hover:text-brand-orange" title="Invoice">
+                                        <i class="fa-solid fa-file-invoice"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="9" class="px-4 py-10 text-center text-brand-navy/40">No orders match these filters.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-4">{{ $orders->links() }}</div>
     </div>
 
-    <div class="mt-4">{{ $orders->links() }}</div>
+    <script>
+        window.bulkOrderManager = function (pageIds) {
+            return {
+                pageIds: (pageIds || []).map(Number),
+                selected: [],
+
+                get allSelected() {
+                    return this.pageIds.length > 0 && this.pageIds.every((id) => this.selected.includes(id));
+                },
+
+                toggleAll(event) {
+                    if (event.target.checked) {
+                        const merged = new Set([...this.selected, ...this.pageIds]);
+                        this.selected = Array.from(merged);
+                    } else {
+                        this.selected = this.selected.filter((id) => !this.pageIds.includes(id));
+                    }
+                },
+
+                confirmBulkDelete() {
+                    const count = this.selected.length;
+                    if (count === 0) return;
+
+                    const msg = `Are you sure you want to delete ${count} selected order(s)?\n\nThis will restore product stock and delete order records. This action cannot be undone.`;
+                    if (confirm(msg)) {
+                        document.getElementById('bulk-delete-orders-form').submit();
+                    }
+                }
+            };
+        };
+    </script>
 </x-admin-layout>
