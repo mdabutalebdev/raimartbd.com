@@ -85,6 +85,14 @@ function initAllSwipers() {
                 640: { slidesPerView: 6, spaceBetween: 16 },
                 768: { slidesPerView: 8, spaceBetween: 16 },
                 1024: { slidesPerView: 10, spaceBetween: 16 }
+            },
+            on: {
+                click: function (swiper, event) {
+                    const link = event.target.closest('a');
+                    if (link && link.href) {
+                        window.location.href = link.href;
+                    }
+                }
             }
         });
     });
