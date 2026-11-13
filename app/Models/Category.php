@@ -14,6 +14,8 @@ class Category extends Model
         'sort_order',
         'is_active',
         'show_on_home',
+        'is_featured_tab',
+        'featured_tab_order',
         'home_layout',
         'home_max_products',
         'home_per_page',
@@ -27,6 +29,8 @@ class Category extends Model
         return [
             'is_active' => 'boolean',
             'show_on_home' => 'boolean',
+            'is_featured_tab' => 'boolean',
+            'featured_tab_order' => 'integer',
             'home_max_products' => 'integer',
             'home_per_page' => 'integer',
             'home_order' => 'integer',

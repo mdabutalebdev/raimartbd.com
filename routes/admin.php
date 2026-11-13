@@ -44,6 +44,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('homepage/category-sections/reorder', [\App\Http\Controllers\Admin\CategorySectionController::class, 'reorder'])->name('homepage.category-sections.reorder');
         Route::put('homepage/category-sections/{category}/settings', [\App\Http\Controllers\Admin\CategorySectionController::class, 'updateSettings'])->name('homepage.category-sections.settings');
 
+        // Featured Products & Featured Sort
+        Route::get('homepage/featured-products', [\App\Http\Controllers\Admin\FeaturedProductController::class, 'edit'])->name('homepage.featured-products.edit');
+        Route::put('homepage/featured-products', [\App\Http\Controllers\Admin\FeaturedProductController::class, 'update'])->name('homepage.featured-products.update');
+        Route::get('homepage/featured-sort', [\App\Http\Controllers\Admin\FeaturedSortController::class, 'edit'])->name('homepage.featured-sort.edit');
+        Route::put('homepage/featured-sort', [\App\Http\Controllers\Admin\FeaturedSortController::class, 'update'])->name('homepage.featured-sort.update');
+
         Route::resource('brands', BrandController::class)->except('show');
         Route::resource('banners', BannerController::class)->except('show');
         Route::resource('promo-banners', PromoBannerController::class)->except('show')->parameters(['promo-banners' => 'banner']);

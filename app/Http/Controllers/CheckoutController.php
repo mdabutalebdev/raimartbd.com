@@ -39,15 +39,15 @@ class CheckoutController extends Controller
         // Mirror the district → area rule used on submit, so the summary opens with the right rate.
         $city = old('city', auth()->user()->city ?? '');
         $area = $city ? (strcasecmp(trim($city), 'Dhaka') === 0 ? 'inside' : 'outside') : Shipping::DEFAULT_AREA;
-        $discount = $this->coupons->discount($subtotal);
-        $shippingFee = Shipping::fee($area, $subtotal, $this->coupons->givesFreeShipping($subtotal));
+        $discount = $this->coupons->discount($subtotal, $items);
+        $shippingFee = Shipping::fee($area, $subtotal, $this->coupons->givesFreeShipping($subtotal, $items));
         $total = max(0, $subtotal - $discount) + $shippingFee;
 
         return view('checkout', [
             'items' => $items,
             'subtotal' => $subtotal,
             'discount' => $discount,
-            'coupon' => $this->coupons->coupon(),
+            'coupon' => $this->coupons->coupon($subtotal, $items),
             'shippingFee' => $shippingFee,
             'total' => $total,
             'area' => $area,
@@ -62,7 +62,7 @@ class CheckoutController extends Controller
     {
         $data = $request->validate(['code' => ['required', 'string', 'max:50']]);
 
-        [$ok, $message] = $this->coupons->apply($data['code'], $cart->subtotal());
+        [$ok, $message] = $this->coupons->apply($data['code'], $cart->subtotal(), $cart->items());
 
         if ($request->wantsJson()) {
             return response()->json($this->couponJsonPayload($ok, $message, $cart));
@@ -86,11 +86,12 @@ class CheckoutController extends Controller
     private function couponJsonPayload(bool $ok, string $message, Cart $cart): array
     {
         $subtotal = $cart->subtotal();
-        $coupon = $this->coupons->coupon();
-        $discount = $this->coupons->discount($subtotal);
+        $items = $cart->items();
+        $coupon = $this->coupons->coupon($subtotal, $items);
+        $discount = $this->coupons->discount($subtotal, $items);
         $city = request('city', auth()->user()->city ?? '');
         $area = $city ? (strcasecmp(trim($city), 'Dhaka') === 0 ? 'inside' : 'outside') : Shipping::DEFAULT_AREA;
-        $shippingFee = Shipping::fee($area, $subtotal, $this->coupons->givesFreeShipping($subtotal));
+        $shippingFee = Shipping::fee($area, $subtotal, $this->coupons->givesFreeShipping($subtotal, $items));
         $total = max(0, $subtotal - $discount) + $shippingFee;
 
         return [
@@ -147,9 +148,9 @@ class CheckoutController extends Controller
         $data['delivery_area'] = strcasecmp(trim($data['city']), 'Dhaka') === 0 ? 'inside' : 'outside';
 
         $subtotal = $cart->subtotal();
-        $coupon = $this->coupons->coupon();
-        $discount = $this->coupons->discount($subtotal);
-        $shippingFee = Shipping::fee($data['delivery_area'], $subtotal, $this->coupons->givesFreeShipping($subtotal));
+        $coupon = $this->coupons->coupon($subtotal, $items);
+        $discount = $this->coupons->discount($subtotal, $items);
+        $shippingFee = Shipping::fee($data['delivery_area'], $subtotal, $this->coupons->givesFreeShipping($subtotal, $items));
         $total = max(0, $subtotal - $discount) + $shippingFee;
 
         // If online payment is selected, check upfront whether the gateway is ready

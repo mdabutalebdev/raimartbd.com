@@ -31,7 +31,26 @@ class HomeController extends Controller
         
         $brands = Cache::remember('home:brands', now()->addHours(6), fn () => \App\Models\Brand::active()->onHome()->orderBy('sort_order')->get());
 
-        $featuredProducts = Product::with(self::CARD_RELATIONS)->active()->featured()->latest()->take(10)->get();
+        $featuredProducts = Product::with(self::CARD_RELATIONS)
+            ->active()
+            ->featured()
+            ->orderBy('featured_order', 'asc')
+            ->orderByDesc('id')
+            ->take(10)
+            ->get();
+
+        $customFeaturedTabs = Cache::remember('home:featured_tabs', now()->addHours(6), function () {
+            return Category::active()
+                ->where('is_featured_tab', true)
+                ->orderBy('featured_tab_order', 'asc')
+                ->orderBy('sort_order', 'asc')
+                ->get();
+        });
+
+        $featuredCategories = $customFeaturedTabs->isNotEmpty()
+            ? $customFeaturedTabs
+            : $featuredProducts->pluck('category')->filter()->unique('id')->values();
+
         $bestSelling = Product::with(self::CARD_RELATIONS)->active()->bestSeller()->latest()->take(15)->get();
         $newArrivals = Product::with(self::CARD_RELATIONS)->active()->newArrival()->latest()->take(15)->get();
         // 15 shown per page, paged client-side.
@@ -68,6 +87,7 @@ class HomeController extends Controller
             'categories',
             'brands',
             'featuredProducts',
+            'featuredCategories',
             'bestSelling',
             'newArrivals',
             'homeCategorySections',

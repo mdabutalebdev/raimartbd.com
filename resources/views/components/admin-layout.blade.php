@@ -168,6 +168,16 @@
                                 {{ request()->routeIs('admin.promo-banners.*') ? 'text-brand-orange font-bold bg-white/5' : 'text-white/60 hover:text-white hover:bg-white/5' }}">
                             Promo Banner
                         </a>
+                        <a href="{{ route('admin.homepage.featured-products.edit') }}" wire:navigate
+                            class="block rounded-lg px-2.5 py-1.5 text-xs transition cursor-pointer
+                                {{ request()->routeIs('admin.homepage.featured-products.*') ? 'text-brand-orange font-bold bg-white/5' : 'text-white/60 hover:text-white hover:bg-white/5' }}">
+                            Featured Product
+                        </a>
+                        <a href="{{ route('admin.homepage.featured-sort.edit') }}" wire:navigate
+                            class="block rounded-lg px-2.5 py-1.5 text-xs transition cursor-pointer
+                                {{ request()->routeIs('admin.homepage.featured-sort.*') ? 'text-brand-orange font-bold bg-white/5' : 'text-white/60 hover:text-white hover:bg-white/5' }}">
+                            Featured Sort
+                        </a>
                         <a href="{{ route('admin.homepage.category-sections.index') }}" wire:navigate
                             class="block rounded-lg px-2.5 py-1.5 text-xs transition cursor-pointer
                                 {{ request()->routeIs('admin.homepage.category-sections.*') ? 'text-brand-orange font-bold bg-white/5' : 'text-white/60 hover:text-white hover:bg-white/5' }}">

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Coupon;
+use Illuminate\Support\Collection;
 
 /**
  * Keeps the customer's applied coupon in the session and works out the money off.
@@ -19,7 +20,7 @@ class CouponService
     }
 
     /** The applied coupon, or null when none is applied / it is no longer usable. */
-    public function coupon(): ?Coupon
+    public function coupon(?float $subtotal = null, ?Collection $cartItems = null): ?Coupon
     {
         $code = $this->code();
 
@@ -35,13 +36,19 @@ class CouponService
             return null;
         }
 
+        if ($subtotal !== null && $coupon->reasonUnusableFor($subtotal, $cartItems)) {
+            $this->clear();
+
+            return null;
+        }
+
         return $coupon;
     }
 
     /**
      * Try to apply a code. Returns [ok, message].
      */
-    public function apply(string $code, float $subtotal): array
+    public function apply(string $code, float $subtotal, ?Collection $cartItems = null): array
     {
         $coupon = Coupon::whereRaw('LOWER(code) = ?', [mb_strtolower(trim($code))])->first();
 
@@ -49,7 +56,7 @@ class CouponService
             return [false, 'This coupon code is not valid.'];
         }
 
-        if ($reason = $coupon->reasonUnusableFor($subtotal)) {
+        if ($reason = $coupon->reasonUnusableFor($subtotal, $cartItems)) {
             return [false, $reason];
         }
 
@@ -64,22 +71,22 @@ class CouponService
     }
 
     /** Discount for the current cart, 0 when nothing applies. */
-    public function discount(float $subtotal): float
+    public function discount(float $subtotal, ?Collection $cartItems = null): float
     {
         $coupon = $this->coupon();
 
-        if (! $coupon || $coupon->reasonUnusableFor($subtotal)) {
+        if (! $coupon || $coupon->reasonUnusableFor($subtotal, $cartItems)) {
             return 0.0;
         }
 
-        return $coupon->discountFor($subtotal);
+        return $coupon->discountFor($subtotal, $cartItems);
     }
 
     /** Does the applied coupon also make delivery free? */
-    public function givesFreeShipping(float $subtotal): bool
+    public function givesFreeShipping(float $subtotal, ?Collection $cartItems = null): bool
     {
         $coupon = $this->coupon();
 
-        return $coupon && ! $coupon->reasonUnusableFor($subtotal) && $coupon->free_shipping;
+        return $coupon && ! $coupon->reasonUnusableFor($subtotal, $cartItems) && $coupon->free_shipping;
     }
 }

@@ -105,7 +105,7 @@
 
     {{-- Featured products --}}
     <section class="py-4 md:py-6">
-        @php $featuredCategories = $featuredProducts->pluck('category')->filter()->unique('id')->values(); @endphp
+        @php $featuredCategories = $featuredCategories ?? $featuredProducts->pluck('category')->filter()->unique('id')->values(); @endphp
 
         <div class="gb-container">
             <div class="text-center">
@@ -128,10 +128,14 @@
             {{-- Product grid --}}
             <div id="feat-grid" class="product-row mt-4 md:mt-5">
                 @foreach ($featuredProducts as $product)
-                    <div data-cat="{{ $product->category_id }}">
+                    <div data-cat="{{ $product->category_id }}" data-parent-cat="{{ $product->category?->parent_id ?? '' }}">
                         <x-product-card :product="$product" />
                     </div>
                 @endforeach
+            </div>
+
+            <div id="feat-empty" style="display: none;" class="py-12 text-center text-gray-400 text-sm">
+                No featured products in this category.
             </div>
 
             <div class="mt-6 text-center">
@@ -148,9 +152,16 @@
             document.querySelectorAll('.feat-tab-btn').forEach(function(btn) {
                 btn.classList.toggle('active-tab', btn.dataset.tab == tab);
             });
+            var visibleCount = 0;
             document.querySelectorAll('#feat-grid > div[data-cat]').forEach(function(card) {
-                card.style.display = (tab === 'all' || card.dataset.cat == tab) ? '' : 'none';
+                var matches = (tab === 'all' || card.dataset.cat == tab || card.dataset.parentCat == tab);
+                card.style.display = matches ? '' : 'none';
+                if (matches) visibleCount++;
             });
+            var emptyEl = document.getElementById('feat-empty');
+            if (emptyEl) {
+                emptyEl.style.display = (visibleCount === 0) ? 'block' : 'none';
+            }
         }
 
         // Use touchend as primary handler on mobile — more reliable than click

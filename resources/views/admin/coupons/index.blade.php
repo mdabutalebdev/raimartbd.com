@@ -41,6 +41,19 @@
                             @if ($coupon->free_shipping)
                                 <span class="ml-1 text-[10px] font-semibold uppercase text-green-600">+ free delivery</span>
                             @endif
+                            <div class="mt-1 text-[11px]">
+                                @if ($coupon->isSpecificProducts())
+                                    <span class="inline-flex items-center gap-1 font-medium text-blue-600">
+                                        <i class="fa-solid fa-tag text-[10px]"></i> {{ count($coupon->product_ids ?? []) }} Products
+                                    </span>
+                                @elseif ($coupon->isSpecificCategories())
+                                    <span class="inline-flex items-center gap-1 font-medium text-purple-600">
+                                        <i class="fa-solid fa-layer-group text-[10px]"></i> {{ count($coupon->category_ids ?? []) }} Categories
+                                    </span>
+                                @else
+                                    <span class="text-gray-400">Full Store</span>
+                                @endif
+                            </div>
                         </td>
                         <td class="px-5 py-3 font-medium">
                             {{ $coupon->label }}
