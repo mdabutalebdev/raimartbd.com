@@ -15,7 +15,15 @@
 
 {{-- Clear all — only visible when at least one filter is active --}}
 @if ($hasActiveFilters)
-    <a href="{{ request()->routeIs('categories.show') && isset($activeCategory) ? route('categories.show', $activeCategory->slug) : route('shop') }}"
+    @php
+        $clearUrl = route('shop');
+        if (request()->routeIs('categories.show') && isset($activeCategory)) {
+            $clearUrl = route('categories.show', $activeCategory->slug);
+        } elseif (request()->routeIs('brands.show') && isset($activeBrand)) {
+            $clearUrl = route('brands.show', $activeBrand->slug);
+        }
+    @endphp
+    <a href="{{ $clearUrl }}"
         class="mb-1.5 flex w-full items-center justify-center gap-2 rounded bg-gradient-to-r from-red-500 to-red-600 px-4 py-3 text-sm font-semibold text-white transition hover:from-red-600 hover:to-red-700">
         <i class="fa-solid fa-xmark"></i> Clear All Filters
     </a>

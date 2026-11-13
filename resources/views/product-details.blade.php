@@ -64,6 +64,7 @@
             $schema['brand'] = [
                 '@type' => 'Brand',
                 'name' => $product->brand->name,
+                'url' => route('brands.show', $product->brand->slug),
             ];
         }
 
@@ -414,7 +415,7 @@
                                     @if($product->brand)
                                         <span class="text-gray-300">•</span>
                                         <span>Brand:</span>
-                                        <span class="font-semibold text-gray-800">{{ $product->brand->name }}</span>
+                                        <a href="{{ route('brands.show', $product->brand->slug) }}" wire:navigate class="font-semibold text-brand-orange hover:underline cursor-pointer">{{ $product->brand->name }}</a>
                                     @endif
                                 </div>
 
@@ -594,7 +595,7 @@
                                 @if($product->brand)
                                     <span class="text-gray-300">•</span>
                                     <span>Brand:</span>
-                                    <span class="font-semibold text-gray-800">{{ $product->brand->name }}</span>
+                                    <a href="{{ route('brands.show', $product->brand->slug) }}" wire:navigate class="font-semibold text-brand-orange hover:underline cursor-pointer">{{ $product->brand->name }}</a>
                                 @endif
                             </div>
 

@@ -53,6 +53,7 @@ Route::get('/track', [OrderTrackingController::class, 'index'])->name('track');
 Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
 Route::get('/category/{category:slug}', [CategoryController::class, 'show'])->name('categories.show');
 Route::get('/brands', [BrandController::class, 'index'])->name('brands.index');
+Route::get('/brand/{brand:slug}', [BrandController::class, 'show'])->name('brands.show');
 Route::get('/products/{product:slug}', [ProductController::class, 'show'])->name('products.show');
 Route::get('/page/{page:slug}', [\App\Http\Controllers\PageController::class, 'show'])->name('pages.show');
 Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'index'])->name('sitemap');

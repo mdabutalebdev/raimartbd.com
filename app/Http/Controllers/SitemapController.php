@@ -37,7 +37,6 @@ class SitemapController extends Controller
             $w->openMemory();
             $w->setIndent(true);
             $w->startDocument('1.0', 'UTF-8');
-            $w->writePI('xml-stylesheet', 'type="text/xsl" href="/sitemap.xsl"');
             $w->startElement('sitemapindex');
             $w->writeAttribute('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9');
 
@@ -111,9 +110,8 @@ class SitemapController extends Controller
 
             $w = new \XMLWriter();
             $w->openMemory();
-            $w->setIndent(false);
+            $w->setIndent(true);
             $w->startDocument('1.0', 'UTF-8');
-            $w->writePI('xml-stylesheet', 'type="text/xsl" href="/sitemap.xsl"');
             $w->startElement('urlset');
             $w->writeAttribute('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9');
             $w->writeAttribute('xmlns:image', 'http://www.google.com/schemas/sitemap-image/1.1');
@@ -171,9 +169,8 @@ class SitemapController extends Controller
 
             $w = new \XMLWriter();
             $w->openMemory();
-            $w->setIndent(false);
+            $w->setIndent(true);
             $w->startDocument('1.0', 'UTF-8');
-            $w->writePI('xml-stylesheet', 'type="text/xsl" href="/sitemap.xsl"');
             $w->startElement('urlset');
             $w->writeAttribute('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9');
             $w->writeAttribute('xmlns:image', 'http://www.google.com/schemas/sitemap-image/1.1');
@@ -201,7 +198,7 @@ class SitemapController extends Controller
 
             foreach ($brands as $brand) {
                 $w->startElement('url');
-                $w->writeElement('loc', $baseUrl . '/shop?brand=' . $brand->slug);
+                $w->writeElement('loc', $baseUrl . '/brand/' . $brand->slug);
                 if ($brand->updated_at) {
                     $w->writeElement('lastmod', date('c', strtotime($brand->updated_at)));
                 }
@@ -256,9 +253,8 @@ class SitemapController extends Controller
 
             $w = new \XMLWriter();
             $w->openMemory();
-            $w->setIndent(false);
+            $w->setIndent(true);
             $w->startDocument('1.0', 'UTF-8');
-            $w->writePI('xml-stylesheet', 'type="text/xsl" href="/sitemap.xsl"');
             $w->startElement('urlset');
             $w->writeAttribute('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9');
 
@@ -302,9 +298,8 @@ class SitemapController extends Controller
 
             $w = new \XMLWriter();
             $w->openMemory();
-            $w->setIndent(false);
+            $w->setIndent(true);
             $w->startDocument('1.0', 'UTF-8');
-            $w->writePI('xml-stylesheet', 'type="text/xsl" href="/sitemap.xsl"');
             $w->startElement('urlset');
             $w->writeAttribute('xmlns', 'http://www.sitemaps.org/schemas/sitemap/0.9');
             $w->writeAttribute('xmlns:image', 'http://www.google.com/schemas/sitemap-image/1.1');
@@ -360,7 +355,7 @@ class SitemapController extends Controller
 
             foreach (DB::table('brands')->where('is_active', 1)->select(['slug', 'name', 'logo', 'updated_at'])->cursor() as $brand) {
                 $w->startElement('url');
-                $w->writeElement('loc', $baseUrl . '/shop?brand=' . $brand->slug);
+                $w->writeElement('loc', $baseUrl . '/brand/' . $brand->slug);
                 if ($brand->updated_at) {
                     $w->writeElement('lastmod', date('c', strtotime($brand->updated_at)));
                 }

@@ -1,13 +1,17 @@
 @php
-    $shopTitle = $activeCategory
-        ? ($activeCategory->meta_title ?: ($activeCategory->name . ' - Buy ' . $activeCategory->name . ' Online in Bangladesh | Raimart'))
-        : 'Shop All Products - Raimart | বাংলাদেশের বিশ্বস্ত অনলাইন শপিং';
-
-    $shopDesc = $activeCategory
-        ? ($activeCategory->meta_description ?: ('Buy authentic ' . $activeCategory->name . ' online at best price in Bangladesh from Raimart. 100% genuine products, fast home delivery & Cash on Delivery.'))
-        : 'Shop the latest trending products at Raimart Bangladesh. Best prices, fast home delivery & Cash on Delivery.';
-
-    $shopImage = $activeCategory?->image ? image_url($activeCategory->image) : null;
+    if ($activeCategory) {
+        $shopTitle = $activeCategory->meta_title ?: ($activeCategory->name . ' - Buy ' . $activeCategory->name . ' Online in Bangladesh | Raimart');
+        $shopDesc = $activeCategory->meta_description ?: ('Buy authentic ' . $activeCategory->name . ' online at best price in Bangladesh from Raimart. 100% genuine products, fast home delivery & Cash on Delivery.');
+        $shopImage = $activeCategory->image ? image_url($activeCategory->image) : null;
+    } elseif (isset($activeBrand) && $activeBrand) {
+        $shopTitle = $activeBrand->name . ' Products in Bangladesh - Buy Original ' . $activeBrand->name . ' Online | Raimart';
+        $shopDesc = 'Shop 100% genuine ' . $activeBrand->name . ' products online in Bangladesh at the best prices from Raimart. Fast delivery & Cash on Delivery.';
+        $shopImage = $activeBrand->logo ? image_url($activeBrand->logo) : null;
+    } else {
+        $shopTitle = 'Shop All Products - Raimart | বাংলাদেশের বিশ্বস্ত অনলাইন শপিং';
+        $shopDesc = 'Shop the latest trending products at Raimart Bangladesh. Best prices, fast home delivery & Cash on Delivery.';
+        $shopImage = null;
+    }
 @endphp
 <x-layout :title="$shopTitle" :description="$shopDesc" :image="$shopImage">
     @if ($activeCategory)
@@ -50,6 +54,44 @@
         <script type="application/ld+json">
             {!! json_encode($collectionSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
         </script>
+    @elseif (isset($activeBrand) && $activeBrand)
+        @php
+            $brandBreadcrumbItems = [
+                ['@type' => 'ListItem', 'position' => 1, 'name' => 'Home', 'item' => route('home')],
+                ['@type' => 'ListItem', 'position' => 2, 'name' => 'Brands', 'item' => route('brands.index')],
+                ['@type' => 'ListItem', 'position' => 3, 'name' => $activeBrand->name, 'item' => route('brands.show', $activeBrand->slug)],
+            ];
+            $brandBreadcrumbSchema = [
+                '@context' => 'https://schema.org',
+                '@type' => 'BreadcrumbList',
+                'itemListElement' => $brandBreadcrumbItems,
+            ];
+            $brandCollectionSchema = [
+                '@context' => 'https://schema.org',
+                '@type' => 'CollectionPage',
+                'name' => $shopTitle,
+                'description' => $shopDesc,
+                'url' => route('brands.show', $activeBrand->slug),
+            ];
+            $brandSchema = [
+                '@context' => 'https://schema.org',
+                '@type' => 'Brand',
+                'name' => $activeBrand->name,
+                'url' => route('brands.show', $activeBrand->slug),
+            ];
+            if ($activeBrand->logo) {
+                $brandSchema['logo'] = image_url($activeBrand->logo);
+            }
+        @endphp
+        <script type="application/ld+json">
+            {!! json_encode($brandBreadcrumbSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+        </script>
+        <script type="application/ld+json">
+            {!! json_encode($brandCollectionSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+        </script>
+        <script type="application/ld+json">
+            {!! json_encode($brandSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+        </script>
     @endif
 
     @php
@@ -61,16 +103,26 @@
                 'flags' => $selectedFlags->values()->all(),
             ]);
 
-        $cleanUrl = function ($arr) use ($activeCategory) {
+        $cleanUrl = function ($arr) use ($activeCategory, $activeBrand) {
             $filtered = collect($arr)
                 ->map(fn ($v) => is_array($v) ? array_values($v) : $v)
                 ->filter(fn ($v) => is_array($v) ? count($v) : ($v !== null && $v !== '' && $v !== '0'));
 
             $cats = collect($filtered->get('categories', []));
-            if ($cats->count() === 1) {
+            $brs = collect($filtered->get('brands', []));
+
+            // Single category context (no brand selected)
+            if ($cats->count() === 1 && $brs->isEmpty()) {
                 $catSlug = $cats->first();
                 $params = $filtered->except(['categories', 'category'])->all();
                 return route('categories.show', array_merge(['category' => $catSlug], $params));
+            }
+
+            // Single brand context (no category selected)
+            if ($brs->count() === 1 && $cats->isEmpty()) {
+                $brandSlug = $brs->first();
+                $params = $filtered->except(['brands', 'brand'])->all();
+                return route('brands.show', array_merge(['brand' => $brandSlug], $params));
             }
 
             return route('shop', $filtered->all());
@@ -141,8 +193,16 @@
                 <i class="fa-solid fa-chevron-right text-[9px] text-brand-navy/30"></i>
                 <span class="font-semibold text-brand-navy">{{ $activeCategory->name }}</span>
             </nav>
+        @elseif (isset($activeBrand) && $activeBrand)
+            <nav class="mb-2 flex items-center gap-1.5 text-xs text-brand-navy/60 overflow-x-auto whitespace-nowrap scrollbar-hide" aria-label="Breadcrumb">
+                <a href="{{ route('home') }}" wire:navigate class="hover:text-brand-orange transition">Home</a>
+                <i class="fa-solid fa-chevron-right text-[9px] text-brand-navy/30"></i>
+                <a href="{{ route('brands.index') }}" wire:navigate class="hover:text-brand-orange transition">Brands</a>
+                <i class="fa-solid fa-chevron-right text-[9px] text-brand-navy/30"></i>
+                <span class="font-semibold text-brand-navy">{{ $activeBrand->name }}</span>
+            </nav>
         @endif
-        <h1 class="font-serif text-xl font-bold sm:text-2xl">{{ $activeCategory->name ?? 'Shop All Products' }}</h1>
+        <h1 class="font-serif text-xl font-bold sm:text-2xl">{{ $activeCategory->name ?? ($activeBrand->name ?? 'Shop All Products') }}</h1>
 
         <div class="mt-4 grid gap-8 lg:mt-6 lg:grid-cols-[290px_1fr]">
             {{-- Filter column: static on desktop, slide-over drawer on mobile --}}
@@ -182,14 +242,20 @@
                         <p class="hidden truncate text-sm text-brand-navy/50 sm:block">{{ $products->total() }} {{ Str::plural('product', $products->total()) }} found</p>
                     </div>
 
-                    <form action="{{ $activeCategory && $selectedCategories->count() === 1 ? route('categories.show', $activeCategory->slug) : route('shop') }}" method="GET" class="flex shrink-0 items-center gap-2">
-                        @php
-                            $exceptFields = ['sort', 'page'];
-                            if ($activeCategory && $selectedCategories->count() === 1) {
-                                $exceptFields[] = 'category';
-                                $exceptFields[] = 'categories';
-                            }
-                        @endphp
+                    @php
+                        $formAction = route('shop');
+                        $exceptFields = ['sort', 'page'];
+                        if ($activeCategory && $selectedCategories->count() === 1) {
+                            $formAction = route('categories.show', $activeCategory->slug);
+                            $exceptFields[] = 'category';
+                            $exceptFields[] = 'categories';
+                        } elseif (isset($activeBrand) && $activeBrand && $selectedBrands->count() === 1 && $selectedCategories->isEmpty()) {
+                            $formAction = route('brands.show', $activeBrand->slug);
+                            $exceptFields[] = 'brand';
+                            $exceptFields[] = 'brands';
+                        }
+                    @endphp
+                    <form action="{{ $formAction }}" method="GET" class="flex shrink-0 items-center gap-2">
                         @foreach (request()->except($exceptFields) as $key => $value)
                             @if (is_array($value))
                                 @foreach ($value as $item)

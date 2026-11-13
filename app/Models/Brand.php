@@ -38,6 +38,11 @@ class Brand extends Model
         return $query->where('show_on_home', true);
     }
 
+    public function getUrlAttribute(): string
+    {
+        return route('brands.show', $this->slug);
+    }
+
     protected static function booted(): void
     {
         static::saved(fn () => \App\Http\Controllers\SitemapController::clearCache());

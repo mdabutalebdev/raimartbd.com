@@ -11,7 +11,8 @@
         @if ($brands->count())
             <div class="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:mt-8 lg:grid-cols-4">
                 @foreach ($brands as $brand)
-                    <a href="{{ route('shop', ['brand' => $brand->slug]) }}"
+                    <a href="{{ route('brands.show', $brand->slug) }}"
+                        wire:navigate
                         class="group flex flex-col items-center justify-center rounded-[4px] border border-[#cccccc] bg-white p-6 transition hover:border-brand-orange">
                         <div class="flex h-20 w-full items-center justify-center">
                             @if ($brand->logo)

@@ -39,6 +39,15 @@ class ShopController extends Controller
             ->merge($request->filled('brand') ? [(string) $request->input('brand')] : [])
             ->filter()->unique()->values();
 
+        // 301 Permanent Redirect for SEO: single-brand shop queries (when no category is selected) redirect to /brand/{slug}
+        if ($selectedBrands->count() === 1 && $selectedCategories->isEmpty() && ! $request->routeIs('brands.show')) {
+            $singleBrandSlug = $selectedBrands->first();
+            if (Brand::active()->where('slug', $singleBrandSlug)->exists()) {
+                $queryParams = $request->except(['brand', 'brands']);
+                return redirect()->route('brands.show', array_merge(['brand' => $singleBrandSlug], $queryParams), 301);
+            }
+        }
+
         $selectedFlags = collect((array) $request->input('flags', []))
             ->intersect(array_keys(self::FLAGS))->values();
 
@@ -49,6 +58,11 @@ class ShopController extends Controller
         // Single active category drives the page heading / breadcrumb
         $activeCategory = $selectedCategories->count() === 1
             ? Category::active()->where('slug', $selectedCategories->first())->first()
+            : null;
+
+        // Single active brand drives the page heading / breadcrumb when on brand view
+        $activeBrand = $selectedBrands->count() === 1
+            ? Brand::active()->where('slug', $selectedBrands->first())->first()
             : null;
 
         $searchTerm = $request->string('search')->trim()->value();
@@ -133,6 +147,7 @@ class ShopController extends Controller
             'brands' => $brands,
             'products' => $products,
             'activeCategory' => $activeCategory,
+            'activeBrand' => $activeBrand,
             'priceFloor' => $priceFloor,
             'priceCeil' => $priceCeil,
             'minPrice' => $minPrice,
