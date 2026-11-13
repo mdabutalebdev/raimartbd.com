@@ -138,6 +138,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
         Route::get('orders/export', [OrderController::class, 'export'])->name('orders.export');
+        Route::delete('orders/bulk-delete', [OrderController::class, 'bulkDestroy'])->name('orders.bulk-delete');
         Route::get('orders/create', [OrderController::class, 'create'])->name('orders.create');
         Route::post('orders', [OrderController::class, 'store'])->name('orders.store');
         Route::get('orders/{order}', [OrderController::class, 'show'])->name('orders.show');

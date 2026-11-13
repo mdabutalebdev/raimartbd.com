@@ -170,6 +170,41 @@ class OrderController extends Controller
         return redirect()->route('admin.orders.index')->with('status', "Order #{$orderNumber} deleted successfully.");
     }
 
+    public function bulkDestroy(Request $request)
+    {
+        $data = $request->validate([
+            'order_ids' => ['required', 'array', 'min:1'],
+            'order_ids.*' => ['integer', 'exists:orders,id'],
+        ]);
+
+        $orders = Order::whereIn('id', $data['order_ids'])->get();
+        $count = $orders->count();
+
+        if ($count === 0) {
+            return back()->with('error', 'No valid orders selected.');
+        }
+
+        DB::transaction(function () use ($orders) {
+            foreach ($orders as $order) {
+                // Restore inventory stock if order was not cancelled
+                if ($order->status !== 'cancelled') {
+                    $this->adjustStock($order, 1);
+                }
+
+                // Remove order items
+                $order->items()->delete();
+
+                // Remove payments
+                $order->payments()->delete();
+
+                // Delete the order
+                $order->delete();
+            }
+        });
+
+        return redirect()->route('admin.orders.index')->with('status', "{$count} order(s) deleted successfully.");
+    }
+
     /** Printable invoice (browser print → PDF), with the shop logo and full details. */
     public function invoice(Order $order)
     {
